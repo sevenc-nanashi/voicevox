@@ -244,9 +244,9 @@ export const audioStore: VoiceVoxStoreOptions<
       return getCharacterInfo(state, engineId, styleId);
     },
     USER_ORDERED_CHARACTER_INFOS: (state, getters) => {
-      const flattenCharacterInfos = getters.GET_FLATTEN_CHARACTER_INFOS;
-      return flattenCharacterInfos.length !== 0
-        ? flattenCharacterInfos.sort(
+      const allCharacterInfos = getters.GET_ALL_CHARACTER_INFOS;
+      return allCharacterInfos.size !== 0
+        ? [...allCharacterInfos.values()].sort(
             (a, b) =>
               state.userCharacterOrder.indexOf(a.metas.speakerUuid) -
               state.userCharacterOrder.indexOf(b.metas.speakerUuid)

@@ -716,8 +716,8 @@ export type IndexStoreState = {
 };
 
 type IndexStoreTypes = {
-  GET_FLATTEN_CHARACTER_INFOS: {
-    getter: CharacterInfo[];
+  GET_ALL_CHARACTER_INFOS: {
+    getter: Map<string, CharacterInfo>;
   };
 
   GET_HOW_TO_USE_TEXT: {
