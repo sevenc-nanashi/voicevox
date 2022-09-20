@@ -45,7 +45,7 @@ export const indexStore: VoiceVoxStoreOptions<
   getters: {
     /**
      * すべてのエンジンのキャラクター情報のリスト。
-     * 同じspeakerUuidのキャラクター情報は、登録順が速いエンジンの情報を元に統合される。
+     * 同じspeakerUuidのキャラクター情報は、登録順が早いエンジンの情報を元に統合される。
      * キャラクター情報が読み出されていないときは、空リストを返す。
      */
     GET_ALL_CHARACTER_INFOS(state) {
