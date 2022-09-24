@@ -24,142 +24,149 @@
         transition-hide="none"
       >
         <q-list>
-          <q-item
-            v-for="(characterInfo, characterIndex) in userOrderedCharacterInfos"
+          <template
+            v-for="(characterInfo, characterIndex) in [selectedCharacterInfo]
+              .concat(userOrderedCharacterInfos)
+              .filter((c) => c !== undefined)"
             :key="characterIndex"
-            class="q-pa-none"
           >
-            <q-btn-group flat class="col full-width">
-              <q-btn
-                flat
-                no-caps
-                v-close-popup
-                class="col-grow"
-                :class="
-                  characterInfo.metas.speakerUuid ===
-                    selectedCharacterInfo.metas.speakerUuid &&
-                  'selected-character-item'
-                "
-                @click="
-                  changeStyleId(
-                    characterInfo.metas.speakerUuid,
-                    getDefaultStyle(characterInfo.metas.speakerUuid).styleId
-                  )
-                "
-                @mouseover="reassignSubMenuOpen(-1)"
-                @mouseleave="reassignSubMenuOpen.cancel()"
-              >
-                <q-avatar rounded size="2rem" class="q-mr-md">
-                  <q-img
-                    no-spinner
-                    no-transition
-                    :ratio="1"
-                    :src="
-                      getDefaultStyle(characterInfo.metas.speakerUuid).iconPath
-                    "
-                  />
-                  <q-avatar
-                    class="engine-icon"
-                    rounded
-                    v-if="
-                      isMultipleEngine && characterInfo.metas.styles.length < 2
-                    "
-                  >
-                    <img
-                      :src="
-                        engineIcons[
-                          getDefaultStyle(characterInfo.metas.speakerUuid)
-                            .engineId
-                        ]
-                      "
-                    />
-                  </q-avatar>
-                </q-avatar>
-                <div>{{ characterInfo.metas.speakerName }}</div>
-              </q-btn>
-
-              <!-- スタイルが2つ以上あるものだけ、スタイル選択ボタンを表示する-->
-              <template v-if="characterInfo.metas.styles.length >= 2">
-                <q-separator vertical />
-
-                <div
-                  class="flex items-center q-px-sm q-py-none cursor-pointer"
+            <q-separator v-if="characterIndex === 1" spaced />
+            <q-item class="q-pa-none">
+              <q-btn-group flat class="col full-width">
+                <q-btn
+                  flat
+                  no-caps
+                  v-close-popup
+                  class="col-grow"
                   :class="
-                    subMenuOpenFlags[characterIndex] && 'opened-character-item'
+                    characterInfo.metas.speakerUuid ===
+                      selectedCharacterInfo.metas.speakerUuid &&
+                    'selected-character-item'
                   "
-                  @mouseover="reassignSubMenuOpen(characterIndex)"
+                  @click="
+                    changeStyleId(
+                      characterInfo.metas.speakerUuid,
+                      getDefaultStyle(characterInfo.metas.speakerUuid).styleId
+                    )
+                  "
+                  @mouseover="reassignSubMenuOpen(-1)"
                   @mouseleave="reassignSubMenuOpen.cancel()"
                 >
-                  <q-icon
-                    name="keyboard_arrow_right"
-                    color="grey-6"
-                    size="sm"
-                  />
-
-                  <q-menu
-                    no-parent-event
-                    anchor="top end"
-                    self="top start"
-                    transition-show="none"
-                    transition-hide="none"
-                    class="character-menu"
-                    v-model="subMenuOpenFlags[characterIndex]"
-                  >
-                    <q-list>
-                      <q-item
-                        v-for="(style, styleIndex) in characterInfo.metas
-                          .styles"
-                        :key="styleIndex"
-                        clickable
-                        v-close-popup
-                        active-class="selected-character-item"
-                        :active="style.styleId === selectedStyle.styleId"
-                        @click="
-                          changeStyleId(
-                            characterInfo.metas.speakerUuid,
-                            style.styleId
-                          )
+                  <q-avatar rounded size="2rem" class="q-mr-md">
+                    <q-img
+                      no-spinner
+                      no-transition
+                      :ratio="1"
+                      :src="
+                        getDefaultStyle(characterInfo.metas.speakerUuid)
+                          .iconPath
+                      "
+                    />
+                    <q-avatar
+                      class="engine-icon"
+                      rounded
+                      v-if="
+                        isMultipleEngine &&
+                        characterInfo.metas.styles.length < 2
+                      "
+                    >
+                      <img
+                        :src="
+                          engineIcons[
+                            getDefaultStyle(characterInfo.metas.speakerUuid)
+                              .engineId
+                          ]
                         "
-                      >
-                        <q-avatar rounded size="2rem" class="q-mr-md">
-                          <q-img
-                            no-spinner
-                            no-transition
-                            :ratio="1"
-                            :src="
-                              characterInfo.metas.styles[styleIndex].iconPath
-                            "
-                          />
-                          <q-avatar
-                            rounded
-                            class="engine-icon"
-                            v-if="isMultipleEngine"
-                          >
-                            <img
+                      />
+                    </q-avatar>
+                  </q-avatar>
+                  <div>{{ characterInfo.metas.speakerName }}</div>
+                </q-btn>
+
+                <!-- スタイルが2つ以上あるものだけ、スタイル選択ボタンを表示する-->
+                <template v-if="characterInfo.metas.styles.length >= 2">
+                  <q-separator vertical />
+
+                  <div
+                    class="flex items-center q-px-sm q-py-none cursor-pointer"
+                    :class="
+                      subMenuOpenFlags[characterIndex] &&
+                      'opened-character-item'
+                    "
+                    @mouseover="reassignSubMenuOpen(characterIndex)"
+                    @mouseleave="reassignSubMenuOpen.cancel()"
+                  >
+                    <q-icon
+                      name="keyboard_arrow_right"
+                      color="grey-6"
+                      size="sm"
+                    />
+
+                    <q-menu
+                      no-parent-event
+                      anchor="top end"
+                      self="top start"
+                      transition-show="none"
+                      transition-hide="none"
+                      class="character-menu"
+                      v-model="subMenuOpenFlags[characterIndex]"
+                    >
+                      <q-list>
+                        <q-item
+                          v-for="(style, styleIndex) in characterInfo.metas
+                            .styles"
+                          :key="styleIndex"
+                          clickable
+                          v-close-popup
+                          active-class="selected-character-item"
+                          :active="style.styleId === selectedStyle.styleId"
+                          @click="
+                            changeStyleId(
+                              characterInfo.metas.speakerUuid,
+                              style.styleId
+                            )
+                          "
+                        >
+                          <q-avatar rounded size="2rem" class="q-mr-md">
+                            <q-img
+                              no-spinner
+                              no-transition
+                              :ratio="1"
                               :src="
-                                engineIcons[
-                                  characterInfo.metas.styles[styleIndex]
-                                    .engineId
-                                ]
+                                characterInfo.metas.styles[styleIndex].iconPath
                               "
                             />
+                            <q-avatar
+                              rounded
+                              class="engine-icon"
+                              v-if="isMultipleEngine"
+                            >
+                              <img
+                                :src="
+                                  engineIcons[
+                                    characterInfo.metas.styles[styleIndex]
+                                      .engineId
+                                  ]
+                                "
+                              />
+                            </q-avatar>
                           </q-avatar>
-                        </q-avatar>
-                        <q-item-section v-if="style.styleName"
-                          >{{ characterInfo.metas.speakerName }} ({{
-                            style.styleName
-                          }})</q-item-section
-                        >
-                        <q-item-section v-else>{{
-                          characterInfo.metas.speakerName
-                        }}</q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </div>
-              </template>
-            </q-btn-group>
-          </q-item>
+                          <q-item-section v-if="style.styleName"
+                            >{{ characterInfo.metas.speakerName }} ({{
+                              style.styleName
+                            }})</q-item-section
+                          >
+                          <q-item-section v-else>{{
+                            characterInfo.metas.speakerName
+                          }}</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </div>
+                </template>
+              </q-btn-group>
+            </q-item>
+          </template>
         </q-list>
       </q-menu>
     </q-btn>
