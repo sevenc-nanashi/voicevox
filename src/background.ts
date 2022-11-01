@@ -804,7 +804,12 @@ if (!fs.existsSync(tempDir)) {
 }
 
 // 使い方テキストの読み込み
-declare let __static: string;
+let __static: string;
+if (isDevelopment) {
+  __static = path.resolve(__dirname, "../public");
+} else {
+  __static = path.resolve(__dirname, "public");
+}
 const howToUseText = fs.readFileSync(
   path.join(__static, "howtouse.md"),
   "utf-8"
@@ -905,7 +910,7 @@ async function createWindow() {
     minWidth: 320,
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "./electron/preload.js"),
       nodeIntegration: true,
       contextIsolation: true,
     },

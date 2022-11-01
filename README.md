@@ -50,6 +50,15 @@ TotalMilliseconds : 97237.6315
 > また、`.npmrc`に`enable-pre-post-scripts=true`を付け足した。
 
 
+## 成果：vue-cli -> vite
+
+色々やったが、
+```
+Uncaught ReferenceError: process is not defined
+``` が解決できなくて諦めた。
+npm-run-allか何かでviteの外で実行するのが正義かも知れない。
+
+
 # VOICEVOX
 
 [VOICEVOX](https://voicevox.hiroshiba.jp/) のエディターです。
