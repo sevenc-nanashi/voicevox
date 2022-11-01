@@ -15,13 +15,12 @@ import {
   shell,
   nativeTheme,
 } from "electron";
-import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 
 import path from "path";
 import { textEditContextMenu } from "./electron/contextMenu";
 import { hasSupportedGpu } from "./electron/device";
-import { ipcMainHandle, ipcMainSend } from "@/electron/ipc";
+import { ipcMainHandle, ipcMainSend } from "./electron/ipc";
 
 import fs from "fs";
 import {
@@ -913,12 +912,9 @@ async function createWindow() {
     icon: path.join(__static, "icon.png"),
   });
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    await win.loadURL(
-      (process.env.WEBPACK_DEV_SERVER_URL as string) + "#/home"
-    );
+  if (process.env.VITE_DEV_SERVER_URL) {
+    await win.loadURL((process.env.VITE_DEV_SERVER_URL as string) + "#/home");
   } else {
-    createProtocol("app");
     win.loadURL("app://./index.html#/home");
   }
   if (isDevelopment) win.webContents.openDevTools();

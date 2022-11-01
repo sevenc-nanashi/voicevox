@@ -46,7 +46,9 @@ TotalMilliseconds : 97237.6315
 > 依存関係の解決のため、1度`pnpm i`を実行して`pnpm-lock.yaml`を生成してある。
 
 > **Warning**
-> `test:unit`を通すには`pnpm add -D electron-builder` `pnpm add tslib`を実行する必要があった。
+> 実行できるようにするには`pnpm add -D electron-builder ts-loader` `pnpm add tslib`を実行する必要があった。
+> また、`.npmrc`に`enable-pre-post-scripts=true`を付け足した。
+
 
 # VOICEVOX
 

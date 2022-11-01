@@ -23,7 +23,7 @@ createApp(App)
   .use(router)
   .use(
     createGtm({
-      id: process.env.VUE_APP_GTM_CONTAINER_ID ?? "GTM-DUMMY",
+      id: import.meta.env.VUE_APP_GTM_CONTAINER_ID ?? "GTM-DUMMY",
       vueRouter: router,
       // NOTE: 最初はgtm.jsを読まず、プライバシーポリシーに同意後に読み込む
       enabled: false,
