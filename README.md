@@ -1,3 +1,53 @@
+# poc/migrate-pnpm-vite
+
+`npm` + `vue-cli` のVoicevoxを`pnpm` + `vite`にしてみよう、というブランチ。
+
+## 成果：npm -> pnpm
+
+```
+voicevox on  poc/migrate-pnpm-vite [$] via  v16.17.0 took 50s                                               22:20:17
+❯ measure-command { npm ci }
+npm WARN ERESOLVE overriding peer dependency
+   ... 警告 ...
+npm WARN deprecated core-js@3.12.1: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
+
+Days              : 0
+Hours             : 0
+Minutes           : 2
+Seconds           : 29
+Milliseconds      : 593
+Ticks             : 1495935381
+TotalDays         : 0.00173140669097222
+TotalHours        : 0.0415537605833333
+TotalMinutes      : 2.493225635
+TotalSeconds      : 149.5935381
+TotalMilliseconds : 149593.5381
+```
+
+```
+voicevox on  poc/migrate-pnpm-vite [$?] via  v16.17.0 took 2m44s                                            22:26:54
+❯ measure-command { rm -re -fo node_modules ; pnpm i }
+'electron-builder' is not recognized as an internal or external command,
+operable program or batch file.
+
+Days              : 0
+Hours             : 0
+Minutes           : 1
+Seconds           : 37
+Milliseconds      : 237
+Ticks             : 972376315
+TotalDays         : 0.00112543554976852
+TotalHours        : 0.0270104531944444
+TotalMinutes      : 1.62062719166667
+TotalSeconds      : 97.2376315
+TotalMilliseconds : 97237.6315
+```
+> **Note**
+> 依存関係の解決のため、1度`pnpm i`を実行して`pnpm-lock.yaml`を生成してある。
+
+> **Warning**
+> `test:unit`を通すには`pnpm add -D electron-builder` `pnpm add tslib`を実行する必要があった。
+
 # VOICEVOX
 
 [VOICEVOX](https://voicevox.hiroshiba.jp/) のエディターです。
