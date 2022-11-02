@@ -55,8 +55,10 @@ TotalMilliseconds : 97237.6315
 色々やったが、
 ```
 Uncaught ReferenceError: process is not defined
-``` が解決できなくて諦めた。
-npm-run-allか何かでviteの外で実行するのが正義かも知れない。
+```
+
+が解決できなくて諦めた。
+electronはnpm-run-allか何かで別で実行するべきなのかもしれない。
 
 
 # VOICEVOX
