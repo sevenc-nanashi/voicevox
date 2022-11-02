@@ -7,11 +7,12 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig({
   root: `src`,
+  publicDir: `../public`,
   plugins: [
     vue(),
     tsconfigPaths(),
     electron({
-      include: ["src/**/*"],
+      include: ["src/background.ts"],
       outDir: "dist_electron",
     }),
   ],

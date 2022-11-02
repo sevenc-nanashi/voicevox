@@ -52,12 +52,9 @@ TotalMilliseconds : 97237.6315
 
 ## 成果：vue-cli -> vite
 
-色々やったが、
-```
-Uncaught ReferenceError: process is not defined
-``` が解決できなくて諦めた。
-npm-run-allか何かでviteの外で実行するのが正義かも知れない。
+結構苦戦した。
 
+TODO: 結果を書く
 
 # VOICEVOX
 
