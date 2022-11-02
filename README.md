@@ -4,6 +4,7 @@
 
 ## 成果：npm -> pnpm
 
+#### npm：2:29
 ```
 voicevox on  poc/migrate-pnpm-vite [$] via  v16.17.0 took 50s                                               22:20:17
 ❯ measure-command { npm ci }
@@ -24,6 +25,7 @@ TotalSeconds      : 149.5935381
 TotalMilliseconds : 149593.5381
 ```
 
+#### pnpm：1:37
 ```
 voicevox on  poc/migrate-pnpm-vite [$?] via  v16.17.0 took 2m44s                                            22:26:54
 ❯ measure-command { rm -re -fo node_modules ; pnpm i }
@@ -53,8 +55,52 @@ TotalMilliseconds : 97237.6315
 ## 成果：vue-cli -> vite
 
 結構苦戦した。
+（測定：`Starting 2 engine/s...`が出るまで）
 
-TODO: 結果を書く
+#### vue-cli：0:39
+```
+voicevox (85d452d 🏷  0.13.3)  [$] via  v16.17.0
+❯ get-date ; npr electron:serve
+
+2022年11月2日 20:59:27
+
+> voicevox@999.999.999 electron:serve
+> vue-cli-service electron:serve
+
+ INFO  Starting development server...
+  ...（略）...
+(Use `electron --trace-warnings ...` to show where the warning was created)
+[21:00:06.391] [info]  Starting 2 engine/s...
+[21:00:06.396] [info]  ENGINE 074fc39e-678b-4c13-8916-ffca8d505d1d: Start launching
+```
+
+#### vite：0:15
+```
+voicevox on  poc/migrate-pnpm-vite [$] via  v16.17.0 took 45s                                                                                                                                                                                                       21:04:53 
+❯ get-date ; npr serve
+
+2022年11月2日 21:05:34
+
+> voicevox@999.999.999 serve
+> vite
+
+
+  VITE v3.2.2  ready in 3558 ms
+
+  ➜  Local:   http://127.0.0.1:3000/
+  ➜  Network: use --host to expose
+[write] 21:05:39 E:/voicevox-project/voicevox/dist_electron/background.js
+[startup] Electron App
+
+(node:152588) ExtensionLoadWarning: Warnings loading extension at C:\Users\katama\AppData\Roaming\voicevox-dev\extensions\ljjemllljcmogpfapbkkighbhhppjdbg:
+  Manifest version 2 is deprecated, and support will be removed in 2023. See https://developer.chrome.com/blog/mv2-transition/ for more details.
+  Permission 'contextMenus' is unknown or URL pattern is malformed.
+
+(Use `electron --trace-warnings ...` to show where the warning was created)
+[21:05:49.151] [info]  Starting 2 engine/s...
+[21:05:49.154] [info]  ENGINE 074fc39e-678b-4c13-8916-ffca8d505d1d: Start launching
+```
+
 
 # VOICEVOX
 
