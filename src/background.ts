@@ -15,7 +15,6 @@ import {
   shell,
   nativeTheme,
 } from "electron";
-import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 
 import path from "path";
 import { textEditContextMenu } from "./electron/contextMenu";
@@ -55,7 +54,7 @@ log.transports.file.format = "[{h}:{i}:{s}.{ms}] [{level}] {text}";
 log.transports.file.level = "warn";
 log.transports.file.fileName = `${prefix}_error.log`;
 
-const isDevelopment = process.env.NODE_ENV !== "production";
+const isDevelopment = import.meta.env.DEV;
 
 if (isDevelopment) {
   app.setPath(
@@ -808,7 +807,7 @@ let __static: string;
 if (isDevelopment) {
   __static = path.resolve(__dirname, "../public");
 } else {
-  __static = path.resolve(__dirname, "public");
+  __static = __dirname;
 }
 const howToUseText = fs.readFileSync(
   path.join(__static, "howtouse.md"),
@@ -920,6 +919,12 @@ async function createWindow() {
   if (process.env.VITE_DEV_SERVER_URL) {
     await win.loadURL((process.env.VITE_DEV_SERVER_URL as string) + "#/home");
   } else {
+    protocol.registerFileProtocol("app", (request, callback) => {
+      const url = new URL(request.url);
+      callback({
+        path: path.normalize(`${__dirname}/${url.hostname}${url.pathname}`),
+      });
+    });
     win.loadURL("app://./index.html#/home");
   }
   if (isDevelopment) win.webContents.openDevTools();
@@ -1400,6 +1405,11 @@ app.once("will-finish-launching", () => {
 
 app.on("ready", async () => {
   if (isDevelopment) {
+    const {
+      default: installExtension,
+      VUEJS3_DEVTOOLS,
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+    } = require("electron-devtools-installer");
     try {
       await installExtension(VUEJS3_DEVTOOLS);
     } catch (e: unknown) {
