@@ -46,6 +46,7 @@ specifiers:
   mousetrap: 1.6.5
   prettier: 2.3.0
   quasar: 2.4.13
+  rimraf: 3.0.2
   sass: 1.32.13
   semver: 7.3.5
   shlex: 2.1.2
@@ -125,6 +126,7 @@ devDependencies:
   markdownlint-cli: 0.28.1
   mousetrap: 1.6.5
   prettier: 2.3.0
+  rimraf: 3.0.2
   sass: 1.32.13
   tmp: 0.2.1
   typescript: 4.8.4
@@ -1045,7 +1047,7 @@ packages:
       read-config-file: 6.2.0
       sanitize-filename: 1.6.3
       semver: 7.3.8
-      tar: 6.1.11
+      tar: 6.1.12
       temp-file: 3.4.0
     transitivePeerDependencies:
       - supports-color
@@ -2619,7 +2621,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.8
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
@@ -4228,9 +4230,9 @@ packages:
     hasBin: true
     dev: false
 
-  /tar/6.1.11:
-    resolution: {integrity: sha512-an/KZQzQUkZCkuoAA64hM92X0Urb6VpRhAFllDzz44U2mcD5scmT3zBc4VgVpkugF580+DQn8eAFSyoQt0tznA==}
-    engines: {node: '>= 10'}
+  /tar/6.1.12:
+    resolution: {integrity: sha512-jU4TdemS31uABHd+Lt5WEYJuzn+TJTCBLljvIAHZOz6M9Os5pJ4dD+vRFLxPa/n3T0iEFzpi+0x1UfuDZYbRMw==}
+    engines: {node: '>=10'}
     dependencies:
       chownr: 2.0.0
       fs-minipass: 2.1.0
