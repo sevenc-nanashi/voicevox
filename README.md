@@ -92,7 +92,7 @@ voicevox on  poc/migrate-pnpm-vite [$] via  v16.17.0 took 45s             
 [write] 21:05:39 E:/voicevox-project/voicevox/dist_electron/background.js
 [startup] Electron App
 
-(node:152588) ExtensionLoadWarning: Warnings loading extension at C:\Users\katama\AppData\Roaming\voicevox-dev\extensions\ljjemllljcmogpfapbkkighbhhppjdbg:
+(node:152588) ExtensionLoadWarning: Warnings loading extension at C:\Users\...\AppData\Roaming\voicevox-dev\extensions\ljjemllljcmogpfapbkkighbhhppjdbg:
   Manifest version 2 is deprecated, and support will be removed in 2023. See https://developer.chrome.com/blog/mv2-transition/ for more details.
   Permission 'contextMenus' is unknown or URL pattern is malformed.
 
