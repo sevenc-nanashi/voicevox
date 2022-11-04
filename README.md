@@ -101,6 +101,7 @@ voicevox on  poc/migrate-pnpm-vite [$] via  v16.17.0 took 45s             
 [21:05:49.154] [info]  ENGINE 074fc39e-678b-4c13-8916-ffca8d505d1d: Start launching
 ```
 
+----
 
 # VOICEVOX
 
