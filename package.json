@@ -58,6 +58,7 @@
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "2.3.3",
     "@playwright/test": "1.23.3",
+    "@rollup/plugin-inject": "5.0.2",
     "@types/chai": "4.2.18",
     "@types/electron-devtools-installer": "2.2.0",
     "@types/encoding-japanese": "1.0.18",
@@ -86,6 +87,7 @@
     "markdownlint": "0.23.1",
     "markdownlint-cli": "0.28.1",
     "mousetrap": "1.6.5",
+    "node-stdlib-browser": "1.2.0",
     "prettier": "2.3.0",
     "rimraf": "3.0.2",
     "sass": "1.32.13",
