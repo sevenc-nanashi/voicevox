@@ -552,6 +552,7 @@ export default defineComponent({
       titleText,
       isEdited,
       isFullscreen,
+      isSafeMode,
       subMenuOpenFlags,
       reassignSubMenuOpen,
       menudata,
