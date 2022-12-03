@@ -322,7 +322,15 @@ export default defineComponent({
           if (engineVersions.value[id]) return;
           const version = await store
             .dispatch("INSTANTIATE_ENGINE_CONNECTOR", { engineId: id })
-            .then((instance) => instance.invoke("versionVersionGet")({}))
+            .then(async (instance) => {
+              for (let i = 0; i < 10; i++) {
+                const version = await instance
+                  .invoke("versionVersionGet")({})
+                  .catch(() => null);
+                if (version) return version;
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
+            })
             .catch(() => null);
           if (!version) continue;
           // "latest"のようにダブルクォーテーションで囲まれているので、JSON.parseで外す。
