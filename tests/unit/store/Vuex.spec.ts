@@ -48,6 +48,7 @@ describe("store/vuex.js test", () => {
         isAcceptRetrieveTelemetryDialogOpen: false,
         isAcceptTermsDialogOpen: false,
         isMaximized: false,
+        isSafeMode: false,
         savedLastCommandUnixMillisec: null,
         savingSetting: {
           fileEncoding: "UTF-8",
@@ -82,7 +83,7 @@ describe("store/vuex.js test", () => {
             executionFilePath: "",
             executionArgs: [],
             host: "http://127.0.0.1",
-            type: "main",
+            type: "default",
           },
         },
         engineManifests: {
@@ -104,6 +105,7 @@ describe("store/vuex.js test", () => {
               adjustIntonationScale: true,
               adjustVolumeScale: true,
               interrogativeUpspeak: true,
+              synthesisMorphing: true,
             },
           },
         },
@@ -120,6 +122,7 @@ describe("store/vuex.js test", () => {
         confirmedTips: {
           tweakableSliderByScroll: false,
         },
+        progress: -1,
       },
       getters: {
         ...uiStore.getters,

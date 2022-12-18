@@ -21,11 +21,24 @@
               icon="close"
               color="display"
               @click="toDialogClosedState"
-              :disabled="isAddingEngine"
+              :disabled="isAddingEngine || uiLocked"
             />
           </q-toolbar>
         </q-header>
         <q-page class="row">
+          <div class="ui-lock-popup" v-if="uiLockedState">
+            <div class="q-pa-md">
+              <q-spinner color="primary" size="2.5rem" />
+              <div class="q-mt-xs">
+                <template v-if="uiLockedState === 'addingEngine'"
+                  >追加中・・・</template
+                >
+                <template v-if="uiLockedState === 'deletingEngine'"
+                  >削除中・・・</template
+                >
+              </div>
+            </div>
+          </div>
           <div class="col-4 engine-list-col">
             <div v-if="isAddingEngine" class="engine-list-disable-overlay" />
             <div class="engine-list-header text-no-wrap">
@@ -63,20 +76,22 @@
                   active-class="active-engine"
                 >
                   <q-item-section avatar>
-                    <q-avatar rounded>
-                      <img :src="engineIcons[id]" :alt="engineInfos[id].name" />
+                    <q-avatar rounded color="primary">
+                      <img
+                        :src="engineIcons[id]"
+                        :alt="engineInfos[id].name"
+                        v-if="engineIcons[id]"
+                      />
+                      <span v-else class="text-display-on-primary"> ? </span>
                     </q-avatar>
                   </q-item-section>
                   <q-item-section>
                     <q-item-label class="text-display">{{
                       engineInfos[id].name
                     }}</q-item-label>
-                    <q-item-label
-                      caption
-                      v-if="engineInfos[id].path"
-                      class="engine-path"
-                      >{{ engineInfos[id].path }}</q-item-label
-                    >
+                    <q-item-label caption class="engine-path">{{
+                      engineInfos[id].uuid
+                    }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </template>
@@ -90,15 +105,31 @@
           >
             <div class="q-pl-md q-mt-md">
               <div class="text-h5 q-ma-sm">エンジンの追加</div>
+
+              <div class="q-ma-sm">
+                <q-btn-toggle
+                  :options="[
+                    { value: 'dir', label: 'フォルダ' },
+                    { value: 'vvpp', label: 'VVPPファイル' },
+                  ]"
+                  v-model="engineLoaderType"
+                  color="surface"
+                  unelevated
+                  text-color="display"
+                  toggle-color="primary"
+                  toggle-text-color="display-on-primary"
+                />
+              </div>
             </div>
 
-            <div class="no-wrap q-pl-md">
-              <div class="text-h6 q-ma-sm">場所</div>
+            <div class="no-wrap q-pl-md" v-if="engineLoaderType === 'dir'">
+              <div class="text-h6 q-ma-sm">フォルダの場所</div>
               <div class="q-ma-sm">
                 <q-input
                   ref="newEngineDirInput"
                   v-model="newEngineDir"
                   dense
+                  readonly
                   :error="
                     newEngineDirValidationState &&
                     newEngineDirValidationState !== 'ok'
@@ -119,9 +150,50 @@
                     </q-btn>
                   </template>
                   <template v-slot:error>
-                    {{ getValidationMessage(newEngineDirValidationState) }}
+                    {{
+                      getEngineDirValidationMessage(newEngineDirValidationState)
+                    }}
                   </template>
                 </q-input>
+              </div>
+              <div class="q-ma-sm">
+                既にインストールされているエンジンのフォルダを指定します。FIXME:
+                説明を良い感じにする
+              </div>
+            </div>
+            <div class="no-wrap q-pl-md" v-if="engineLoaderType === 'vvpp'">
+              <div class="text-h6 q-ma-sm">VVPPファイルの場所</div>
+              <div class="q-ma-sm">
+                <q-input
+                  ref="vvppFilePathInput"
+                  v-model="vvppFilePath"
+                  dense
+                  readonly
+                >
+                  <template v-slot:append>
+                    <q-btn
+                      square
+                      dense
+                      flat
+                      color="primary"
+                      icon="folder_open"
+                      @click="selectVvppFile"
+                    >
+                      <q-tooltip :delay="500" anchor="bottom left">
+                        ファイル選択
+                      </q-tooltip>
+                    </q-btn>
+                  </template>
+                  <template v-slot:error>
+                    {{
+                      getEngineDirValidationMessage(newEngineDirValidationState)
+                    }}
+                  </template>
+                </q-input>
+              </div>
+              <div class="q-ma-sm">
+                VVPPファイルとして配布されているエンジンを追加します。FIXME:
+                説明を良い感じにする
               </div>
             </div>
             <div class="row q-px-md right-pane-buttons">
@@ -139,7 +211,7 @@
                 text-color="display"
                 class="text-no-wrap text-bold q-mr-sm"
                 @click="addEngine"
-                :disabled="newEngineDirValidationState !== 'ok'"
+                :disabled="!canAddEngine"
                 >追加</q-btn
               >
             </div>
@@ -150,10 +222,16 @@
           >
             <div class="q-pl-md q-mt-md flex">
               <img
+                v-if="selectedId in engineIcons"
                 :src="engineIcons[selectedId]"
                 :alt="engineInfos[selectedId].name"
                 class="engine-icon"
               />
+              <div class="q-mt-sm inline-block" v-else>
+                <q-avatar rounded color="primary" size="2rem">
+                  <span class="text-display-on-primary"> ? </span>
+                </q-avatar>
+              </div>
               <div class="text-h5 q-ma-sm">
                 {{ engineInfos[selectedId].name }}
               </div>
@@ -161,20 +239,29 @@
 
             <div class="no-wrap q-pl-md">
               <ul>
-                <li>バージョン：{{ engineVersions[selectedId] }}</li>
                 <li>
-                  URL：<a
+                  バージョン：{{
+                    engineVersions[selectedId]
+                      ? engineVersions[selectedId]
+                      : "（取得に失敗しました）"
+                  }}
+                </li>
+                <li>
+                  URL：
+                  <a
+                    v-if="engineManifests[selectedId]"
                     :href="engineManifests[selectedId].url"
                     class="text-display-hyperlink"
                     target="_blank"
                     >{{ engineManifests[selectedId].url }}</a
                   >
+                  <span v-else>（取得に失敗しました）</span>
                 </li>
               </ul>
             </div>
             <div class="no-wrap q-pl-md">
               <div class="text-h6 q-ma-sm">機能</div>
-              <ul>
+              <ul v-if="engineManifests[selectedId]">
                 <li
                   v-for="[feature, value] in Object.entries(
                     engineManifests[selectedId].supportedFeatures
@@ -185,6 +272,7 @@
                   {{ getFeatureName(feature) }}：{{ value ? "対応" : "非対応" }}
                 </li>
               </ul>
+              <span v-else>（取得に失敗しました）</span>
             </div>
             <div class="no-wrap q-pl-md">
               <div class="text-h6 q-ma-sm">場所</div>
@@ -210,7 +298,10 @@
                 text-color="warning"
                 class="text-no-wrap text-bold q-mr-sm"
                 @click="deleteEngine"
-                :disable="uiLocked || engineInfos[selectedId].type !== 'path'"
+                :disable="
+                  uiLocked ||
+                  !['path', 'vvpp'].includes(engineInfos[selectedId].type)
+                "
                 >削除</q-btn
               >
               <q-btn
@@ -245,6 +336,8 @@ import { base64ImageToUri } from "@/helpers/imageHelper";
 import type { EngineDirValidationResult } from "@/type/preload";
 import type { SupportedFeatures } from "@/openapi/models/SupportedFeatures";
 
+type EngineLoaderType = "dir" | "vvpp";
+
 export default defineComponent({
   name: "EngineManageDialog",
   props: {
@@ -262,19 +355,28 @@ export default defineComponent({
       get: () => props.modelValue,
       set: (val) => emit("update:modelValue", val),
     });
-    const uiLocked = ref(false); // ダイアログ内でstore.getters.UI_LOCKEDは常にtrueなので独自に管理
+    const uiLockedState = ref<null | "addingEngine" | "deletingEngine">(null); // ダイアログ内でstore.getters.UI_LOCKEDは常にtrueなので独自に管理
+    const uiLocked = computed(() => uiLockedState.value !== null);
     const isAddingEngine = ref(false);
+    const engineLoaderType = ref<EngineLoaderType>("dir");
+
+    const lockUi = function <T>(
+      lockType: "addingEngine" | "deletingEngine",
+      action: Promise<T>
+    ): Promise<T> {
+      uiLockedState.value = lockType;
+      return action.finally(() => {
+        uiLockedState.value = null;
+      });
+    };
 
     const categorizedEngineIds = computed(() => {
       const result = {
-        main: Object.values(engineInfos.value)
-          .filter((info) => info.type === "main")
-          .map((info) => info.uuid),
-        sub: Object.values(engineInfos.value)
-          .filter((info) => info.type === "sub")
+        default: Object.values(engineInfos.value)
+          .filter((info) => info.type === "default")
           .map((info) => info.uuid),
         plugin: Object.values(engineInfos.value)
-          .filter((info) => info.type === "userDir" || info.type === "path")
+          .filter((info) => info.type === "path" || info.type === "vvpp")
           .map((info) => info.uuid),
       };
       return Object.fromEntries(
@@ -295,15 +397,21 @@ export default defineComponent({
     const engineVersions = ref<Record<string, string>>({});
 
     watch(
-      [engineInfos],
+      [engineInfos, engineStates, engineManifests],
       async () => {
         for (const id of Object.keys(engineInfos.value)) {
-          if (engineVersions.value[id]) return;
+          if (engineStates.value[id] !== "READY") continue;
+          if (engineVersions.value[id]) continue;
           const version = await store
             .dispatch("INSTANTIATE_ENGINE_CONNECTOR", { engineId: id })
-            .then((instance) => instance.invoke("versionVersionGet")({}));
+            .then((instance) => instance.invoke("versionVersionGet")({}))
+            .catch(() => null);
+          if (!version) continue;
           // "latest"のようにダブルクォーテーションで囲まれているので、JSON.parseで外す。
-          engineVersions.value[id] = JSON.parse(version);
+          engineVersions.value = {
+            ...engineVersions.value,
+            [id]: JSON.parse(version),
+          };
         }
       },
       { immediate: true }
@@ -322,8 +430,7 @@ export default defineComponent({
 
     const getEngineTypeName = (name: string) => {
       const engineTypeMap = {
-        main: "メインエンジン",
-        sub: "サブエンジン",
+        default: "デフォルトエンジン",
         plugin: "追加エンジン",
       };
       return engineTypeMap[name as keyof typeof engineTypeMap];
@@ -338,11 +445,14 @@ export default defineComponent({
         adjustIntonationScale: "全体の抑揚の調整",
         adjustVolumeScale: "全体の音量の調整",
         interrogativeUpspeak: "疑問文の自動調整",
+        synthesisMorphing: "2人の話者でモーフィングした音声を合成",
       };
       return featureNameMap[name];
     };
 
-    const getValidationMessage = (result: EngineDirValidationResult) => {
+    const getEngineDirValidationMessage = (
+      result: EngineDirValidationResult
+    ) => {
       const messageMap: {
         [key in EngineDirValidationResult]: string | undefined;
       } = {
@@ -357,11 +467,44 @@ export default defineComponent({
     };
 
     const addEngine = () => {
-      store.dispatch("ADD_ENGINE_DIR", {
-        engineDir: newEngineDir.value,
-      });
+      $q.dialog({
+        title: "エンジン追加の確認",
+        message:
+          "この操作はコンピュータに損害を与える可能性があります。エンジンの配布元が信頼できない場合は追加しないでください。",
+        cancel: {
+          label: "キャンセル",
+          color: "display",
+          flat: true,
+        },
+        ok: {
+          label: "追加",
+          flat: true,
+          textColor: "warning",
+        },
+      }).onOk(async () => {
+        if (engineLoaderType.value === "dir") {
+          await lockUi(
+            "addingEngine",
+            store.dispatch("ADD_ENGINE_DIR", {
+              engineDir: newEngineDir.value,
+            })
+          );
 
-      requireRestart("エンジンを追加しました。");
+          requireRestart(
+            "エンジンを追加しました。反映には再起動が必要です。今すぐ再起動しますか？"
+          );
+        } else {
+          const success = await lockUi(
+            "addingEngine",
+            store.dispatch("INSTALL_VVPP_ENGINE", vvppFilePath.value)
+          );
+          if (success) {
+            requireRestart(
+              "エンジンを追加しました。反映には再起動が必要です。今すぐ再起動しますか？"
+            );
+          }
+        }
+      });
     };
     const deleteEngine = () => {
       $q.dialog({
@@ -377,15 +520,38 @@ export default defineComponent({
           flat: true,
           textColor: "warning",
         },
-      }).onOk(() => {
-        const engineDir = store.state.engineInfos[selectedId.value].path;
-        if (!engineDir)
-          throw new Error("assert engineInfos[selectedId.value].path");
-        store.dispatch("REMOVE_ENGINE_DIR", {
-          engineDir,
-        });
-
-        requireRestart("エンジンを削除しました。");
+      }).onOk(async () => {
+        switch (engineInfos.value[selectedId.value].type) {
+          case "path": {
+            const engineDir = store.state.engineInfos[selectedId.value].path;
+            if (!engineDir)
+              throw new Error("assert engineInfos[selectedId.value].path");
+            await lockUi(
+              "deletingEngine",
+              store.dispatch("REMOVE_ENGINE_DIR", {
+                engineDir,
+              })
+            );
+            requireRestart(
+              "エンジンを削除しました。反映には再起動が必要です。今すぐ再起動しますか？"
+            );
+            break;
+          }
+          case "vvpp": {
+            const success = await lockUi(
+              "deletingEngine",
+              store.dispatch("UNINSTALL_VVPP_ENGINE", selectedId.value)
+            );
+            if (success) {
+              requireRestart(
+                "エンジンの削除には再起動が必要です。今すぐ再起動しますか？"
+              );
+            }
+            break;
+          }
+          default:
+            throw new Error("assert engineInfos[selectedId.value].type");
+        }
       });
     };
 
@@ -404,7 +570,8 @@ export default defineComponent({
     const requireRestart = (message: string) => {
       $q.dialog({
         title: "再起動が必要です",
-        message: message + "反映には再起動が必要です。今すぐ再起動しますか？",
+        message: message,
+        noBackdropDismiss: true,
         cancel: {
           label: "後で",
           color: "display",
@@ -417,7 +584,7 @@ export default defineComponent({
         },
       })
         .onOk(() => {
-          store.dispatch("RESTART_APP");
+          store.dispatch("RESTART_APP", {});
         })
         .onCancel(() => {
           toInitialState();
@@ -433,19 +600,42 @@ export default defineComponent({
       });
       if (path) {
         newEngineDir.value = path;
+        if (path === "") {
+          newEngineDirValidationState.value = null;
+          return;
+        }
+        newEngineDirValidationState.value = await store.dispatch(
+          "VALIDATE_ENGINE_DIR",
+          {
+            engineDir: path,
+          }
+        );
       }
     };
-    watch(newEngineDir, async () => {
-      if (newEngineDir.value === "") {
-        newEngineDirValidationState.value = null;
-        return;
+
+    const vvppFilePath = ref("");
+    const selectVvppFile = async () => {
+      const path = await window.electron.showVvppOpenDialog({
+        title: "vvppファイルを選択",
+        defaultPath: vvppFilePath.value,
+      });
+      if (path) {
+        vvppFilePath.value = path;
       }
-      newEngineDirValidationState.value = await store.dispatch(
-        "VALIDATE_ENGINE_DIR",
-        {
-          engineDir: newEngineDir.value,
-        }
-      );
+    };
+
+    const canAddEngine = computed(() => {
+      if (uiLocked.value) return false;
+      if (engineLoaderType.value === "dir") {
+        return (
+          newEngineDir.value !== "" &&
+          newEngineDirValidationState.value === "ok"
+        );
+      } else if (engineLoaderType.value === "vvpp") {
+        return vvppFilePath.value !== "";
+      } else {
+        return false;
+      }
     });
 
     // ステートの移動
@@ -457,8 +647,10 @@ export default defineComponent({
     // エンジン追加状態
     const toAddEngineState = () => {
       isAddingEngine.value = true;
+      selectedId.value = "";
       newEngineDirValidationState.value = null;
       newEngineDir.value = "";
+      vvppFilePath.value = "";
     };
     // ダイアログが閉じている状態
     const toDialogClosedState = () => {
@@ -474,13 +666,15 @@ export default defineComponent({
       engineManifests,
       engineIcons,
       engineVersions,
+      engineLoaderType,
       selectEngine,
       addEngine,
       deleteEngine,
       isDeletable,
       getFeatureName,
       getEngineTypeName,
-      getValidationMessage,
+      getEngineDirValidationMessage,
+      uiLockedState,
       uiLocked,
       isAddingEngine,
       selectedId,
@@ -493,6 +687,9 @@ export default defineComponent({
       newEngineDir,
       selectEngineDir,
       newEngineDirValidationState,
+      vvppFilePath,
+      selectVvppFile,
+      canAddEngine,
     };
   },
 });
@@ -569,5 +766,22 @@ export default defineComponent({
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
   border-radius: 5px;
+}
+
+.ui-lock-popup {
+  background-color: rgba(colors.$display-rgb, 0.15);
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+
+  > div {
+    color: colors.$display;
+    background: colors.$background;
+    border-radius: 6px;
+  }
 }
 </style>

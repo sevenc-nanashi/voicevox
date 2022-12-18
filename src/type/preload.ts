@@ -33,12 +33,15 @@ export interface Sandbox {
   getPrivacyPolicyText(): Promise<string>;
   saveTempAudioFile(obj: { relativePath: string; buffer: ArrayBuffer }): void;
   loadTempFile(): Promise<string>;
-  getBaseName(obj: { filePath: string }): string;
   showAudioSaveDialog(obj: {
     title: string;
     defaultPath?: string;
   }): Promise<string | undefined>;
   showTextSaveDialog(obj: {
+    title: string;
+    defaultPath?: string;
+  }): Promise<string | undefined>;
+  showVvppOpenDialog(obj: {
     title: string;
     defaultPath?: string;
   }): Promise<string | undefined>;
@@ -64,7 +67,7 @@ export interface Sandbox {
   writeFile(obj: {
     filePath: string;
     buffer: ArrayBuffer;
-  }): WriteFileErrorResult | undefined;
+  }): Promise<WriteFileErrorResult | undefined>;
   readFile(obj: { filePath: string }): Promise<ArrayBuffer>;
   openTextEditContextMenu(): Promise<void>;
   isAvailableGPUMode(): Promise<boolean>;
@@ -82,7 +85,6 @@ export interface Sandbox {
   restartEngineAll(): Promise<void>;
   restartEngine(engineId: string): Promise<void>;
   openEngineDirectory(engineId: string): void;
-  openUserEngineDirectory(): void;
   hotkeySettings(newData?: HotkeySetting): Promise<HotkeySetting[]>;
   checkFileExists(file: string): Promise<boolean>;
   changePinWindow(): void;
@@ -97,8 +99,10 @@ export interface Sandbox {
     key: Key,
     newValue: ElectronStoreType[Key]
   ): Promise<ElectronStoreType[Key]>;
+  installVvppEngine(path: string): Promise<boolean>;
+  uninstallVvppEngine(engineId: string): Promise<boolean>;
   validateEngineDir(engineDir: string): Promise<EngineDirValidationResult>;
-  restartApp(): void;
+  restartApp(obj: { isSafeMode: boolean }): void;
 }
 
 export type AppInfos = {
@@ -136,6 +140,12 @@ export type UpdateInfo = {
   contributors: string[];
 };
 
+export type Voice = {
+  engineId: string;
+  speakerId: string;
+  styleId: number;
+};
+
 export type Encoding = "UTF-8" | "Shift_JIS";
 
 export type AcceptRetrieveTelemetryStatus =
@@ -158,7 +168,7 @@ export type SavingSetting = {
   avoidOverwrite: boolean;
   exportText: boolean;
   outputStereo: boolean;
-  outputSamplingRate: number;
+  outputSamplingRate: number | "default";
   audioOutputDevice: string;
 };
 
@@ -182,11 +192,10 @@ export type EngineInfo = {
   executionFilePath: string;
   executionArgs: string[];
   // エンジンの種類。
-  // main: メインエンジン
-  // sub: .envで指定されたその他のエンジン
-  // userDir: ユーザーディレクトリにあるエンジン
+  // default: デフォルトエンジン
+  // vvpp: vvppファイルから読み込んだエンジン
   // path: パスを指定して追加したエンジン
-  type: "main" | "sub" | "userDir" | "path";
+  type: "default" | "vvpp" | "path";
 };
 
 export type Preset = {
@@ -325,3 +334,5 @@ export type EngineDirValidationResult =
   | "invalidManifest"
   | "notADirectory"
   | "alreadyExists";
+
+export type VvppFilePathValidationResult = "ok" | "fileNotFound";

@@ -39,12 +39,19 @@ import {
 import { IEngineConnectorFactory } from "@/infrastructures/EngineConnector";
 import { QVueGlobals } from "quasar";
 
+/**
+ * エディタ用のAudioQuery
+ */
+export type EditorAudioQuery = Omit<AudioQuery, "outputSamplingRate"> & {
+  outputSamplingRate: number | "default";
+};
+
 // FIXME: SpeakerIdを追加する
 export type AudioItem = {
   text: string;
   engineId?: string;
   styleId?: number;
-  query?: AudioQuery;
+  query?: EditorAudioQuery;
   presetKey?: string;
 };
 
@@ -358,6 +365,7 @@ export type AudioStoreTypes = {
     action(payload: {
       dirPath?: string;
       encoding?: EncodingType;
+      callback?: (finishedCount: number, totalCount: number) => void;
     }): SaveResultObject[] | undefined;
   };
 
@@ -365,6 +373,7 @@ export type AudioStoreTypes = {
     action(payload: {
       filePath?: string;
       encoding?: EncodingType;
+      callback?: (finishedCount: number, totalCount: number) => void;
     }): SaveResultObject | undefined;
   };
 
@@ -654,6 +663,18 @@ export type EngineStoreState = {
 };
 
 export type EngineStoreTypes = {
+  GET_ENGINE_INFOS: {
+    action(): void;
+  };
+
+  SET_ENGINE_MANIFESTS: {
+    mutation: { engineManifests: Record<string, EngineManifest> };
+  };
+
+  FETCH_AND_SET_ENGINE_MANIFESTS: {
+    action(): void;
+  };
+
   IS_ALL_ENGINE_READY: {
     getter: boolean;
   };
@@ -685,10 +706,6 @@ export type EngineStoreTypes = {
     action(payload: { engineId: string }): void;
   };
 
-  OPEN_USER_ENGINE_DIRECTORY: {
-    action(): void;
-  };
-
   SET_ENGINE_STATE: {
     mutation: { engineId: string; engineState: EngineState };
   };
@@ -701,12 +718,28 @@ export type EngineStoreTypes = {
     action(payload: { engineId: string; styleId: number }): void;
   };
 
-  GET_ENGINE_INFOS: {
-    action(): void;
+  VALIDATE_ENGINE_DIR: {
+    action(payload: { engineDir: string }): Promise<EngineDirValidationResult>;
+  };
+
+  ADD_ENGINE_DIR: {
+    action(payload: { engineDir: string }): Promise<void>;
+  };
+
+  REMOVE_ENGINE_DIR: {
+    action(payload: { engineDir: string }): Promise<void>;
+  };
+
+  INSTALL_VVPP_ENGINE: {
+    action: (path: string) => Promise<boolean>;
+  };
+
+  UNINSTALL_VVPP_ENGINE: {
+    action: (engineId: string) => Promise<boolean>;
   };
 
   SET_ENGINE_INFOS: {
-    mutation: { engineInfos: EngineInfo[] };
+    mutation: { engineIds: string[]; engineInfos: EngineInfo[] };
   };
 
   SET_ENGINE_MANIFEST: {
@@ -725,6 +758,7 @@ export type EngineStoreTypes = {
 export type IndexStoreState = {
   defaultStyleIds: DefaultStyleId[];
   userCharacterOrder: string[];
+  isSafeMode: boolean;
 };
 
 export type IndexStoreTypes = {
@@ -800,6 +834,11 @@ export type IndexStoreTypes = {
 
   INIT_VUEX: {
     action(): void;
+  };
+
+  SET_IS_SAFE_MODE: {
+    mutation: { isSafeMode: boolean };
+    action(payload: boolean): void;
   };
 };
 
@@ -921,18 +960,6 @@ export type SettingStoreTypes = {
   CHANGE_USE_GPU: {
     action(payload: { useGpu: boolean }): void;
   };
-
-  VALIDATE_ENGINE_DIR: {
-    action(payload: { engineDir: string }): Promise<EngineDirValidationResult>;
-  };
-
-  ADD_ENGINE_DIR: {
-    action(payload: { engineDir: string }): Promise<void>;
-  };
-
-  REMOVE_ENGINE_DIR: {
-    action(payload: { engineDir: string }): Promise<void>;
-  };
 };
 
 /*
@@ -958,6 +985,7 @@ export type UiStoreState = {
   isMaximized: boolean;
   isPinned: boolean;
   isFullscreen: boolean;
+  progress: number;
 };
 
 export type UiStoreTypes = {
@@ -967,6 +995,10 @@ export type UiStoreTypes = {
 
   MENUBAR_LOCKED: {
     getter: boolean;
+  };
+
+  PROGRESS: {
+    getter: number;
   };
 
   ASYNC_UI_LOCK: {
@@ -997,58 +1029,35 @@ export type UiStoreTypes = {
     getter: boolean;
   };
 
-  IS_HELP_DIALOG_OPEN: {
-    mutation: { isHelpDialogOpen: boolean };
-    action(payload: { isHelpDialogOpen: boolean }): void;
-  };
-
-  IS_SETTING_DIALOG_OPEN: {
-    mutation: { isSettingDialogOpen: boolean };
-    action(payload: { isSettingDialogOpen: boolean }): void;
-  };
-
-  IS_HOTKEY_SETTING_DIALOG_OPEN: {
-    mutation: { isHotkeySettingDialogOpen: boolean };
-    action(payload: { isHotkeySettingDialogOpen: boolean }): void;
-  };
-
-  IS_TOOLBAR_SETTING_DIALOG_OPEN: {
-    mutation: { isToolbarSettingDialogOpen: boolean };
-    action(payload: { isToolbarSettingDialogOpen: boolean }): void;
-  };
-
-  IS_ACCEPT_RETRIEVE_TELEMETRY_DIALOG_OPEN: {
-    mutation: { isAcceptRetrieveTelemetryDialogOpen: boolean };
-    action(payload: { isAcceptRetrieveTelemetryDialogOpen: boolean }): void;
-  };
-
-  IS_ACCEPT_TERMS_DIALOG_OPEN: {
-    mutation: { isAcceptTermsDialogOpen: boolean };
-    action(payload: { isAcceptTermsDialogOpen: boolean }): void;
-  };
-
-  IS_ENGINE_MANAGE_DIALOG_OPEN: {
-    mutation: { isEngineManageDialogOpen: boolean };
-    action(payload: { isEngineManageDialogOpen: boolean }): void;
-  };
-
-  IS_DICTIONARY_MANAGE_DIALOG_OPEN: {
-    mutation: { isDictionaryManageDialogOpen: boolean };
-    action(payload: { isDictionaryManageDialogOpen: boolean }): void;
+  SET_DIALOG_OPEN: {
+    mutation: {
+      isDefaultStyleSelectDialogOpen?: boolean;
+      isAcceptRetrieveTelemetryDialogOpen?: boolean;
+      isAcceptTermsDialogOpen?: boolean;
+      isDictionaryManageDialogOpen?: boolean;
+      isHelpDialogOpen?: boolean;
+      isSettingDialogOpen?: boolean;
+      isHotkeySettingDialogOpen?: boolean;
+      isToolbarSettingDialogOpen?: boolean;
+      isCharacterOrderDialogOpen?: boolean;
+      isEngineManageDialogOpen?: boolean;
+    };
+    action(payload: {
+      isDefaultStyleSelectDialogOpen?: boolean;
+      isAcceptRetrieveTelemetryDialogOpen?: boolean;
+      isAcceptTermsDialogOpen?: boolean;
+      isDictionaryManageDialogOpen?: boolean;
+      isHelpDialogOpen?: boolean;
+      isSettingDialogOpen?: boolean;
+      isHotkeySettingDialogOpen?: boolean;
+      isToolbarSettingDialogOpen?: boolean;
+      isCharacterOrderDialogOpen?: boolean;
+      isEngineManageDialogOpen?: boolean;
+    }): void;
   };
 
   ON_VUEX_READY: {
     action(): void;
-  };
-
-  IS_CHARACTER_ORDER_DIALOG_OPEN: {
-    mutation: { isCharacterOrderDialogOpen: boolean };
-    action(payload: { isCharacterOrderDialogOpen: boolean }): void;
-  };
-
-  IS_DEFAULT_STYLE_SELECT_DIALOG_OPEN: {
-    mutation: { isDefaultStyleSelectDialogOpen: boolean };
-    action(payload: { isDefaultStyleSelectDialogOpen: boolean }): void;
   };
 
   HYDRATE_UI_STORE: {
@@ -1109,6 +1118,23 @@ export type UiStoreTypes = {
   };
 
   RESTART_APP: {
+    action(obj: { isSafeMode?: boolean }): void;
+  };
+
+  START_PROGRESS: {
+    action(): void;
+  };
+
+  SET_PROGRESS: {
+    mutation: { progress: number };
+    action(payload: { progress: number }): void;
+  };
+
+  SET_PROGRESS_FROM_COUNT: {
+    action(payload: { finishedCount: number; totalCount: number }): void;
+  };
+
+  RESET_PROGRESS: {
     action(): void;
   };
 };

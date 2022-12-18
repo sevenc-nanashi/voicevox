@@ -7,11 +7,12 @@ import {
   State,
   AudioStoreState,
   AudioCommandStoreState,
+  EditorAudioQuery,
   AudioStoreTypes,
   AudioCommandStoreTypes,
   transformCommandStore,
 } from "./type";
-import { createUILockAction } from "./ui";
+import { createUILockAction, withProgress } from "./ui";
 import {
   CharacterInfo,
   DefaultStyleId,
@@ -29,13 +30,14 @@ import {
   createKanaRegex,
   currentDateString,
 } from "./utility";
+import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { createPartialStore } from "./vuex";
 import { base64ImageToUri } from "@/helpers/imageHelper";
 
 async function generateUniqueIdAndQuery(
   state: State,
   audioItem: AudioItem
-): Promise<[string, AudioQuery | undefined]> {
+): Promise<[string, EditorAudioQuery | undefined]> {
   audioItem = JSON.parse(JSON.stringify(audioItem)) as AudioItem;
   const audioQuery = audioItem.query;
   if (audioQuery != undefined) {
@@ -1052,7 +1054,10 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         })
           .then((instance) =>
             instance.invoke("synthesisSynthesisPost")({
-              audioQuery,
+              audioQuery: convertAudioQueryFromEditorToEngine(
+                audioQuery,
+                state.engineManifests[engineId].defaultSamplingRate
+              ),
               speaker,
               enableInterrogativeUpspeak:
                 state.experimentalSetting.enableInterrogativeUpspeak,
@@ -1146,7 +1151,7 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
           }
         }
 
-        let writeFileResult = window.electron.writeFile({
+        let writeFileResult = await window.electron.writeFile({
           filePath,
           buffer: await blob.arrayBuffer(),
         }); // 失敗した場合、WriteFileErrorResultオブジェクトが返り、成功時はundefinedが反る
@@ -1173,7 +1178,7 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
             type: "text/plain;charset=UTF-8",
           });
 
-          writeFileResult = window.electron.writeFile({
+          writeFileResult = await window.electron.writeFile({
             filePath: filePath.replace(/\.wav$/, ".lab"),
             buffer: await labBlob.arrayBuffer(),
           });
@@ -1204,7 +1209,7 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
             });
           })();
 
-          writeFileResult = window.electron.writeFile({
+          writeFileResult = await window.electron.writeFile({
             filePath: filePath.replace(/\.wav$/, ".txt"),
             buffer: await textBlob.arrayBuffer(),
           });
@@ -1227,7 +1232,15 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
     action: createUILockAction(
       async (
         { state, dispatch },
-        { dirPath, encoding }: { dirPath?: string; encoding?: EncodingType }
+        {
+          dirPath,
+          encoding,
+          callback,
+        }: {
+          dirPath?: string;
+          encoding?: EncodingType;
+          callback?: (finishedCount: number, totalCount: number) => void;
+        }
       ) => {
         if (state.savingSetting.fixedExportEnabled) {
           dirPath = state.savingSetting.fixedExportDir;
@@ -1238,12 +1251,19 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         }
         if (dirPath) {
           const _dirPath = dirPath;
+
+          const totalCount = state.audioKeys.length;
+          let finishedCount = 0;
+
           const promises = state.audioKeys.map((audioKey) => {
             const name = buildFileName(state, audioKey);
             return dispatch("GENERATE_AND_SAVE_AUDIO", {
               audioKey,
               filePath: path.join(_dirPath, name),
               encoding,
+            }).then((value) => {
+              callback?.(++finishedCount, totalCount);
+              return value;
             });
           });
           return Promise.all(promises);
@@ -1256,7 +1276,15 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
     action: createUILockAction(
       async (
         { state, dispatch },
-        { filePath, encoding }: { filePath?: string; encoding?: EncodingType }
+        {
+          filePath,
+          encoding,
+          callback,
+        }: {
+          filePath?: string;
+          encoding?: EncodingType;
+          callback?: (finishedCount: number, totalCount: number) => void;
+        }
       ): Promise<SaveResultObject> => {
         const defaultFileName = buildProjectFileName(state, "wav");
 
@@ -1308,10 +1336,14 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
           });
         };
 
+        const totalCount = state.audioKeys.length;
+        let finishedCount = 0;
+
         for (const audioKey of state.audioKeys) {
           let blob = await dispatch("GET_AUDIO_CACHE", { audioKey });
           if (!blob) {
             blob = await dispatch("GENERATE_AUDIO", { audioKey });
+            callback?.(++finishedCount, totalCount);
           }
           if (blob === null) {
             return { result: "ENGINE_ERROR", path: filePath };
@@ -1516,7 +1548,10 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
             audioKey,
             nowGenerating: true,
           });
-          blob = await dispatch("GENERATE_AUDIO", { audioKey });
+          blob = await withProgress(
+            dispatch("GENERATE_AUDIO", { audioKey }),
+            dispatch
+          );
           commit("SET_AUDIO_NOW_GENERATING", {
             audioKey,
             nowGenerating: false,
@@ -1777,7 +1812,7 @@ export const audioCommandStore = transformCommandStore(
         if (styleId === undefined)
           throw new Error("assert styleId !== undefined");
 
-        const query: AudioQuery | undefined = state.audioItems[audioKey].query;
+        const query = state.audioItems[audioKey].query;
         try {
           if (query !== undefined) {
             const accentPhrases: AccentPhrase[] = await dispatch(
@@ -1983,7 +2018,7 @@ export const audioCommandStore = transformCommandStore(
         } & ({ isPause: false; moraIndex: number } | { isPause: true })
       ) {
         const { audioKey, accentPhraseIndex } = payload;
-        const query: AudioQuery | undefined = state.audioItems[audioKey].query;
+        const query = state.audioItems[audioKey].query;
 
         const engineId = state.audioItems[audioKey].engineId;
         if (engineId === undefined)
