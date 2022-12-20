@@ -63,7 +63,7 @@ specifiers:
   unzipper: 0.10.11
   uuid: 9.0.0
   vite: 3.2.2
-  vite-plugin-electron: 0.10.2
+  vite-plugin-electron: github:sevenc-nanashi/vite-plugin-electron
   vite-tsconfig-paths: 3.5.2
   vue: 3.2.41
   vue-router: 4.0.8
@@ -141,7 +141,7 @@ devDependencies:
   tmp: 0.2.1
   typescript: 4.8.4
   vite: 3.2.2_sass@1.32.13
-  vite-plugin-electron: 0.10.2
+  vite-plugin-electron: github.com/sevenc-nanashi/vite-plugin-electron/ad3712a78611667e5446330bff2ee386a344741c
   vite-tsconfig-paths: 3.5.2_vite@3.2.2
   vue-tsc: 0.40.13_typescript@4.8.4
   yargs: 17.2.1
@@ -5136,10 +5136,6 @@ packages:
     dev: true
     optional: true
 
-  /vite-plugin-electron/0.10.2:
-    resolution: {integrity: sha512-sPGHDvIsMqmk/C2ZJue2JoZkO9L1cEum3J4hUUkeUPNHh0fg4EOfQiDoY//h2Cd8aCpoUiRpa1vHEYmypjBkgg==}
-    dev: true
-
   /vite-tsconfig-paths/3.5.2_vite@3.2.2:
     resolution: {integrity: sha512-xJMgHA2oJ28QCG2f+hXrcqzo7IttrSRK4A//Tp94CfuX5eetOx33qiwXHUdi3FwkHP2ocpxHuvE45Ix67gwEmQ==}
     peerDependencies:
@@ -5395,4 +5391,13 @@ packages:
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+    dev: true
+
+  github.com/sevenc-nanashi/vite-plugin-electron/ad3712a78611667e5446330bff2ee386a344741c:
+    resolution: {tarball: https://codeload.github.com/sevenc-nanashi/vite-plugin-electron/tar.gz/ad3712a78611667e5446330bff2ee386a344741c}
+    name: vite-plugin-electron
+    version: 0.11.0
+    dependencies:
+      tree-kill: 1.2.2
+      vite-plugin-electron: 'link:'
     dev: true
