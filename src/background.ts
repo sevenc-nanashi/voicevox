@@ -752,6 +752,9 @@ async function restartEngine(engineId: string) {
 
     engineProcess.once("close", restartEngineOnProcessClosedCallback);
 
+    if (!engineProcess.pid) {
+      throw new Error("engineProcess.pid === undefined");
+    }
     // treeKillのコールバック関数はコマンドが終了した時に呼ばれます。
     log.info(
       `ENGINE ${engineId}: Killing current process (PID=${engineProcess.pid})...`
