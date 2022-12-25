@@ -42,7 +42,7 @@ jobs:
           restore-keys: |
             ${{ env.cache-version }}-${{ runner.os }}--electron-builder-cache-
 
-      - run: pnpm ci
+      - run: pnpm i
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm run markdownlint
