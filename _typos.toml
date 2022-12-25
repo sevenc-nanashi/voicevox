@@ -5,6 +5,7 @@
 
 [default.extend-words]
 ba="ba" # 7zコマンドの-baオプション
+fo="fo" # powershellのrm -Forceの短縮
 
 [files]
-extend-exclude = ["package-lock.json", "src/store/project.ts", "*.svg"]
+extend-exclude = ["pnpm-lock.yaml", "src/store/project.ts", "*.svg"]
