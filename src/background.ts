@@ -173,7 +173,7 @@ function fetchAdditionalEngineInfos(): EngineInfo[] {
 
     engines.push({
       uuid: manifest.uuid,
-      host: `http://127.0.0.1:${manifest.port}`,
+      host: `http://localhost:${manifest.port}`,
       name: manifest.name,
       path: engineDir,
       executionEnabled: true,
