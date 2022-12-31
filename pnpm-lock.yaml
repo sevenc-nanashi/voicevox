@@ -6,12 +6,15 @@ specifiers:
   '@playwright/test': 1.23.3
   '@quasar/extras': 1.10.10
   '@rollup/plugin-inject': 5.0.3
+  '@sevenc-nanashi/vite-plugin-electron': 0.11.2
   '@types/chai': 4.2.18
   '@types/electron-devtools-installer': 2.2.2
   '@types/encoding-japanese': 1.0.18
+  '@types/glob': 8.0.0
   '@types/markdown-it': 12.2.0
   '@types/mocha': 5.2.7
   '@types/mousetrap': 1.6.8
+  '@types/multistream': 4.1.0
   '@types/semver': 7.3.9
   '@types/unzipper': 0.10.5
   '@types/uuid': 8.3.4
@@ -40,6 +43,7 @@ specifiers:
   eslint-config-prettier: 8.5.0
   eslint-plugin-prettier: 3.4.0
   eslint-plugin-vue: 9.5.1
+  glob: 8.0.3
   immer: 9.0.2
   license-checker: 25.0.1
   markdown-it: 12.0.4
@@ -47,6 +51,7 @@ specifiers:
   markdownlint-cli: 0.28.1
   mousetrap: 1.6.5
   move-file: 3.0.0
+  multistream: 4.1.0
   node-stdlib-browser: 1.2.0
   prettier: 2.3.0
   quasar: 2.4.13
@@ -63,7 +68,6 @@ specifiers:
   unzipper: 0.10.11
   uuid: 9.0.0
   vite: 3.2.5
-  vite-plugin-electron: 0.11.1
   vite-tsconfig-paths: 3.5.2
   vue: 3.2.41
   vue-router: 4.0.8
@@ -84,9 +88,11 @@ dependencies:
   electron-store: 8.1.0
   electron-window-state: 5.0.3
   encoding-japanese: 1.0.30
+  glob: 8.0.3
   immer: 9.0.2
   markdown-it: 12.0.4
   move-file: 3.0.0
+  multistream: 4.1.0
   quasar: 2.4.13
   semver: 7.3.5
   shlex: 2.1.2
@@ -105,12 +111,15 @@ devDependencies:
   '@openapitools/openapi-generator-cli': 2.3.3
   '@playwright/test': 1.23.3
   '@rollup/plugin-inject': 5.0.3
+  '@sevenc-nanashi/vite-plugin-electron': 0.11.2
   '@types/chai': 4.2.18
   '@types/electron-devtools-installer': 2.2.2
   '@types/encoding-japanese': 1.0.18
+  '@types/glob': 8.0.0
   '@types/markdown-it': 12.2.0
   '@types/mocha': 5.2.7
   '@types/mousetrap': 1.6.8
+  '@types/multistream': 4.1.0
   '@types/semver': 7.3.9
   '@types/unzipper': 0.10.5
   '@types/uuid': 8.3.4
@@ -141,7 +150,6 @@ devDependencies:
   tmp: 0.2.1
   typescript: 4.8.4
   vite: 3.2.5_sass@1.32.13
-  vite-plugin-electron: 0.11.1
   vite-tsconfig-paths: 3.5.2_vite@3.2.5
   vue-tsc: 0.40.13_typescript@4.8.4
   yargs: 17.2.1
@@ -500,6 +508,12 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /@sevenc-nanashi/vite-plugin-electron/0.11.2:
+    resolution: {integrity: sha512-CJoyV3Qw+kDTTOBniBAIDX/xRaucE5waHyWaZ/bYz12kkaZ6+9xKTtXjI32ahzwIDrbodrWQgvXR/unOicd5/g==}
+    dependencies:
+      tree-kill: 1.2.2
+    dev: true
+
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
     engines: {node: '>=6'}
@@ -554,6 +568,13 @@ packages:
     dev: true
     optional: true
 
+  /@types/glob/8.0.0:
+    resolution: {integrity: sha512-l6NQsDDyQUVeoTynNpC9uRvCUint/gSUXQA2euwmTuWGvPY5LSDUu6tkCtJB2SvGQlJQzLaKqcGZP4//7EDveA==}
+    dependencies:
+      '@types/minimatch': 5.1.2
+      '@types/node': 18.11.18
+    dev: true
+
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
     dev: true
@@ -561,7 +582,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 16.18.11
+      '@types/node': 18.11.18
     dev: true
 
   /@types/linkify-it/3.0.2:
@@ -583,7 +604,6 @@ packages:
   /@types/minimatch/5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
     dev: true
-    optional: true
 
   /@types/mocha/5.2.7:
     resolution: {integrity: sha512-NYrtPht0wGzhwe9+/idPaBB+TqkY9AhTvOLMkThm0IoEfLaiVQZwBwyJ5puCkO3AUCWrmcoePjp2mbFocKy4SQ==}
@@ -595,6 +615,12 @@ packages:
 
   /@types/ms/0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
+    dev: true
+
+  /@types/multistream/4.1.0:
+    resolution: {integrity: sha512-KiMkWve/Uu0qwCtNO6ZflMLjglkXsAdLdIwb31o5YQBbevdH2DF7inqebCli+F9am8McvEqCE4GXNOUZe8jOAg==}
+    dependencies:
+      '@types/node': 18.11.18
     dev: true
 
   /@types/node/16.18.11:
@@ -621,7 +647,7 @@ packages:
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
-      '@types/node': 16.18.11
+      '@types/node': 18.11.18
     dev: true
 
   /@types/semver/7.3.9:
@@ -658,7 +684,7 @@ packages:
     resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
     requiresBuild: true
     dependencies:
-      '@types/node': 16.18.11
+      '@types/node': 18.11.18
     dev: true
     optional: true
 
@@ -1347,7 +1373,6 @@ packages:
     resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
     dependencies:
       balanced-match: 1.0.2
-    dev: true
 
   /braces/3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
@@ -3003,7 +3028,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.8
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
@@ -3017,6 +3042,17 @@ packages:
       minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
+
+  /glob/8.0.3:
+    resolution: {integrity: sha512-ull455NHSHI/Y1FqGaaYFaLGkNMMJbavMrEGFXG/PGrg6y7sutWHUHrz6gy6WEBH6akM1M414dWKCNs+IhKdiQ==}
+    engines: {node: '>=12'}
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 5.1.2
+      once: 1.4.0
+    dev: false
 
   /global-agent/3.0.0:
     resolution: {integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==}
@@ -3794,7 +3830,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
-    dev: true
 
   /minimist/1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
@@ -3855,6 +3890,13 @@ packages:
   /ms/2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
     dev: true
+
+  /multistream/4.1.0:
+    resolution: {integrity: sha512-J1XDiAmmNpRCBfIWJv+n0ymC4ABcf/Pl+5YvC5B/D2f/2+8PtHvCNxMPKiQcZyi922Hq69J2YOpb1pTywfifyw==}
+    dependencies:
+      once: 1.4.0
+      readable-stream: 3.6.0
+    dev: false
 
   /mute-stream/0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
@@ -4413,7 +4455,6 @@ packages:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
-    dev: true
 
   /readdir-scoped-modules/1.1.0:
     resolution: {integrity: sha512-asaikDeqAQg7JifRsZn1NJZXo9E+VwlyCfbkZhwyISinqk5zNS6266HS5kah6P0SaQKGF6SkNnZVHUzHFYxYDw==}
@@ -4575,7 +4616,6 @@ packages:
 
   /safe-buffer/5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
-    dev: true
 
   /safer-buffer/2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
@@ -4819,7 +4859,6 @@ packages:
     resolution: {integrity: sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==}
     dependencies:
       safe-buffer: 5.2.1
-    dev: true
 
   /strip-ansi/6.0.1:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
@@ -5194,10 +5233,6 @@ packages:
       extsprintf: 1.4.1
     dev: true
     optional: true
-
-  /vite-plugin-electron/0.11.1:
-    resolution: {integrity: sha512-pi9Wy4KCGjKIRvp7/5VUOT8BYEAJdZrpy3gI+GhGc5vYs2V9yPxLOtfCqNfSTYqH3uM6hYY6MyifFVku3Wg+2A==}
-    dev: true
 
   /vite-tsconfig-paths/3.5.2_vite@3.2.5:
     resolution: {integrity: sha512-xJMgHA2oJ28QCG2f+hXrcqzo7IttrSRK4A//Tp94CfuX5eetOx33qiwXHUdi3FwkHP2ocpxHuvE45Ix67gwEmQ==}

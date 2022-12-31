@@ -1,12 +1,10 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tsconfigPaths from "vite-tsconfig-paths";
-import electron from "vite-plugin-electron";
+import electron from "@sevenc-nanashi/vite-plugin-electron";
 import path from "path";
 import inject from "@rollup/plugin-inject";
 import stdLibBrowser from "node-stdlib-browser";
-
-import treeKill from "tree-kill";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,16 +26,14 @@ export default defineConfig({
         build: {
           outDir: "../dist",
         },
-      },
-      onstart: (options: { startup: (args: string[]) => void }) => {
-        // @ts-expect-error vite-plugin-electronが追加する
-        const pid = process.electronApp?.pid;
-        if (pid) {
-          treeKill(pid, "SIGINT");
-        }
-        options.startup([".", "--no-sandbox"]);
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "./src"),
+          },
+        },
       },
     }),
+    // @ts-expect-error 何故かエラーを吐く
     inject({
       Buffer: [
         require.resolve("node-stdlib-browser/helpers/esbuild/shim"),
