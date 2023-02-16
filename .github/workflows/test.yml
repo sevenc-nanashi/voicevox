@@ -17,7 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: node-version
-        run: echo "NODE_VERSION=$(cat .node-version)" >> $GITHUB_OUTPUT
+        run: |
+          NODE_VERSION="$(cat .node-version)"
+          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "Node.js version: $NODE_VERSION"
 
       - uses: actions/setup-node@v3
         with:
