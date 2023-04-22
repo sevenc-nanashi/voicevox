@@ -53,7 +53,7 @@ npm run cap:build:ios
 
 以下は元リポジトリの README です。
 
-# VOICEVOX
+## VOICEVOX
 
 [![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
 [![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
