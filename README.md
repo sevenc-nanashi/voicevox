@@ -1,15 +1,68 @@
 # VOICEVOX MOBILE
 
-[![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
-[![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
-[![test](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/879570910208733277?color=5865f2&label=&logo=discord&logoColor=ffffff)](https://discord.gg/WMwWetrzuh)
-
 [VOICEVOX](https://voicevox.hiroshiba.jp/) のスマホ版エディターです。
 
 > **Warning**
 > このリポジトリは現在開発中です。
 
+## 環境構築
+
+[.node-version](.node-version) に記載されているバージョンの Node.js をインストールしてください。
+Node.js をインストール後、[このリポジトリ](https://github.com/VOICEVOX/voicevox.git) を
+Fork して `git clone` し、次のコマンドを実行してください。
+
+Node.js の管理ツール ([nvs](https://github.com/jasongin/nvs)など)を利用すると、
+[.node-version](.node-version) を簡単にインストールすることができます。
+
+```bash
+npm ci
+```
+
+また、Android・iOS開発用のツールも必要です。[Capacitor: 環境設定](https://capacitorjs.jp/docs/getting-started/environment-setup)を参照してください。
+
+## 実行
+
+以下のコマンドで Vue 側の変更が反映されます。
+
+```bash
+npm run cap:sync
+```
+
+### Android 版
+
+以下のコマンドで Android Studio が起動します。起動後、Android Studio で実行ボタンを押してください。
+
+```bash
+npm run cap:open:android
+```
+
+[Capacitor Android ドキュメンテーション](https://capacitorjs.jp/docs/android) も参照してください。
+
+### iOS/iPadOS 版
+
+TODO
+
+## ビルド
+
+```bash
+npm run cap:build:android
+npm run cap:build:ios
+```
+
+---
+
+以下は元リポジトリの README です。
+
+# VOICEVOX
+
+[![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
+[![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
+[![test](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml)
+[![Discord](https://img.shields.io/discord/879570910208733277?color=5865f2&label=&logo=discord&logoColor=ffffff)](https://discord.gg/WMwWetrzuh)
+
+[VOICEVOX](https://voicevox.hiroshiba.jp/) のエディターです。
+
+（エンジンは [VOICEVOX ENGINE](https://github.com/VOICEVOX/voicevox_engine/) 、
 コアは [VOICEVOX CORE](https://github.com/VOICEVOX/voicevox_core/) 、
 全体構成は [こちら](./docs/全体構成.md) に詳細があります。）
 
@@ -46,31 +99,32 @@ npm ci
 
 ## 実行
 
-以下のコマンドで Vue 側の変更が反映されます。
+`.env.production`をコピーして`.env`を作成し、`DEFAULT_ENGINE_INFOS`内の`executionFilePath`に`voicevox_engine`のフルパスを指定します。
+
+[製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) のディレクトリのパスを指定すれば動きます。
+
+Windows の場合でもパスの区切り文字は`\`ではなく`/`なのでご注意ください。
+
+また、macOS 向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Contents/MacOS/run`を指定してください。
+
+Linux の場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できる tar.gz 版に含まれる`run`コマンドを指定してください。
+AppImage 版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファイルシステムをマウントできます。
+
+VOICEVOX エディタの実行とは別にエンジン API のサーバを立てている場合は`executionFilePath`を指定する必要はありません。
+これは製品版 VOICEVOX を起動している場合もあてはまります。
+
+また、エンジン API の宛先エンドポイントを変更する場合は`DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
 
 ```bash
-npm run cap:sync
+npm run electron:serve
 ```
 
-### Android 版
-
-以下のコマンドで Android Studio が起動します。起動後、Android Studio で実行ボタンを押してください。
-
-```bash
-npm run cap:open:android
-```
-
-[Capacitor Android ドキュメンテーション](https://capacitorjs.jp/docs/android) も参照してください。
-
-### iOS/iPadOS 版
-
-TODO
+音声合成エンジンのリポジトリはこちらです <https://github.com/VOICEVOX/voicevox_engine>
 
 ## ビルド
 
 ```bash
-npm run cap:build:android
-npm run cap:build:ios
+npm run electron:build
 ```
 
 ## テスト
