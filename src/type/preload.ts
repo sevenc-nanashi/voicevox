@@ -133,6 +133,7 @@ export const defaultToolbarButtonSetting: ToolbarSetting = [
 ];
 
 export interface Sandbox {
+  isMock: boolean;
   getAppInfos(): Promise<AppInfos>;
   getHowToUseText(): Promise<string>;
   getPolicyText(): Promise<string>;

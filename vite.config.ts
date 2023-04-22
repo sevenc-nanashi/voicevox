@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { rmSync } from "fs";
+import { rmSync, readdirSync, readFileSync } from "fs";
 import treeKill from "tree-kill";
 
 import electron from "vite-plugin-electron";
@@ -29,6 +29,16 @@ export default defineConfig((options) => {
   const sourcemap: BuildOptions["sourcemap"] = shouldEmitSourcemap
     ? "inline"
     : false;
+  const themes = readdirSync(path.resolve(__dirname, "public/themes")).map(
+    (themeFile: string) => {
+      return JSON.parse(
+        readFileSync(
+          path.resolve(__dirname, "public/themes", themeFile),
+          "utf-8"
+        )
+      );
+    }
+  );
   return {
     root: path.resolve(__dirname, "src"),
     build: {
@@ -55,6 +65,9 @@ export default defineConfig((options) => {
       ],
       environment: "happy-dom",
       globals: true,
+    },
+    define: {
+      __availableThemes: JSON.stringify(themes),
     },
 
     plugins: [
