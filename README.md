@@ -1,4 +1,59 @@
-# VOICEVOX
+# VOICEVOX MOBILE
+
+[VOICEVOX](https://voicevox.hiroshiba.jp/) のスマホ版エディターです。
+
+> **Warning**
+> このリポジトリは現在開発中です。
+
+## 環境構築
+
+[.node-version](.node-version) に記載されているバージョンの Node.js をインストールしてください。
+Node.js をインストール後、[このリポジトリ](https://github.com/VOICEVOX/voicevox.git) を
+Fork して `git clone` し、次のコマンドを実行してください。
+
+Node.js の管理ツール ([nvs](https://github.com/jasongin/nvs)など)を利用すると、
+[.node-version](.node-version) を簡単にインストールすることができます。
+
+```bash
+npm ci
+```
+
+また、Android・iOS開発用のツールも必要です。[Capacitor: 環境設定](https://capacitorjs.jp/docs/getting-started/environment-setup)を参照してください。
+
+## 実行
+
+以下のコマンドで Vue 側の変更が反映されます。
+
+```bash
+npm run cap:sync
+```
+
+### Android 版
+
+以下のコマンドで Android Studio が起動します。起動後、Android Studio で実行ボタンを押してください。
+
+```bash
+npm run cap:open:android
+```
+
+[Capacitor Android ドキュメンテーション](https://capacitorjs.jp/docs/android) も参照してください。
+
+### iOS/iPadOS 版
+
+TODO
+
+## ビルド
+
+```bash
+npm run cap:build:android
+npm run cap:build:ios
+```
+
+---
+
+以下は元リポジトリの README です。
+
+## VOICEVOX
 
 [![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
 [![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
@@ -27,7 +82,7 @@ Issue 側で取り組み始めたことを伝えるか、最初に Draft プル�
 
 ### デザインガイドライン
 
-[UX・UIデザインの方針](./docs/UX・UIデザインの方針.md)をご参照ください。
+[UX・UI デザインの方針](./docs/UX・UIデザインの方針.md)をご参照ください。
 
 ## 環境構築
 
@@ -48,17 +103,17 @@ npm ci
 
 [製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) のディレクトリのパスを指定すれば動きます。
 
-Windowsの場合でもパスの区切り文字は`\`ではなく`/`なのでご注意ください。
+Windows の場合でもパスの区切り文字は`\`ではなく`/`なのでご注意ください。
 
-また、macOS向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Contents/MacOS/run`を指定してください。
+また、macOS 向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Contents/MacOS/run`を指定してください。
 
-Linuxの場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できるtar.gz版に含まれる`run`コマンドを指定してください。
-AppImage版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファイルシステムをマウントできます。
+Linux の場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できる tar.gz 版に含まれる`run`コマンドを指定してください。
+AppImage 版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファイルシステムをマウントできます。
 
-VOICEVOXエディタの実行とは別にエンジンAPIのサーバを立てている場合は`executionFilePath`を指定する必要はありません。
-これは製品版VOICEVOXを起動している場合もあてはまります。
+VOICEVOX エディタの実行とは別にエンジン API のサーバを立てている場合は`executionFilePath`を指定する必要はありません。
+これは製品版 VOICEVOX を起動している場合もあてはまります。
 
-また、エンジンAPIの宛先エンドポイントを変更する場合は`DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
+また、エンジン API の宛先エンドポイントを変更する場合は`DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
 
 ```bash
 npm run electron:serve
@@ -118,8 +173,8 @@ typos
 
 ## 型チェック
 
-TypeScriptの型チェックを行います。
-※ 現在チェック方法は2種類ありますが、将来的に1つになります。
+TypeScript の型チェックを行います。
+※ 現在チェック方法は 2 種類ありますが、将来的に 1 つになります。
 
 ```bash
 # .tsのみ型チェック
