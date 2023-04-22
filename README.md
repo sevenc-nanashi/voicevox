@@ -1,13 +1,15 @@
-# VOICEVOX
+# VOICEVOX MOBILE
 
 [![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
 [![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
 [![test](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/test.yml)
 [![Discord](https://img.shields.io/discord/879570910208733277?color=5865f2&label=&logo=discord&logoColor=ffffff)](https://discord.gg/WMwWetrzuh)
 
-[VOICEVOX](https://voicevox.hiroshiba.jp/) のエディターです。
+[VOICEVOX](https://voicevox.hiroshiba.jp/) のスマホ版エディターです。
 
-（エンジンは [VOICEVOX ENGINE](https://github.com/VOICEVOX/voicevox_engine/) 、
+> **Warning**
+> このリポジトリは現在開発中です。
+
 コアは [VOICEVOX CORE](https://github.com/VOICEVOX/voicevox_core/) 、
 全体構成は [こちら](./docs/全体構成.md) に詳細があります。）
 
@@ -27,7 +29,7 @@ Issue 側で取り組み始めたことを伝えるか、最初に Draft プル�
 
 ### デザインガイドライン
 
-[UX・UIデザインの方針](./docs/UX・UIデザインの方針.md)をご参照ください。
+[UX・UI デザインの方針](./docs/UX・UIデザインの方針.md)をご参照ください。
 
 ## 環境構築
 
@@ -44,32 +46,24 @@ npm ci
 
 ## 実行
 
-`.env.production`をコピーして`.env`を作成し、`DEFAULT_ENGINE_INFOS`内の`executionFilePath`に`voicevox_engine`のフルパスを指定します。
+### Android 版
 
-[製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) のディレクトリのパスを指定すれば動きます。
-
-Windowsの場合でもパスの区切り文字は`\`ではなく`/`なのでご注意ください。
-
-また、macOS向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Contents/MacOS/run`を指定してください。
-
-Linuxの場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できるtar.gz版に含まれる`run`コマンドを指定してください。
-AppImage版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファイルシステムをマウントできます。
-
-VOICEVOXエディタの実行とは別にエンジンAPIのサーバを立てている場合は`executionFilePath`を指定する必要はありません。
-これは製品版VOICEVOXを起動している場合もあてはまります。
-
-また、エンジンAPIの宛先エンドポイントを変更する場合は`DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
+以下のコマンドで Android Studio が起動します。起動後、Android Studio で実行ボタンを押してください。
 
 ```bash
-npm run electron:serve
+npm run cap:open:android
 ```
 
-音声合成エンジンのリポジトリはこちらです <https://github.com/VOICEVOX/voicevox_engine>
+[Capacitor Android ドキュメンテーション](https://capacitorjs.jp/docs/android) も参照してください。
+
+### iOS/iPadOS 版
+
+TODO
 
 ## ビルド
 
 ```bash
-npm run electron:build
+npm run cap:sync
 ```
 
 ## テスト
@@ -118,8 +112,8 @@ typos
 
 ## 型チェック
 
-TypeScriptの型チェックを行います。
-※ 現在チェック方法は2種類ありますが、将来的に1つになります。
+TypeScript の型チェックを行います。
+※ 現在チェック方法は 2 種類ありますが、将来的に 1 つになります。
 
 ```bash
 # .tsのみ型チェック
