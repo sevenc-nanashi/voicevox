@@ -46,6 +46,12 @@ npm ci
 
 ## 実行
 
+以下のコマンドで Vue 側の変更が反映されます。
+
+```bash
+npm run cap:sync
+```
+
 ### Android 版
 
 以下のコマンドで Android Studio が起動します。起動後、Android Studio で実行ボタンを押してください。
@@ -63,7 +69,8 @@ TODO
 ## ビルド
 
 ```bash
-npm run cap:sync
+npm run cap:build:android
+npm run cap:build:ios
 ```
 
 ## テスト
