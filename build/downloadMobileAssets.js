@@ -1,6 +1,7 @@
 // @ts-check
 /**
- * voicevox/voicevox_coreのmodelディレクトリをダウンロードするスクリプト。
+ * voicevox/voicevox_coreのmodelディレクトリをダウンロードしてZip圧縮し、
+ * またOpenJTalkの辞書をzip圧縮するスクリプト。
  */
 const path = require("path");
 const fs = require("fs");

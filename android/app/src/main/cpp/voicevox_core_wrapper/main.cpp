@@ -71,6 +71,34 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxErrorResultToMessage(
 
 extern "C"
 JNIEXPORT jstring
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(JNIEnv
+                                                             *env,
+                                                             jobject thiz
+) {
+    ASSERT_CORE_LOADED;
+
+    auto voicevox_get_metas_json = (voicevox_get_metas_json_t) dlsym(voicevoxCore, "voicevox_get_metas_json");
+
+    return env->
+            NewStringUTF(voicevox_get_metas_json());
+}
+
+extern "C"
+JNIEXPORT jstring
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetSupportedDevicesJson(JNIEnv
+                                                             *env,
+                                                             jobject thiz
+) {
+    ASSERT_CORE_LOADED;
+
+    auto voicevox_get_supported_devices_json = (voicevox_get_supported_devices_json_t) dlsym(voicevoxCore, "voicevox_get_supported_devices_json");
+
+    return env->
+            NewStringUTF(voicevox_get_supported_devices_json());
+}
+
+extern "C"
+JNIEXPORT jstring
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(JNIEnv
                                                            *env,
                                                            jobject thiz
@@ -80,9 +108,7 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(JNIEnv
     auto voicevox_get_version = (voicevox_get_version_t) dlsym(voicevoxCore, "voicevox_get_version");
 
     return env->
-
             NewStringUTF(voicevox_get_version());
-//    return env->NewStringUTF("0.1.0");
 }
 
 extern "C"

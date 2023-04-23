@@ -57,6 +57,20 @@ public class CorePlugin extends Plugin {
         call.resolve(ret);
     }
 
+    @PluginMethod()
+    public void getMetasJson(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("value", core.voicevoxGetMetasJson());
+        call.resolve(ret);
+    }
+
+    @PluginMethod()
+    public void getSupportedDevicesJson(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("value", core.voicevoxGetSupportedDevicesJson());
+        call.resolve(ret);
+    }
+
     private void extractDict() throws IOException {
         Context context = getContext();
         String filesDir = context.getFilesDir().getAbsolutePath();

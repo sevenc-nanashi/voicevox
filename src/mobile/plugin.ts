@@ -2,6 +2,8 @@ import { registerPlugin } from "@capacitor/core";
 
 export type VoicevoxCorePlugin = {
   getVersion: () => Promise<{ value: string }>;
+  getMetasJson: () => Promise<{ value: string }>;
+  getSupportedDevicesJson: () => Promise<{ value: string }>;
   initialize: () => Promise<void>;
 };
 
