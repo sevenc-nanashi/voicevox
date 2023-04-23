@@ -1,0 +1,23 @@
+{
+  "manifest_version": "0.13.1",
+  "name": "VOICEVOX Engine",
+  "brand_name": "VOICEVOX",
+  "uuid": "074fc39e-678b-4c13-8916-ffca8d505d1d",
+  "url": "https://github.com/VOICEVOX/voicevox_engine",
+  "icon": "",
+  "default_sampling_rate": 24000,
+  "terms_of_service": "",
+  "update_infos": [],
+  "dependency_licenses": [],
+  "supported_features": {
+    "adjust_mora_pitch": true,
+    "adjust_phoneme_length": true,
+    "adjust_speed_scale": true,
+    "adjust_pitch_scale": true,
+    "adjust_intonation_scale": true,
+    "adjust_volume_scale": true,
+    "interrogative_upspeak": true,
+    "synthesis_morphing": true,
+    "manage_library": true
+  }
+}
