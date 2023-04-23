@@ -18,11 +18,17 @@ Node.js の管理ツール ([nvs](https://github.com/jasongin/nvs)など)を利�
 npm ci
 ```
 
-また、Android・iOS開発用のツールも必要です。[Capacitor: 環境設定](https://capacitorjs.jp/docs/getting-started/environment-setup)を参照してください。
+また、Android・iOS 開発用のツールも必要です。[Capacitor: 環境設定](https://capacitorjs.jp/docs/getting-started/environment-setup)を参照してください。
 
 ## 実行
 
-以下のコマンドで Vue 側の変更が反映されます。
+以下のコマンドで Vite の開発サーバーを起動し、Capacitor をライブリロードモードでセットアップします。
+
+```bash
+npm run cap:serve
+```
+
+または、以下のコマンドで Web 側の変更をビルドし、Capacitor のライブリロードなしで反映します。
 
 ```bash
 npm run cap:sync
