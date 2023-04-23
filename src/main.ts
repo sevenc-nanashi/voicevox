@@ -8,8 +8,12 @@ import router from "./router";
 import { store, storeKey } from "./store";
 import { ipcMessageReceiver } from "./plugins/ipcMessageReceiverPlugin";
 // eslint-disable-next-line no-restricted-imports
-import loadMock from "./electron/mock";
-import loadPlugin from "./mobile/plugin";
+import loadElectronMock from "./electron/mock";
+import {
+  loadPlugin,
+  loadMock as loadMobileMock,
+  loadCoreBasedApi,
+} from "./mobile";
 import { markdownItPlugin } from "@/plugins/markdownItPlugin";
 
 import "@quasar/extras/material-icons/material-icons.css";
@@ -20,12 +24,12 @@ import "./styles/_index.scss";
 //       ため、それを防止するため自前でdataLayerをあらかじめ用意する
 window.dataLayer = [];
 
-if (!window.electron) {
-  loadMock();
-}
-
 if (Capacitor.isNativePlatform()) {
   loadPlugin();
+  loadMobileMock();
+  loadCoreBasedApi();
+} else if (!window.electron) {
+  loadElectronMock();
 }
 
 createApp(App)

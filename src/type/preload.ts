@@ -330,7 +330,8 @@ export type MinimumEngineManifest = z.infer<typeof minimumEngineManifestSchema>;
 
 export type EngineInfo = {
   uuid: EngineId;
-  host: string;
+  // "core" の場合はコアを直接使う
+  host: string | "core";
   name: string;
   path?: string; // エンジンディレクトリのパス
   executionEnabled: boolean;
