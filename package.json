@@ -38,6 +38,7 @@
   "dependencies": {
     "@capacitor/android": "4.7.3",
     "@capacitor/core": "4.7.3",
+    "@capacitor/preferences": "4.0.2",
     "@gtm-support/vue-gtm": "1.2.3",
     "@quasar/extras": "1.10.10",
     "buffer": "6.0.3",

@@ -1,31 +1,19 @@
-import engineManifestBase from "./engineManifestAssets/base.json";
-import termsOfService from "./engineManifestAssets/termsOfService.md?raw";
+import engineManifestBase from "./manifestAssets/base.json";
+import termsOfService from "./manifestAssets/termsOfService.md?raw";
+import { ApiProvider } from ".";
 import {
-  DefaultApi,
-  DefaultApiInterface,
   EngineManifest,
+  SpeakerInfo,
   EngineManifestFromJSON,
   SpeakerFromJSON,
-  SpeakerInfo,
   SpeakerInfoFromJSON,
 } from "@/openapi";
 
-let api: DefaultApi | undefined;
-export let coreBasedApi: DefaultApiInterface | undefined;
-
-const loadApi = () => {
-  api = new DefaultApi();
-  const corePlugin = window.plugins?.voicevoxCore;
-  if (!corePlugin) throw new Error("assert: corePlugin != null");
-  let isCoreInitialized = false;
-  corePlugin.initialize().then(() => {
-    isCoreInitialized = true;
-  });
-
+const infoProvider: ApiProvider = ({ corePlugin }) => {
   let engineManifest: EngineManifest | undefined;
   let speakerInfosMap: Record<string, SpeakerInfo> | undefined;
 
-  const coreBasedApiNaked: Partial<DefaultApiInterface> = {
+  return {
     async versionVersionGet() {
       // 何故か""で囲まれているのを再現。直ったら消す。
       return JSON.stringify(corePlugin.getVersion());
@@ -91,25 +79,6 @@ const loadApi = () => {
       return speakerInfo;
     },
   };
-
-  // コアベースのOpenAPI Connectorライクなオブジェクト。
-  // - コアベースの実装がある場合は呼び出し、
-  // - 本家OpenAPI Connectorに存在している、かつコアベースの実装がない場合はNot implementedエラーを投げ、
-  // - 本家OpenAPI Connectorに存在していない場合はUnknown APIエラーを投げる
-  coreBasedApi = new Proxy(coreBasedApiNaked, {
-    get: (base, key: keyof DefaultApiInterface) => {
-      if (!api) throw new Error("assert: api != null");
-      if (!isCoreInitialized) throw new Error("Core is not initialized");
-      if (key in base) {
-        window.electron.logInfo(`Call coreBasedApi.${String(key)}`);
-        return base[key];
-      } else if (key in api) {
-        throw new Error(`Not implemented: ${String(key)}`);
-      } else {
-        throw new Error(`Unknown API: ${String(key)}`);
-      }
-    },
-  }) as DefaultApiInterface;
 };
 
-export default loadApi;
+export default infoProvider;
