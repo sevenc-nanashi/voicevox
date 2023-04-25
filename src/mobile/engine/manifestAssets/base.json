@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.13.1",
-  "name": "VOICEVOX Engine",
-  "brand_name": "VOICEVOX",
-  "uuid": "074fc39e-678b-4c13-8916-ffca8d505d1d",
+  "name": "DUMMY Engine",
+  "brand_name": "DUMMY",
+  "uuid": "c7b58856-bd56-4aa1-afb7-b8415f824b06",
   "url": "https://github.com/VOICEVOX/voicevox_engine",
   "icon": "",
   "default_sampling_rate": 24000,
@@ -18,6 +18,6 @@
     "adjust_volume_scale": true,
     "interrogative_upspeak": true,
     "synthesis_morphing": true,
-    "manage_library": true
+    "manage_library": false
   }
 }

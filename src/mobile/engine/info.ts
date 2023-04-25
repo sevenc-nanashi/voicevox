@@ -1,3 +1,4 @@
+// FIXME: 本番ビルドではbase.jsonを置き換える
 import engineManifestBase from "./manifestAssets/base.json";
 import termsOfService from "./manifestAssets/termsOfService.md?raw";
 import { ApiProvider } from ".";
