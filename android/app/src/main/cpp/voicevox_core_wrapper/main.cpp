@@ -19,15 +19,35 @@ bool assertCoreLoaded(JNIEnv *env) {
 }
 
 
-extern "C" jstring
-Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(JNIEnv *env, jobject thiz) {
+extern "C"
+JNIEXPORT jstring
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetSupportedDevicesJson(JNIEnv
+                                                                        *env,
+                                                                        jobject thiz
+) {
+    ASSERT_CORE_LOADED;
+
+    auto voicevox_get_supported_devices_json = (voicevox_get_supported_devices_json_t) dlsym(voicevoxCore,
+                                                                                             "voicevox_get_supported_devices_json");
+
+    return env->
+            NewStringUTF(voicevox_get_supported_devices_json());
+}
+
+extern "C"
+JNIEXPORT jstring
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(JNIEnv
+                                                           *env,
+                                                           jobject thiz
+) {
     ASSERT_CORE_LOADED;
 
     auto voicevox_get_version = (voicevox_get_version_t) dlsym(voicevoxCore, "voicevox_get_version");
 
-    return env->NewStringUTF(voicevox_get_version());
-//    return env->NewStringUTF("0.1.0");
+    return env->
+            NewStringUTF(voicevox_get_version());
 }
+
 
 extern "C"
 JNIEXPORT void JNICALL

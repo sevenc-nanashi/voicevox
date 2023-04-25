@@ -2,6 +2,7 @@ package jp.hiroshiba.voicevox;
 
 public class VoicevoxCore {
     native String voicevoxGetVersion();
+    native String voicevoxGetSupportedDevicesJson();
 
     native static void loadLibrary();
 

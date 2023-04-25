@@ -16,9 +16,9 @@ const routes: Array<RouteRecordRaw> = [
 
 const router = createRouter({
   history:
-    import.meta.env.VITE_IS_ELECTRON === "true"
-      ? createWebHashHistory(import.meta.env.BASE_URL)
-      : createWebHistory(import.meta.env.BASE_URL),
+    import.meta.env.VITE_TARGET === "web"
+      ? createWebHistory(import.meta.env.BASE_URL)
+      : createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 

@@ -22,4 +22,11 @@ public class CorePlugin extends Plugin {
         ret.put("value", core.voicevoxGetVersion());
         call.resolve(ret);
     }
+
+    @PluginMethod()
+    public void getSupportedDevicesJson(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("value", core.voicevoxGetSupportedDevicesJson());
+        call.resolve(ret);
+    }
 }

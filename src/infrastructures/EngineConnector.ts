@@ -1,3 +1,4 @@
+import { coreBasedApi } from "@/mobile";
 import { Configuration, DefaultApi, DefaultApiInterface } from "@/openapi";
 
 export interface IEngineConnectorFactory {
@@ -14,9 +15,15 @@ const OpenAPIEngineConnectorFactoryImpl = (): IEngineConnectorFactory => {
       if (cached !== undefined) {
         return cached;
       }
-      const api = new DefaultApi(new Configuration({ basePath: host }));
-      instanceMapper[host] = api;
+      let api;
+      if (import.meta.env.VITE_TARGET === "mobile") {
+        if (!coreBasedApi) throw new Error("assert: coreBasedApi != null");
+        api = coreBasedApi;
+      } else {
+        api = new DefaultApi(new Configuration({ basePath: host }));
+      }
 
+      instanceMapper[host] = api;
       return api;
     },
   };
