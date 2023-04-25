@@ -13,7 +13,7 @@ import { quasar } from "@quasar/vite-plugin";
 
 rmSync(path.resolve(__dirname, "dist"), { recursive: true, force: true });
 
-const isElectron = process.env.VITE_IS_ELECTRON === "true";
+const isElectron = process.env.VITE_TARGET === "electron";
 
 export default defineConfig((options) => {
   const shouldEmitSourcemap = ["development", "test"].includes(options.mode);

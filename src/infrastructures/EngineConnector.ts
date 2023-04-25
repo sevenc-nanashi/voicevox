@@ -16,7 +16,7 @@ const OpenAPIEngineConnectorFactoryImpl = (): IEngineConnectorFactory => {
         return cached;
       }
       let api;
-      if (host === "core") {
+      if (import.meta.env.VITE_TARGET === "mobile") {
         if (!coreBasedApi) throw new Error("assert: coreBasedApi != null");
         api = coreBasedApi;
       } else {
