@@ -27,6 +27,7 @@ switch (process.platform) {
 }
 const sevenZip = path.resolve(__dirname, "vendored", "7z", sevenZipCommand);
 
+// FIXME: ダミーモデルを使っているので製品版に変える
 const downloadAndCompressModel = async () => {
   const modelZipPath = path.resolve(
     __dirname,
