@@ -50,8 +50,22 @@ TODO
 
 ## ビルド
 
+### Android 版
+
 ```bash
-npm run cap:build:android
+ANDROID_HOME=/path/to/android-sdk
+
+npm run cap:build:android -- \
+     --keystorepath /path/to/keystore.jks \
+     --keystorepass Password_here \
+     --keystorealias TestKey \
+     --keystorealiaspass Password_here
+```
+
+### iOS/iPadOS 版
+
+```bash
+# 動作未確認
 npm run cap:build:ios
 ```
 
