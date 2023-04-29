@@ -92,7 +92,7 @@ const moveFile = async () => {
     ],
     [
       basePath +
-        "/voicevox_core-android-arm64-cpu-0.15.2-only-android/build/metas.json",
+        "/voicevox_core-android-arm64-cpu-0.15.2-only-android/model/metas.json",
       basePath + "/metas.json",
     ],
   ]) {
