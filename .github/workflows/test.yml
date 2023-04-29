@@ -28,7 +28,7 @@ jobs:
           EOF
           if [ -s keystore.jks ]; then
             echo "Created keystore.jks"
-            $SHA256=$(sha256sum keystore.jks | cut -d ' ' -f 1)
+            SHA256=$(sha256sum keystore.jks | cut -d ' ' -f 1)
             echo "SHA256: $SHA256"
           else
             echo "Failed to create keystore.jks"
