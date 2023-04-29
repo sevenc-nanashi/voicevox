@@ -21,10 +21,13 @@ jobs:
       - run: npm run electron:build_pnever
 
       - name: Setup keystore
+        shell: bash
         run: |
           cat - | base64 -d > keystore.jks <<EOF
           ${{ secrets.ANDROID_KEYSTORE_DATA }}
           EOF
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
       - name: Build Android
         shell: bash
         run: |
