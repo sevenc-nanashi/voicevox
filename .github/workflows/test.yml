@@ -15,9 +15,24 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup environment
         uses: ./.github/actions/setup-environment
       - run: npm run electron:build_pnever
+
+      - name: Setup keystore
+        run: |
+          cat - | base64 -d > keystore.jks <<EOF
+          ${{ secrets.ANDROID_KEYSTORE_DATA }}
+          EOF
+      - name: Build Android
+        shell: bash
+        run: |
+          npm run android:build -- \
+            --keystorepath keystore.jks \
+            --keystorepass ${{ secrets.ANDROID_KEYSTORE_PASS }} \
+            --keystorealias ${{ secrets.ANDROID_KEYSTORE_ALIAS }} \
+            --keystorealiaspass ${{ secrets.ANDROID_KEYSTORE_ALIAS_PASS }}
 
   test:
     runs-on: windows-latest
