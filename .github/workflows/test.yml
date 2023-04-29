@@ -31,7 +31,7 @@ jobs:
       - name: Build Android
         shell: bash
         run: |
-          npm run android:build -- \
+          npm run cap:build:android -- \
             --keystorepath keystore.jks \
             --keystorepass ${{ secrets.ANDROID_KEYSTORE_PASS }} \
             --keystorealias ${{ secrets.ANDROID_KEYSTORE_ALIAS }} \
