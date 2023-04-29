@@ -218,6 +218,9 @@ const loadMock = () => {
     async restartApp(obj) {
       window.location.reload();
     },
+    async getAltPortInfos() {
+      return {};
+    },
   };
 
   try {
