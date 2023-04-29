@@ -76,7 +76,7 @@ const main = async () => {
 
   const metas = JSON.parse(
     await fs.promises.readFile(
-      path.resolve(__dirname, "vendored/voicevox_core/model/metas.json"),
+      path.resolve(__dirname, "vendored/voicevox_core/metas.json"),
       "utf-8"
     )
   );
