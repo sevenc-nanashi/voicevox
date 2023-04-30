@@ -21,7 +21,7 @@ bool assertCoreLoaded(JNIEnv *env) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_jp_hiroshiba_voicevox_VoicevoxCore_loadLibrary(JNIEnv *env, jclass clazz) {
+Java_jp_hiroshiba_voicevox_VoicevoxCore_loadLibrary(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "loadLibrary");
     voicevoxCore = dlopen("libvoicevox_core.so", RTLD_LAZY);
 
@@ -76,6 +76,9 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
 ) {
     ASSERT_CORE_LOADED;
 
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxGetMetasJson");
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", getenv("VV_MODELS_ROOT_DIR"));
+
     auto voicevox_get_metas_json = (voicevox_get_metas_json_t) dlsym(
             voicevoxCore,
             "voicevox_get_metas_json"
@@ -84,4 +87,3 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
     return env->
             NewStringUTF(voicevox_get_metas_json());
 }
-
