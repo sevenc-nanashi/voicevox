@@ -76,9 +76,6 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
 ) {
     ASSERT_CORE_LOADED;
 
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxGetMetasJson");
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", getenv("VV_MODELS_ROOT_DIR"));
-
     auto voicevox_get_metas_json = (voicevox_get_metas_json_t) dlsym(
             voicevoxCore,
             "voicevox_get_metas_json"
