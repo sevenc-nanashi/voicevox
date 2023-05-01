@@ -69,4 +69,3 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
     return env->
             NewStringUTF(voicevoxCore->voicevox_get_metas_json());
 }
-
