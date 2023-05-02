@@ -40,7 +40,15 @@ jobs:
         with:
           java-version: 17
           distribution: 'oracle'
+      - name: Cache Android SDK
+        id: cache-android-sdk
+        uses: actions/cache@v3
+        with:
+          paths: |
+           C:/Android/android-sdk
+          key: v1
       - name: Setup Android SDK
+        if: steps.cache-android-sdk.outputs.cache-hit != 'true'
         uses: android-actions/setup-android@v2
       - name: Download header file
         shell: bash
