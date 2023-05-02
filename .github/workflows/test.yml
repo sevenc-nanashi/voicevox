@@ -41,6 +41,11 @@ jobs:
           java-version: 11
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+      - name: Download header file
+        run: |
+          # FIXME: ちゃんとしたところ（Releasesで公開するようにする？）から落とすようにする
+          curl -sSL https://cdn.discordapp.com/attachments/1000018124965417040/1102892919565856829/voicevox_core.h \
+            -o ./android/app/src/main/jniLibs/include
       - name: Build Android
         shell: bash
         run: |
