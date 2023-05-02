@@ -36,7 +36,7 @@ jobs:
             exit 1
           fi
       - name: Setup java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
           java-version: 11
       - name: Setup Android SDK
@@ -46,7 +46,7 @@ jobs:
         run: |
           # FIXME: ちゃんとしたところ（Releasesで公開するようにする？）から落とすようにする
           curl -sSL https://cdn.discordapp.com/attachments/1000018124965417040/1102892919565856829/voicevox_core.h \
-            -o ./android/app/src/main/jniLibs/include
+            -o ./android/app/src/main/jniLibs/include/voicevox_core.h
       - name: Build Android
         shell: bash
         run: |
