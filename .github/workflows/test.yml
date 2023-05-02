@@ -44,8 +44,8 @@ jobs:
         id: cache-android-sdk
         uses: actions/cache@v3
         with:
-          paths: |
-           C:/Android/android-sdk
+          path: |
+            C:/Android/android-sdk
           key: v1
       - name: Setup Android SDK
         if: steps.cache-android-sdk.outputs.cache-hit != 'true'
