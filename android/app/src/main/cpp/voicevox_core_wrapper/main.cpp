@@ -5,7 +5,6 @@
 #include "core_caller.cpp"
 
 #define LOG_TAG "voicevox_core_wrapper"
-#define ASSERT_CORE_LOADED if (!assertCoreLoaded(env)) return NULL
 
 VoicevoxCore *voicevoxCore;
 
@@ -40,7 +39,9 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetSupportedDevicesJson(
         JNIEnv *env,
         jobject thiz
 ) {
-    ASSERT_CORE_LOADED;
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
 
     return env->
             NewStringUTF(voicevoxCore->voicevox_get_supported_devices_json());
@@ -52,7 +53,9 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(
         JNIEnv *env,
         jobject thiz
 ) {
-    ASSERT_CORE_LOADED;
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
 
     return env->
             NewStringUTF(voicevoxCore->voicevox_get_version());
@@ -64,7 +67,9 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
         JNIEnv *env,
         jobject thiz
 ) {
-    ASSERT_CORE_LOADED;
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
 
     return env->
             NewStringUTF(voicevoxCore->voicevox_get_metas_json());
