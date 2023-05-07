@@ -74,3 +74,42 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
     return env->
             NewStringUTF(voicevoxCore->voicevox_get_metas_json());
 }
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxErrorResultToMessage(
+        JNIEnv *env,
+        jobject thiz,
+        jint status_code
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto message = voicevoxCore->voicevox_error_result_to_message(static_cast<VoicevoxResultCode>(status_code));
+
+    return env->NewStringUTF(message);
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
+        JNIEnv *env,
+        jobject thiz,
+        jstring openJtalkDictPath
+) {
+    if(!assertCoreLoaded(env)) {
+        return -1;
+    }
+
+    auto openJtalkDictPathStr = env->GetStringUTFChars(openJtalkDictPath, nullptr);
+    auto options = voicevoxCore->voicevox_make_default_initialize_options();
+    options.open_jtalk_dict_dir = openJtalkDictPathStr;
+
+    auto result = voicevoxCore->voicevox_initialize(options);
+    env->ReleaseStringUTFChars(openJtalkDictPath, openJtalkDictPathStr);
+
+    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxInitialize: %d", result);
+
+    return result;
+}
