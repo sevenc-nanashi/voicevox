@@ -184,6 +184,38 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAudioQuery(
     }
 
     auto resultJStr = env->NewStringUTF(result);
+    voicevoxCore->voicevox_audio_query_json_free(result);
+
+    return resultJStr;
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAccentPhrases(
+        JNIEnv *env,
+        jobject thiz,
+        jstring text,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto textCStr = env->GetStringUTFChars(text, nullptr);
+    auto options = voicevoxCore->voicevox_make_default_accent_phrases_options();
+    options.kana = false;
+
+    char *result;
+
+    auto resultCode = voicevoxCore->voicevox_accent_phrases(textCStr, speakerId, options, &result);
+    env->ReleaseStringUTFChars(text, textCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultJStr = env->NewStringUTF(result);
+    voicevoxCore->voicevox_accent_phrases_json_free(result);
 
     return resultJStr;
 }

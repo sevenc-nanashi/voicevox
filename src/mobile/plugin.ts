@@ -14,6 +14,10 @@ export type VoicevoxCorePlugin = {
     text: string;
     speakerId: number;
   }) => Promise<{ value: string }>;
+  accentPhrases: (obj: {
+    text: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
 };
 
 const loadPlugin = () => {

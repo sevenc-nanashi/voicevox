@@ -1,5 +1,5 @@
 import { ApiProvider } from ".";
-import { AudioQueryFromJSON } from "@/openapi";
+import { AccentPhraseFromJSON, AudioQueryFromJSON } from "@/openapi";
 
 const queryProvider: ApiProvider = ({ corePlugin }) => {
   return {
@@ -19,6 +19,13 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
         outputStereo: rawQuery.output_stereo,
         kana: rawQuery.kana,
       });
+    },
+
+    async accentPhrasesAccentPhrasesPost({ speaker, text }) {
+      const rawAccentPhrases = await corePlugin
+        .accentPhrases({ text, speakerId: speaker })
+        .then((res) => JSON.parse(res.value));
+      return rawAccentPhrases.map(AccentPhraseFromJSON);
     },
   };
 };

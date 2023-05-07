@@ -118,6 +118,25 @@ class CorePlugin : Plugin() {
         }
     }
 
+    @PluginMethod
+    fun accentPhrases(call: PluginCall) {
+        val text = call.getString("text")
+        val speakerId = call.getInt("speakerId")
+        if (text == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val accentPhrases = core!!.voicevoxAccentPhrases(text, speakerId)
+            val ret = JSObject()
+            ret.put("value", accentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
     @Throws(IOException::class)
     private fun extractIfNotFound(archiveName: String): String {
         val filesDir = context.filesDir.absolutePath

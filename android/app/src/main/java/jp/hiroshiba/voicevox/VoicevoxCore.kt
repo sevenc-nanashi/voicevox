@@ -13,11 +13,14 @@ class VoicevoxCore {
     @Throws(VoicevoxException::class)
     external fun voicevoxInitialize(openJtalkDictPath: String)
 
+    @Throws(VoicevoxException::class)
     external fun voicevoxLoadModel(speakerId: Int)
     external fun voicevoxIsModelLoaded(speakerId: Int): Boolean
 
     @Throws(VoicevoxException::class)
     external fun voicevoxAudioQuery(text: String, speakerId: Int): String
+    @Throws(VoicevoxException::class)
+    external fun voicevoxAccentPhrases(text: String, speakerId: Int): String
 
     class VoicevoxException(override val message: String) : Exception(message)
 
