@@ -123,8 +123,36 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
     auto result = voicevoxCore->voicevox_initialize(options);
     env->ReleaseStringUTFChars(openJtalkDictPath, openJtalkDictPathStr);
 
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxInitialize: %d", result);
-
     throwExceptionIfError(env, result);
     return;
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAudioQuery(
+        JNIEnv *env,
+        jobject thiz,
+        jstring text,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto textCStr = env->GetStringUTFChars(text, nullptr);
+    auto options = voicevoxCore->voicevox_make_default_audio_query_options();
+    options.kana = false;
+
+    char* result;
+
+    auto resultCode = voicevoxCore->voicevox_audio_query(textCStr, speakerId, options, &result);
+    env->ReleaseStringUTFChars(text, textCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultJStr = env->NewStringUTF(result);
+
+    return resultJStr;
 }

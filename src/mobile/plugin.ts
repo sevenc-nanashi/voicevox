@@ -6,6 +6,10 @@ export type VoicevoxCorePlugin = {
   getMetasJson: () => Promise<{ value: string }>;
 
   initialize: () => Promise<void>;
+  audioQuery: (obj: {
+    text: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
 };
 
 const loadPlugin = () => {
