@@ -3,6 +3,7 @@
 #include <android/log.h>
 #include <string>
 #include "core_caller.cpp"
+#include "logger.cpp"
 
 #define LOG_TAG "voicevox_core_wrapper"
 
@@ -37,6 +38,7 @@ JNIEXPORT void JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_loadLibrary(JNIEnv *env, jobject thiz) {
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "loadLibrary");
     voicevoxCore = new VoicevoxCore();
+    startLogger();
 
     if (!voicevoxCore) {
         jclass jExceptionClass = env->FindClass("java/lang/RuntimeException");
