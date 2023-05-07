@@ -55,13 +55,13 @@ class CorePlugin : Plugin() {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
-        val result = core!!.voicevoxInitialize(
-                dictPath,
-        )
-        if (result == 0) {
+        try {
+            core!!.voicevoxInitialize(
+                    dictPath,
+            )
             call.resolve()
-        } else {
-            call.reject(core!!.voicevoxErrorResultToMessage(result))
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
         }
     }
 

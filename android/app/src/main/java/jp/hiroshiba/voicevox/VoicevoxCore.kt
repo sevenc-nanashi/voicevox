@@ -10,7 +10,13 @@ class VoicevoxCore {
 
     external fun voicevoxErrorResultToMessage(statusCode: Int): String
 
-    external fun voicevoxInitialize(openJtalkDictPath: String): Int
+    @Throws(VoicevoxException::class)
+    external fun voicevoxInitialize(openJtalkDictPath: String)
+
+    @Throws(VoicevoxException::class)
+    external fun voicevoxAudioQuery(text: String, speakerId: Int): String
+
+    class VoicevoxException(override val message: String) : Exception(message)
 
     constructor(modelPath: String) {
         try {

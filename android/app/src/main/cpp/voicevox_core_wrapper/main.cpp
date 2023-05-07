@@ -17,6 +17,20 @@ bool assertCoreLoaded(JNIEnv *env) {
     return true;
 }
 
+// 成功だったらtrueを返す
+bool throwExceptionIfError(JNIEnv *env, VoicevoxStatusCode code) {
+    if (!voicevoxCore) {
+        return false;
+    }
+    if (code == 0) {
+        return false;
+    }
+    jclass jExceptionClass = env->FindClass("jp/hiroshiba/voicevox/VoicevoxCore$VoicevoxException");
+    auto message = voicevoxCore->voicevox_error_result_to_message(code);
+    env->ThrowNew(jExceptionClass, message);
+    return true;
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -92,14 +106,14 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxErrorResultToMessage(
 }
 
 extern "C"
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
         JNIEnv *env,
         jobject thiz,
         jstring openJtalkDictPath
 ) {
-    if(!assertCoreLoaded(env)) {
-        return -1;
+    if (!assertCoreLoaded(env)) {
+        return;
     }
 
     auto openJtalkDictPathStr = env->GetStringUTFChars(openJtalkDictPath, nullptr);
@@ -111,5 +125,6 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
 
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxInitialize: %d", result);
 
-    return result;
+    throwExceptionIfError(env, result);
+    return;
 }
