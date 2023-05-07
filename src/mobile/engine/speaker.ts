@@ -41,7 +41,8 @@ const speakerProvider: ApiProvider = ({ corePlugin }) => {
     async isInitializedSpeakerIsInitializedSpeakerGet({ speaker }) {
       return await corePlugin
         .isModelLoaded({ speakerId: speaker })
-        .then((res) => res.value);
+        // 何故かbooleanが文字列で返ってくるバグの再現
+        .then((res) => JSON.stringify(res.value) as unknown as boolean);
     },
   };
 };
