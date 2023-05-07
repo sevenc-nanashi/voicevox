@@ -18,7 +18,7 @@ bool assertCoreLoaded(JNIEnv *env) {
 }
 
 // 成功だったらtrueを返す
-bool throwExceptionIfError(JNIEnv *env, VoicevoxStatusCode code) {
+bool throwExceptionIfError(JNIEnv *env, VoicevoxResultCode code) {
     if (!voicevoxCore) {
         return false;
     }
@@ -124,7 +124,38 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
     env->ReleaseStringUTFChars(openJtalkDictPath, openJtalkDictPathStr);
 
     throwExceptionIfError(env, result);
-    return;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxLoadModel(
+        JNIEnv *env,
+        jobject thiz,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return;
+    }
+
+    auto result = voicevoxCore->voicevox_load_model(speakerId);
+
+    throwExceptionIfError(env, result);
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxIsModelLoaded(
+        JNIEnv *env,
+        jobject thiz,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return false;
+    }
+
+    auto result = voicevoxCore->voicevox_is_model_loaded(speakerId);
+
+    return result;
 }
 
 extern "C"
@@ -143,7 +174,7 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAudioQuery(
     auto options = voicevoxCore->voicevox_make_default_audio_query_options();
     options.kana = false;
 
-    char* result;
+    char *result;
 
     auto resultCode = voicevoxCore->voicevox_audio_query(textCStr, speakerId, options, &result);
     env->ReleaseStringUTFChars(text, textCStr);

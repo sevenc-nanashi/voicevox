@@ -4,9 +4,9 @@ import { AudioQueryFromJSON } from "@/openapi";
 const audioProvider: ApiProvider = ({ corePlugin }) => {
   return {
     async audioQueryAudioQueryPost({ text, speaker }) {
-      const rawQuery = JSON.parse(
-        (await corePlugin.audioQuery({ text, speakerId: speaker })).value
-      );
+      const rawQuery = await corePlugin
+        .audioQuery({ text, speakerId: speaker })
+        .then((res) => JSON.parse(res.value));
       return AudioQueryFromJSON({
         accent_phrases: rawQuery.accent_phrases,
         speedScale: rawQuery.speed_scale,

@@ -13,6 +13,9 @@ class VoicevoxCore {
     @Throws(VoicevoxException::class)
     external fun voicevoxInitialize(openJtalkDictPath: String)
 
+    external fun voicevoxLoadModel(speakerId: Int)
+    external fun voicevoxIsModelLoaded(speakerId: Int): Boolean
+
     @Throws(VoicevoxException::class)
     external fun voicevoxAudioQuery(text: String, speakerId: Int): String
 

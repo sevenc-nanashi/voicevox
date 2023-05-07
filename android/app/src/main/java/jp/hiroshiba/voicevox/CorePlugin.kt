@@ -66,6 +66,40 @@ class CorePlugin : Plugin() {
     }
 
     @PluginMethod
+    fun loadModel(call: PluginCall) {
+        val speakerId = call.getInt("speakerId")
+        if (speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            core!!.voicevoxLoadModel(speakerId)
+            call.resolve()
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun isModelLoaded(call: PluginCall) {
+        val speakerId = call.getInt("speakerId")
+        if (speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val result = core!!.voicevoxIsModelLoaded(speakerId)
+            val ret = JSObject()
+            ret.put("value", result)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
     fun audioQuery(call: PluginCall) {
         val text = call.getString("text")
         val speakerId = call.getInt("speakerId")
@@ -78,7 +112,7 @@ class CorePlugin : Plugin() {
             val audioQuery = core!!.voicevoxAudioQuery(text, speakerId)
             val ret = JSObject()
             ret.put("value", audioQuery)
-            call.resolve()
+            call.resolve(ret)
         } catch (e: VoicevoxCore.VoicevoxException) {
             call.reject(e.message)
         }
