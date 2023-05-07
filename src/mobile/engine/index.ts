@@ -1,5 +1,5 @@
 import { VoicevoxCorePlugin } from "../plugin";
-import audioProvider from "./audio";
+import queryProvider from "./query";
 import infoProvider from "./info";
 import speakerProvider from "./speaker";
 import dictProvider from "./dict";
@@ -25,7 +25,7 @@ const loadApi = () => {
   // - 本家OpenAPI Connectorに存在している、かつコアベースの実装がない場合はNot implementedエラーを投げ、
   // - 本家OpenAPI Connectorに存在していない場合はUnknown APIエラーを投げる
   coreBasedApi = new Proxy(
-    [infoProvider, speakerProvider, dictProvider, audioProvider].reduce(
+    [infoProvider, speakerProvider, dictProvider, queryProvider].reduce(
       (acc, provider) => ({ ...acc, ...provider({ corePlugin }) }),
       {}
     ) as Partial<DefaultApiInterface>,

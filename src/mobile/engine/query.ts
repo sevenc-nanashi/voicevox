@@ -1,7 +1,7 @@
 import { ApiProvider } from ".";
 import { AudioQueryFromJSON } from "@/openapi";
 
-const audioProvider: ApiProvider = ({ corePlugin }) => {
+const queryProvider: ApiProvider = ({ corePlugin }) => {
   return {
     async audioQueryAudioQueryPost({ text, speaker }) {
       const rawQuery = await corePlugin
@@ -23,4 +23,4 @@ const audioProvider: ApiProvider = ({ corePlugin }) => {
   };
 };
 
-export default audioProvider;
+export default queryProvider;
