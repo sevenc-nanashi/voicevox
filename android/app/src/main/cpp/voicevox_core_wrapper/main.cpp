@@ -35,7 +35,7 @@ bool throwExceptionIfError(JNIEnv *env, VoicevoxResultCode code) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_jp_hiroshiba_voicevox_VoicevoxCore_loadLibrary(JNIEnv *env, jobject thiz) {
+Java_jp_hiroshiba_voicevox_VoicevoxCore_loadLibrary(JNIEnv *env, __attribute__((unused)) jobject thiz) {
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "loadLibrary");
     voicevoxCore = new VoicevoxCore();
     startLogger();
@@ -53,7 +53,7 @@ extern "C"
 JNIEXPORT jstring
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetSupportedDevicesJson(
         JNIEnv *env,
-        jobject thiz
+        __attribute__((unused)) jobject thiz
 ) {
     if (!assertCoreLoaded(env)) {
         return nullptr;
@@ -67,7 +67,7 @@ extern "C"
 JNIEXPORT jstring
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetVersion(
         JNIEnv *env,
-        jobject thiz
+        __attribute__((unused)) jobject thiz
 ) {
     if (!assertCoreLoaded(env)) {
         return nullptr;
@@ -81,7 +81,7 @@ extern "C"
 JNIEXPORT jstring
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxGetMetasJson(
         JNIEnv *env,
-        jobject thiz
+        __attribute__((unused)) jobject thiz
 ) {
     if (!assertCoreLoaded(env)) {
         return nullptr;
@@ -95,7 +95,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxErrorResultToMessage(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jint status_code
 ) {
     if (!assertCoreLoaded(env)) {
@@ -111,7 +111,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxInitialize(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring openJtalkDictPath
 ) {
     if (!assertCoreLoaded(env)) {
@@ -132,7 +132,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxLoadModel(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jint speakerId
 ) {
     if (!assertCoreLoaded(env)) {
@@ -148,7 +148,7 @@ extern "C"
 JNIEXPORT jboolean JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxIsModelLoaded(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jint speakerId
 ) {
     if (!assertCoreLoaded(env)) {
@@ -164,7 +164,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAudioQuery(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring text,
         jint speakerId
 ) {
@@ -195,7 +195,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAccentPhrases(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring text,
         jint speakerId
 ) {
@@ -226,7 +226,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraLength(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring accentPhrases,
         jint speakerId
 ) {
@@ -255,7 +255,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraPitch(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring accentPhrases,
         jint speakerId
 ) {
@@ -284,7 +284,7 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraData(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring accentPhrases,
         jint speakerId
 ) {
@@ -313,7 +313,7 @@ extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxSynthesis(
         JNIEnv *env,
-        jobject thiz,
+        __attribute__((unused)) jobject thiz,
         jstring audioQuery,
         jint speakerId,
         jboolean enableInterrogativeUpspeak
