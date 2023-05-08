@@ -1,5 +1,9 @@
 import { ApiProvider } from ".";
-import { AccentPhraseFromJSON, AudioQueryFromJSON } from "@/openapi";
+import {
+  AccentPhraseFromJSON,
+  AccentPhraseToJSON,
+  AudioQueryFromJSON,
+} from "@/openapi";
 
 const queryProvider: ApiProvider = ({ corePlugin }) => {
   return {
@@ -26,6 +30,36 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
         .accentPhrases({ text, speakerId: speaker })
         .then((res) => JSON.parse(res.value));
       return rawAccentPhrases.map(AccentPhraseFromJSON);
+    },
+
+    async moraLengthMoraLengthPost({ accentPhrase: accentPhrases, speaker }) {
+      const rawMoraLength = await corePlugin
+        .moraLength({
+          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          speakerId: speaker,
+        })
+        .then((res) => JSON.parse(res.value));
+      return rawMoraLength.map(AccentPhraseFromJSON);
+    },
+
+    async moraPitchMoraPitchPost({ accentPhrase: accentPhrases, speaker }) {
+      const rawMoraPitch = await corePlugin
+        .moraPitch({
+          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          speakerId: speaker,
+        })
+        .then((res) => JSON.parse(res.value));
+      return rawMoraPitch.map(AccentPhraseFromJSON);
+    },
+
+    async moraDataMoraDataPost({ accentPhrase: accentPhrases, speaker }) {
+      const rawMoraData = await corePlugin
+        .moraData({
+          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          speakerId: speaker,
+        })
+        .then((res) => JSON.parse(res.value));
+      return rawMoraData.map(AccentPhraseFromJSON);
     },
   };
 };

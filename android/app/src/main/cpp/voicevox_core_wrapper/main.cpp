@@ -308,3 +308,5 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraData(
 
     return resultJStr;
 }
+
+

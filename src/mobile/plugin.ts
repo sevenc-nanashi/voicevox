@@ -18,6 +18,19 @@ export type VoicevoxCorePlugin = {
     text: string;
     speakerId: number;
   }) => Promise<{ value: string }>;
+
+  moraLength: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+  moraPitch: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+  moraData: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
 };
 
 const loadPlugin = () => {
