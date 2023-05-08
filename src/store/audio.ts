@@ -55,19 +55,25 @@ async function generateUniqueIdAndQuery(
     audioQuery.outputStereo = state.savingSetting.outputStereo;
   }
 
-  const data = new TextEncoder().encode(
-    JSON.stringify([
-      audioItem.text,
-      audioQuery,
-      audioItem.voice,
-      audioItem.morphingInfo,
-      state.experimentalSetting.enableInterrogativeUpspeak, // このフラグが違うと、同じAudioQueryで違う音声が生成されるので追加
-    ])
-  );
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  const id = Array.from(new Uint8Array(digest))
-    .map((v) => v.toString(16).padStart(2, "0"))
-    .join("");
+  const key = JSON.stringify([
+    audioItem.text,
+    audioQuery,
+    audioItem.voice,
+    audioItem.morphingInfo,
+    state.experimentalSetting.enableInterrogativeUpspeak, // このフラグが違うと、同じAudioQueryで違う音声が生成されるので追加
+  ]);
+  let id: string;
+  // Capacitorのサーバー接続モードでは、Insecure contextとして扱われるためcrypto.subtleが使えない。
+  // 使えない場合はそのままkeyをidとして使う。
+  if (crypto.subtle) {
+    const data = new TextEncoder().encode(key);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    id = Array.from(new Uint8Array(digest))
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("");
+  } else {
+    id = key;
+  }
   return [id, audioQuery];
 }
 
