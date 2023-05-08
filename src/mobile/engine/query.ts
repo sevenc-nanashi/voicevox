@@ -1,9 +1,19 @@
 import { ApiProvider } from ".";
 import {
+  AccentPhrase,
   AccentPhraseFromJSON,
   AccentPhraseToJSON,
   AudioQueryFromJSON,
 } from "@/openapi";
+
+const accentPhrasesToJSON = (accentPhrases: AccentPhrase[]) =>
+  accentPhrases.map((p) => {
+    const ret = AccentPhraseToJSON(p);
+    if (ret.is_interrogative == null) {
+      ret.is_interrogative = false;
+    }
+    return ret;
+  });
 
 const queryProvider: ApiProvider = ({ corePlugin }) => {
   return {
@@ -35,7 +45,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
     async moraLengthMoraLengthPost({ accentPhrase: accentPhrases, speaker }) {
       const rawMoraLength = await corePlugin
         .moraLength({
-          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          accentPhrases: JSON.stringify(accentPhrasesToJSON(accentPhrases)),
           speakerId: speaker,
         })
         .then((res) => JSON.parse(res.value));
@@ -45,7 +55,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
     async moraPitchMoraPitchPost({ accentPhrase: accentPhrases, speaker }) {
       const rawMoraPitch = await corePlugin
         .moraPitch({
-          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          accentPhrases: JSON.stringify(accentPhrasesToJSON(accentPhrases)),
           speakerId: speaker,
         })
         .then((res) => JSON.parse(res.value));
@@ -55,7 +65,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
     async moraDataMoraDataPost({ accentPhrase: accentPhrases, speaker }) {
       const rawMoraData = await corePlugin
         .moraData({
-          accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
+          accentPhrases: JSON.stringify(accentPhrasesToJSON(accentPhrases)),
           speakerId: speaker,
         })
         .then((res) => JSON.parse(res.value));
@@ -70,7 +80,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
       const b64Audio = await corePlugin
         .synthesis({
           audioQuery: JSON.stringify({
-            accent_phrases: audioQuery.accentPhrases.map(AccentPhraseToJSON),
+            accent_phrases: accentPhrasesToJSON(audioQuery.accentPhrases),
             speed_scale: audioQuery.speedScale,
             pitch_scale: audioQuery.pitchScale,
             intonation_scale: audioQuery.intonationScale,
