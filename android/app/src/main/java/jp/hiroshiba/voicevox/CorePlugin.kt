@@ -137,6 +137,63 @@ class CorePlugin : Plugin() {
         }
     }
 
+    @PluginMethod
+    fun moraPitch(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraPitch(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun moraLength(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraLength(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun moraData(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraData(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
     @Throws(IOException::class)
     private fun extractIfNotFound(archiveName: String): String {
         val filesDir = context.filesDir.absolutePath

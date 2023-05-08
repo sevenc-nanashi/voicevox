@@ -221,3 +221,90 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxAccentPhrases(
 
     return resultJStr;
 }
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraLength(
+        JNIEnv *env,
+        jobject thiz,
+        jstring accentPhrases,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto accentPhrasesCStr = env->GetStringUTFChars(accentPhrases, nullptr);
+
+    char *result;
+
+    auto resultCode = voicevoxCore->voicevox_mora_length(accentPhrasesCStr, speakerId, &result);
+    env->ReleaseStringUTFChars(accentPhrases, accentPhrasesCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultJStr = env->NewStringUTF(result);
+    voicevoxCore->voicevox_accent_phrases_json_free(result);
+
+    return resultJStr;
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraPitch(
+        JNIEnv *env,
+        jobject thiz,
+        jstring accentPhrases,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto accentPhrasesCStr = env->GetStringUTFChars(accentPhrases, nullptr);
+
+    char *result;
+
+    auto resultCode = voicevoxCore->voicevox_mora_pitch(accentPhrasesCStr, speakerId, &result);
+    env->ReleaseStringUTFChars(accentPhrases, accentPhrasesCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultJStr = env->NewStringUTF(result);
+    voicevoxCore->voicevox_accent_phrases_json_free(result);
+
+    return resultJStr;
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraData(
+        JNIEnv *env,
+        jobject thiz,
+        jstring accentPhrases,
+        jint speakerId
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
+
+    auto accentPhrasesCStr = env->GetStringUTFChars(accentPhrases, nullptr);
+
+    char *result;
+
+    auto resultCode = voicevoxCore->voicevox_mora_data(accentPhrasesCStr, speakerId, &result);
+    env->ReleaseStringUTFChars(accentPhrases, accentPhrasesCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultJStr = env->NewStringUTF(result);
+    voicevoxCore->voicevox_accent_phrases_json_free(result);
+
+    return resultJStr;
+}
