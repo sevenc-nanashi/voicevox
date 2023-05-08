@@ -31,6 +31,12 @@ export type VoicevoxCorePlugin = {
     accentPhrases: string;
     speakerId: number;
   }) => Promise<{ value: string }>;
+
+  synthesis: (obj: {
+    audioQuery: string;
+    speakerId: number;
+    enableInterrogativeUpspeak: boolean;
+  }) => Promise<{ value: string }>;
 };
 
 const loadPlugin = () => {

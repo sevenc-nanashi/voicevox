@@ -1,6 +1,7 @@
 // https://stackoverflow.com/questions/10531050/redirect-stdout-to-logcat-in-android-ndk
 #include <android/log.h>
 #include <unistd.h>
+#include <pthread.h>
 
 struct LogParams {
     int fd;
@@ -18,10 +19,10 @@ static void *logInBackground(void *rawParams) {
         buf[rdsz] = 0;
         __android_log_write(params.priority, "voicevox_core", buf);
     }
-    return 0;
+    return nullptr;
 }
 
-int startLogger() {
+static void startLogger() {
     int stdoutPfd[2];
     int stderrPfd[2];
     pthread_t thr[2];
@@ -36,9 +37,9 @@ int startLogger() {
     };
 
     if (pthread_create(
-            &thr[0], 0, logInBackground, &stdoutParams
-    ) == -1)
-        return -1;
+            &thr[0], nullptr, logInBackground, &stdoutParams
+    ) != 0)
+        return;
     pthread_detach(thr[0]);
 
     stderrParams = {
@@ -47,9 +48,8 @@ int startLogger() {
     };
 
     if (pthread_create(
-            &thr[1], 0, logInBackground, &stderrParams
-    ) == -1)
-        return -1;
+            &thr[1], nullptr, logInBackground, &stderrParams
+    ) != 0)
+        return;
     pthread_detach(thr[1]);
-    return 0;
 }

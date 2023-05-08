@@ -309,4 +309,38 @@ Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxMoraData(
     return resultJStr;
 }
 
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_jp_hiroshiba_voicevox_VoicevoxCore_voicevoxSynthesis(
+        JNIEnv *env,
+        jobject thiz,
+        jstring audioQuery,
+        jint speakerId,
+        jboolean enableInterrogativeUpspeak
+) {
+    if (!assertCoreLoaded(env)) {
+        return nullptr;
+    }
 
+    auto audioQueryCStr = env->GetStringUTFChars(audioQuery, nullptr);
+    auto options = voicevoxCore->voicevox_make_default_synthesis_options();
+    options.enable_interrogative_upspeak = enableInterrogativeUpspeak;
+
+    uint8_t *result;
+    uintptr_t resultSize;
+
+    auto resultCode = voicevoxCore->voicevox_synthesis(audioQueryCStr, speakerId, options, &resultSize, &result);
+    env->ReleaseStringUTFChars(audioQuery, audioQueryCStr);
+
+    if (throwExceptionIfError(env, resultCode)) {
+        return nullptr;
+    }
+
+    auto resultByteArray = env->NewByteArray(static_cast<int>(resultSize));
+    auto resultByteArrayElements = env->GetByteArrayElements(resultByteArray, nullptr);
+    memcpy(resultByteArrayElements, result, resultSize);
+    env->ReleaseByteArrayElements(resultByteArray, resultByteArrayElements, 0);
+    voicevoxCore->voicevox_wav_free(result);
+
+    return resultByteArray;
+}

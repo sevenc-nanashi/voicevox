@@ -10,6 +10,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.Base64
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -188,6 +189,27 @@ class CorePlugin : Plugin() {
             val newAccentPhrases = core!!.voicevoxMoraData(accentPhrases, speakerId)
             val ret = JSObject()
             ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun synthesis(call: PluginCall) {
+        val audioQuery = call.getString("audioQuery")
+        val speakerId = call.getInt("speakerId")
+        val enableInterrogativeUpspeak = call.getBoolean("enableInterrogativeUpspeak")
+        if (audioQuery == null || speakerId == null || enableInterrogativeUpspeak == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val result = core!!.voicevoxSynthesis(audioQuery, speakerId, enableInterrogativeUpspeak)
+            val ret = JSObject()
+            val encodedResult = Base64.getEncoder().encodeToString(result)
+            ret.put("value", encodedResult)
             call.resolve(ret)
         } catch (e: VoicevoxCore.VoicevoxException) {
             call.reject(e.message)

@@ -19,15 +19,21 @@ class VoicevoxCore {
 
     @Throws(VoicevoxException::class)
     external fun voicevoxAudioQuery(text: String, speakerId: Int): String
+
     @Throws(VoicevoxException::class)
     external fun voicevoxAccentPhrases(text: String, speakerId: Int): String
 
     @Throws(VoicevoxException::class)
     external fun voicevoxMoraPitch(accentPhrases: String, speakerId: Int): String
+
     @Throws(VoicevoxException::class)
     external fun voicevoxMoraLength(accentPhrases: String, speakerId: Int): String
+
     @Throws(VoicevoxException::class)
     external fun voicevoxMoraData(accentPhrases: String, speakerId: Int): String
+
+    @Throws(VoicevoxException::class)
+    external fun voicevoxSynthesis(audioQuery: String, speakerId: Int, enableInterrogativeUpspeak: Boolean): ByteArray
 
     class VoicevoxException(override val message: String) : Exception(message)
 

@@ -61,6 +61,39 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
         .then((res) => JSON.parse(res.value));
       return rawMoraData.map(AccentPhraseFromJSON);
     },
+
+    async synthesisSynthesisPost({
+      audioQuery,
+      speaker,
+      enableInterrogativeUpspeak,
+    }) {
+      const b64Audio = await corePlugin
+        .synthesis({
+          audioQuery: JSON.stringify({
+            accent_phrases: audioQuery.accentPhrases.map(AccentPhraseToJSON),
+            speed_scale: audioQuery.speedScale,
+            pitch_scale: audioQuery.pitchScale,
+            intonation_scale: audioQuery.intonationScale,
+            volume_scale: audioQuery.volumeScale,
+            pre_phoneme_length: audioQuery.prePhonemeLength,
+            post_phoneme_length: audioQuery.postPhonemeLength,
+            output_sampling_rate: audioQuery.outputSamplingRate,
+            output_stereo: audioQuery.outputStereo,
+            kana: audioQuery.kana,
+          }),
+          speakerId: speaker,
+          enableInterrogativeUpspeak: !!enableInterrogativeUpspeak,
+        })
+        .then((res) => {
+          return atob(res.value);
+        });
+
+      const arrayBuffer = Uint8Array.from(
+        b64Audio.split("").map((c) => c.charCodeAt(0))
+      ).buffer;
+
+      return new Blob([arrayBuffer], { type: "audio/wav" });
+    },
   };
 };
 
