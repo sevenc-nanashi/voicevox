@@ -878,6 +878,9 @@ const currentAudioOutputDeviceComputed = computed<{
   label: string;
 } | null>({
   get: () => {
+    if (store.state.savingSetting.audioOutputDevice === "default") {
+      return null;
+    }
     // 再生デバイスが見つからなかったらデフォルト値に戻す
     const device = availableAudioOutputDevices.value?.find(
       (device) => device.key === store.state.savingSetting.audioOutputDevice
