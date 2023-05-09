@@ -33,8 +33,8 @@
     "cap:sync": "cross-env VITE_TARGET=mobile vite build && cross-env CAPACITOR_MODE=build cap sync",
     "cap:build:android": "npm run cap:sync && npx cap build android",
     "cap:build:ios": "npm run cap:sync && npx cap build ios",
-    "cap:open:android": "npm run cap:sync && npx cap open android",
-    "cap:open:ios": "npm run cap:sync && npx cap open ios"
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios"
   },
   "dependencies": {
     "@capacitor/android": "4.7.3",
