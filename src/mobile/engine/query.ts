@@ -6,6 +6,7 @@ import {
   AudioQueryFromJSON,
 } from "@/openapi";
 
+// TODO: https://github.com/VOICEVOX/voicevox_core/pull/486 がマージされたら消す
 const accentPhrasesToJSON = (accentPhrases: AccentPhrase[]) =>
   accentPhrases.map((p) => {
     const ret = AccentPhraseToJSON(p);
