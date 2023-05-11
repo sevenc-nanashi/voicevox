@@ -1,6 +1,7 @@
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import Encoding from "encoding-japanese";
+import sha256 from "crypto-js/sha256";
 import { createUILockAction, withProgress } from "./ui";
 import {
   AudioItem,
@@ -62,18 +63,9 @@ async function generateUniqueIdAndQuery(
     audioItem.morphingInfo,
     state.experimentalSetting.enableInterrogativeUpspeak, // このフラグが違うと、同じAudioQueryで違う音声が生成されるので追加
   ]);
-  let id: string;
   // Capacitorのサーバー接続モードでは、Insecure contextとして扱われるためcrypto.subtleが使えない。
-  // 使えない場合はそのままkeyをidとして使う。
-  if (crypto.subtle) {
-    const data = new TextEncoder().encode(key);
-    const digest = await crypto.subtle.digest("SHA-256", data);
-    id = Array.from(new Uint8Array(digest))
-      .map((v) => v.toString(16).padStart(2, "0"))
-      .join("");
-  } else {
-    id = key;
-  }
+  // そのため、crypto-jsでハッシュ化処理を行う。
+  const id = sha256(key).toString();
   return [id, audioQuery];
 }
 
