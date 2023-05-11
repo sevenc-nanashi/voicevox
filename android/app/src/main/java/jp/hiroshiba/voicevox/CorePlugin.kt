@@ -10,6 +10,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.Base64
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -55,13 +56,163 @@ class CorePlugin : Plugin() {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
-        val result = core!!.voicevoxInitialize(
-                dictPath,
-        )
-        if (result == 0) {
+        try {
+            core!!.voicevoxInitialize(
+                    dictPath,
+            )
             call.resolve()
-        } else {
-            call.reject(core!!.voicevoxErrorResultToMessage(result))
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun loadModel(call: PluginCall) {
+        val speakerId = call.getInt("speakerId")
+        if (speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            core!!.voicevoxLoadModel(speakerId)
+            call.resolve()
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun isModelLoaded(call: PluginCall) {
+        val speakerId = call.getInt("speakerId")
+        if (speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val result = core!!.voicevoxIsModelLoaded(speakerId)
+            val ret = JSObject()
+            ret.put("value", result)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun audioQuery(call: PluginCall) {
+        val text = call.getString("text")
+        val speakerId = call.getInt("speakerId")
+        if (text == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val audioQuery = core!!.voicevoxAudioQuery(text, speakerId)
+            val ret = JSObject()
+            ret.put("value", audioQuery)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun accentPhrases(call: PluginCall) {
+        val text = call.getString("text")
+        val speakerId = call.getInt("speakerId")
+        if (text == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val accentPhrases = core!!.voicevoxAccentPhrases(text, speakerId)
+            val ret = JSObject()
+            ret.put("value", accentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun moraPitch(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraPitch(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun moraLength(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraLength(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun moraData(call: PluginCall) {
+        val accentPhrases = call.getString("accentPhrases")
+        val speakerId = call.getInt("speakerId")
+        if (accentPhrases == null || speakerId == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val newAccentPhrases = core!!.voicevoxMoraData(accentPhrases, speakerId)
+            val ret = JSObject()
+            ret.put("value", newAccentPhrases)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun synthesis(call: PluginCall) {
+        val audioQuery = call.getString("audioQuery")
+        val speakerId = call.getInt("speakerId")
+        val enableInterrogativeUpspeak = call.getBoolean("enableInterrogativeUpspeak")
+        if (audioQuery == null || speakerId == null || enableInterrogativeUpspeak == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val result = core!!.voicevoxSynthesis(audioQuery, speakerId, enableInterrogativeUpspeak)
+            val ret = JSObject()
+            val encodedResult = Base64.getEncoder().encodeToString(result)
+            ret.put("value", encodedResult)
+            call.resolve(ret)
+        } catch (e: VoicevoxCore.VoicevoxException) {
+            call.reject(e.message)
         }
     }
 

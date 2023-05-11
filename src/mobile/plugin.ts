@@ -6,6 +6,37 @@ export type VoicevoxCorePlugin = {
   getMetasJson: () => Promise<{ value: string }>;
 
   initialize: () => Promise<void>;
+
+  loadModel: (obj: { speakerId: number }) => Promise<void>;
+  isModelLoaded: (obj: { speakerId: number }) => Promise<{ value: boolean }>;
+
+  audioQuery: (obj: {
+    text: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+  accentPhrases: (obj: {
+    text: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+
+  moraLength: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+  moraPitch: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+  moraData: (obj: {
+    accentPhrases: string;
+    speakerId: number;
+  }) => Promise<{ value: string }>;
+
+  synthesis: (obj: {
+    audioQuery: string;
+    speakerId: number;
+    enableInterrogativeUpspeak: boolean;
+  }) => Promise<{ value: string }>;
 };
 
 const loadPlugin = () => {
