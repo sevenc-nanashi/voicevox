@@ -990,7 +990,7 @@ const adjustSliderValue = (
   }
 }
 
-.paramters {
+.parameters {
   flex-grow: 1;
   padding: 0 16px;
 }
