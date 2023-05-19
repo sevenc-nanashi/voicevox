@@ -4,6 +4,7 @@
       <div class="side">
         <div class="detail-selector">
           <q-tabs dense vertical class="text-display" v-model="selectedDetail">
+            <q-tab name="parameter" label="ﾊﾟﾗﾒｰﾀ" />
             <q-tab name="accent" label="ｱｸｾﾝﾄ" />
             <q-tab
               name="pitch"
