@@ -1,6 +1,7 @@
 package jp.hiroshiba.voicevox
 
 import android.app.Activity
+import android.system.Os
 import android.util.Log
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -18,12 +19,7 @@ import java.util.zip.ZipInputStream
 class CorePlugin : Plugin() {
     var core: VoicevoxCore? = null
     override fun load() {
-        val modelPath: String = try {
-            extractIfNotFound("model.zip")
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        }
-        core = VoicevoxCore(modelPath)
+        core = VoicevoxCore()
     }
 
     @PluginMethod
@@ -56,6 +52,12 @@ class CorePlugin : Plugin() {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
+        val modelPath = try {
+            extractIfNotFound("model.zip")
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
+        Os.setenv("VV_MODELS_ROOT_DIR", modelPath, true)
         try {
             core!!.voicevoxInitialize(
                     dictPath,

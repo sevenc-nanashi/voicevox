@@ -37,12 +37,7 @@ class VoicevoxCore {
 
     class VoicevoxException(override val message: String) : Exception(message)
 
-    constructor(modelPath: String) {
-        try {
-            Os.setenv("VV_MODELS_ROOT_DIR", modelPath, true)
-        } catch (e: ErrnoException) {
-            throw RuntimeException(e)
-        }
+    constructor() {
         loadLibrary()
     }
 
