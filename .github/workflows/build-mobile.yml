@@ -1,4 +1,4 @@
-name: Build for Mobile
+name: Build
 
 on:
   push:
@@ -25,6 +25,7 @@ on:
         default: false
 
 env:
+  VOICEVOX_CORE_REPO_URL: "https://github.com/VOICEVOX/voicevox_core"
   VOICEVOX_CORE_VERSION: 0.15.0-preview.3
   VOICEVOX_RESOURCE_VERSION: 0.14.2
   VOICEVOX_EDITOR_VERSION:
@@ -44,8 +45,11 @@ jobs:
           sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
           sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
 
-          # 1625832000: 2023/05/20 00:00:00 JST
-          version_code="$(expr $(date "+%s") - 1684508400)"
+          releases="$(
+            curl https://api.github.com/repos/${{ github.repository }}/releases -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -sSf | \
+              jq -r 'length'
+          )"
+          version_code="$(( releases + 1 ))"
           sed -i 's/versionCode 1/versionCode $version_code/' android/app/build.gradle
           sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
 

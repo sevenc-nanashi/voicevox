@@ -549,8 +549,9 @@ jobs:
         run: |
           sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
           sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
+
           releases="$(
-            curl https://api.github.com/repos/${{ github.action_repository }}/releases -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -sSf | \
+            curl https://api.github.com/repos/${{ github.repository }}/releases -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -sSf | \
               jq -r 'length'
           )"
           version_code="$(( releases + 1 ))"
