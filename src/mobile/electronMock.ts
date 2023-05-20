@@ -37,28 +37,28 @@ const loadMock = () => {
       };
     },
     async getHowToUseText() {
-      return "# How to use\ndummy";
+      return await fetch("/howtouse.md").then((res) => res.text());
     },
     async getPolicyText() {
-      return "# Policy\ndummy";
+      return await fetch("/policy.md").then((res) => res.text());
     },
     async getOssLicenses() {
-      return [];
+      return await fetch("/licenses.json").then((res) => res.json());
     },
     async getUpdateInfos() {
-      return [];
+      return await fetch("/updateInfos.json").then((res) => res.json());
     },
     async getOssCommunityInfos() {
-      return "";
+      return await fetch("/ossCommunityInfos.md").then((res) => res.json());
     },
     async getQAndAText() {
-      return "# Q&A\ndummy";
+      return await fetch("/qAndA.md").then((res) => res.text());
     },
     async getContactText() {
-      return "# Contact\ndummy";
+      return await fetch("/contact.md").then((res) => res.text());
     },
     async getPrivacyPolicyText() {
-      return "# Privacy Policy\ndummy";
+      return await fetch("/privacyPolicy.md").then((res) => res.text());
     },
     async saveTempAudioFile(obj) {
       throw new Error(`Not implemented: saveTempAudioFile ${obj}`);

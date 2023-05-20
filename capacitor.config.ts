@@ -1,12 +1,18 @@
 import { networkInterfaces } from "os";
 import { CapacitorConfig } from "@capacitor/cli";
 
-const config: CapacitorConfig = {
-  appId: "jp.hiroshiba.voicevox",
-  appName: "VOICEVOX",
-  webDir: "dist",
-  bundledWebRuntime: false,
-};
+const config: CapacitorConfig =
+  process.env.IS_PRODUCTION === "true"
+    ? {
+        appId: "jp.hiroshiba.voicevox",
+        appName: "VOICEVOX",
+        webDir: "dist",
+      }
+    : {
+        appId: "jp.hiroshiba.voicevox-dev",
+        appName: "VOICEVOX Dev",
+        webDir: "dist",
+      };
 
 if (process.env.CAPACITOR_MODE === "serve") {
   const nets = networkInterfaces();
