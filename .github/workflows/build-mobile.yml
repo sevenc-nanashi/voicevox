@@ -209,5 +209,5 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           tag_name: ${{ env.VOICEVOX_EDITOR_VERSION }}
           files: |-
-            /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.aab
+            /tmp/voicevox-mobile-${{ env.VOICEVOX_EDITOR_VERSION }}.aab
           target_commitish: ${{ github.sha }}
