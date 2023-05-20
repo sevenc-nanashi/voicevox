@@ -984,7 +984,6 @@ const adjustSliderValue = (
     .parameters {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      padding: 0 16px;
       gap: 16px;
     }
   }
