@@ -44,6 +44,10 @@ jobs:
         run: |
           sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
           sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
+          # 1625832000: 2023/05/20 00:00:00 JST
+          version_code="$(expr $(date "+%s") - 1684508400)"
+          sed -i 's/versionCode 1/versionCode $current_time/' android/app/build.gradle
+          sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
 
       - uses: actions/checkout@v3
       - name: Setup environment
