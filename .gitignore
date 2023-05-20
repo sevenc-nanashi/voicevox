@@ -39,5 +39,5 @@ electron-builder.yml
 # generated licenses.json
 /*licenses.json
 
-# generated speakerInfo.json
-public/speakerInfos.json
+# generated speakerInfo files
+public/speakerInfos/*.json

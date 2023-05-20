@@ -1,9 +1,7 @@
 import { ApiProvider } from ".";
-import { SpeakerFromJSON, SpeakerInfo, SpeakerInfoFromJSON } from "@/openapi";
+import { SpeakerFromJSON, SpeakerInfoFromJSON } from "@/openapi";
 
 const speakerProvider: ApiProvider = ({ corePlugin }) => {
-  let speakerInfosMap: Record<string, SpeakerInfo> | undefined;
-
   return {
     async speakersSpeakersGet() {
       const metasJson = JSON.parse(
@@ -21,14 +19,9 @@ const speakerProvider: ApiProvider = ({ corePlugin }) => {
       );
     },
     async speakerInfoSpeakerInfoGet({ speakerUuid }) {
-      if (!speakerInfosMap) {
-        speakerInfosMap = Object.fromEntries(
-          Object.entries(
-            await fetch("/speakerInfos.json").then((res) => res.json())
-          ).map(([key, value]) => [key, SpeakerInfoFromJSON(value)])
-        );
-      }
-      const speakerInfo = speakerInfosMap[speakerUuid];
+      const speakerInfo = await fetch(`/speakerInfos/${speakerUuid}.json`).then(
+        (res) => SpeakerInfoFromJSON(res.json())
+      );
       if (!speakerInfo) {
         throw new Error(`SpeakerInfo not found: ${speakerUuid}`);
       }

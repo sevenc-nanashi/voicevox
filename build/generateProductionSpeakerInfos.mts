@@ -24,78 +24,64 @@ const main = async () => {
   if (!speakerInfoDir || !fs.existsSync(speakerInfoDir)) {
     throw new Error(`speaker-info-dir not found: ${speakerInfoDir}`);
   }
-  const destPath = path.resolve(__dirname, "../public/speakerInfos.json");
+  const destDir = path.resolve(__dirname, "../public/speakerInfos");
 
-  await fs.promises.writeFile(
-    destPath,
-    JSON.stringify(
-      Object.fromEntries(
-        await Promise.all(
-          await fs.promises.readdir(speakerInfoDir).then((d) =>
-            d.map(async (dirName) => {
-              const dir = path.resolve(speakerInfoDir, dirName);
-              return [
-                dirName.split("_")[1],
-                {
-                  policy: await fs.promises.readFile(
-                    dir + "/policy.md",
-                    "utf-8"
-                  ),
-                  portrait: await fs.promises
-                    .readFile(dir + "/portrait.png")
+  await Promise.all(
+    await fs.promises.readdir(speakerInfoDir).then((d) =>
+      d.map(async (dirName) => {
+        const dir = path.resolve(speakerInfoDir, dirName);
+        const uuid = dirName.split("_")[1];
+        const data = {
+          policy: await fs.promises.readFile(dir + "/policy.md", "utf-8"),
+          portrait: await fs.promises
+            .readFile(dir + "/portrait.png")
+            .then((buf) => buf.toString("base64")),
+          style_infos: await Promise.all(
+            await fs.promises.readdir(dir + "/icons").then((icons) =>
+              icons.map(async (icon) => {
+                const id = parseInt(icon.split(".")[0]);
+                return {
+                  id,
+                  icon: await fs.promises
+                    .readFile(dir + `/icons/${icon}`)
                     .then((buf) => buf.toString("base64")),
-                  style_infos: await Promise.all(
-                    await fs.promises.readdir(dir + "/icons").then((icons) =>
-                      icons.map(async (icon) => {
-                        const id = parseInt(icon.split(".")[0]);
-                        return {
-                          id,
-                          icon: await fs.promises
-                            .readFile(dir + `/icons/${icon}`)
-                            .then((buf) => buf.toString("base64")),
-                          portrait: await fs.promises
-                            .readFile(dir + `/portraits/${id}.png`)
-                            .then((buf) => buf.toString("base64"))
-                            .catch(() => null),
-                          voice_samples: await Promise.all(
-                            await glob(dir + `/voice_samples/${id}_*.wav`).then(
-                              (voiceSamples) =>
-                                voiceSamples
-                                  .sort((a, b) => {
-                                    const aNum = parseInt(
-                                      path
-                                        .basename(a)
-                                        .split(".")[0]
-                                        .split("_")[1]
-                                    );
-                                    const bNum = parseInt(
-                                      path
-                                        .basename(b)
-                                        .split(".")[0]
-                                        .split("_")[1]
-                                    );
-                                    return aNum - bNum;
-                                  })
-                                  .map(async (voiceSample) => {
-                                    return await fs.promises
-                                      .readFile(voiceSample)
-                                      .then((buf) => buf.toString("base64"));
-                                  })
-                            )
-                          ),
-                        };
-                      })
+                  portrait: await fs.promises
+                    .readFile(dir + `/portraits/${id}.png`)
+                    .then((buf) => buf.toString("base64"))
+                    .catch(() => null),
+                  voice_samples: await Promise.all(
+                    await glob(dir + `/voice_samples/${id}_*.wav`).then(
+                      (voiceSamples) =>
+                        voiceSamples
+                          .sort((a, b) => {
+                            const aNum = parseInt(
+                              path.basename(a).split(".")[0].split("_")[1]
+                            );
+                            const bNum = parseInt(
+                              path.basename(b).split(".")[0].split("_")[1]
+                            );
+                            return aNum - bNum;
+                          })
+                          .map(async (voiceSample) => {
+                            return await fs.promises
+                              .readFile(voiceSample)
+                              .then((buf) => buf.toString("base64"));
+                          })
                     )
                   ),
-                },
-              ];
-            })
-          )
-        )
-      )
+                };
+              })
+            )
+          ),
+        };
+        await fs.promises.writeFile(
+          path.resolve(destDir, `${uuid}.json`),
+          JSON.stringify(data)
+        );
+      })
     )
   );
-  console.log("speakerInfos.json generated.");
+  console.log("speakerInfos generated.");
 };
 
 main();
