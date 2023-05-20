@@ -35,6 +35,17 @@ jobs:
   build-and-upload-for-android:
     environment: ${{ github.event.inputs.production_code_signing == 'true' && 'code_signing' || '' }} # コード署名用のenvironment（false時の挙動は2022年7月10日時点で未定義動作）
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - apk
+          - aab
+        include:
+          - target: apk
+            dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
+          - target: aab
+            dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
     steps:
       - uses: actions/checkout@v3
 
@@ -193,20 +204,9 @@ jobs:
             --keystorepath /tmp/keystore.jks \
             --keystorepass $ANDROID_KEYSTORE_PASS \
             --keystorealias $ANDROID_KEYSTORE_ALIAS \
-            --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS
-          mv android/app/build/outputs/bundle/release/app-release-signed.aab /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.aab
-
-          curl https://github.com/google/bundletool/releases/download/1.15.0/bundletool-all-1.15.0.jar -fsSLo bundletool.jar
-          java -jar bundletool.jar build-apks \
-            --bundle android/app/build/outputs/bundle/release/app-release.aab \
-            --output /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.apks \
-            --mode=universal \
-            --ks=/tmp/keystore.jks \
-            --ks-pass=pass:$ANDROID_KEYSTORE_PASS \
-            --ks-key-alias=$ANDROID_KEYSTORE_ALIAS \
-            --key-pass=pass:$ANDROID_KEYSTORE_ALIAS_PASS
-          unzip -o /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.apks universal.apk -d /tmp
-          mv /tmp/universal.apk /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.apk
+            --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS \
+            --androidreleasetype ${{ matrix.target }}
+          mv ${{ matrix.dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
 
       - name: Upload apk
         if: (github.event.release.tag_name || github.event.inputs.version) != ''
@@ -215,6 +215,5 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           tag_name: ${{ env.VOICEVOX_EDITOR_VERSION }}
           files: |-
-            /tmp/voicevox-mobile-${{ env.VOICEVOX_EDITOR_VERSION }}.aab
-            /tmp/voicevox-mobile-${{ env.VOICEVOX_EDITOR_VERSION }}.apk
+            /tmp/voicevox-mobile-${{ env.VOICEVOX_EDITOR_VERSION }}.${{ matrix.target }}
           target_commitish: ${{ github.sha }}
