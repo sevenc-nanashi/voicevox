@@ -60,10 +60,10 @@ jobs:
               jq -r 'length'
           )"
           version_code="$(( releases + 1 ))"
+          echo "VersionCode: $version_code"
           sed -i 's/versionCode 1/versionCode $version_code/' android/app/build.gradle
           sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
 
-      - uses: actions/checkout@v3
       - name: Setup environment
         uses: ./.github/actions/setup-environment
 
