@@ -44,7 +44,7 @@ jobs:
         include:
           - target: apk
             prod_dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
-            dev_dest_path: android/app/build/outputs/apk/release/app-release.apk
+            dev_dest_path: android/app/build/outputs/apk/release/app-release-unsigned.apk
           - target: aab
             prod_dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
             dev_dest_path: android/app/build/outputs/bundle/release/app-release.aab
