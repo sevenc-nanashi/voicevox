@@ -137,7 +137,7 @@ jobs:
             curl https://github.com/VOICEVOX/voicevox_core/releases/download/${{ env.VOICEVOX_CORE_VERSION }}/voicevox_core-android-$arch-cpu-${{ env.VOICEVOX_CORE_VERSION }}.zip -fsSLo $arch.zip
             unzip -o $arch.zip
             rm $arch.zip
-            mv voicevox_core-android-$arch-cpu-${{ env.VOICEVOX_CORE_VERSION }}/libvoicevox_core.so $arch_core.so
+            mv voicevox_core-android-$arch-cpu-${{ env.VOICEVOX_CORE_VERSION }}/libvoicevox_core.so ${arch}_core.so
           done
           cd voicevox_core-android-x86_64-cpu-${{ env.VOICEVOX_CORE_VERSION }}/model
           zip -r /tmp/model.zip .
