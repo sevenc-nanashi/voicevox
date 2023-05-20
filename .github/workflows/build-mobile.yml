@@ -43,9 +43,11 @@ jobs:
           - aab
         include:
           - target: apk
-            dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
+            prod_dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
+            dev_dest_path: android/app/build/outputs/apk/release/app-release.apk
           - target: aab
-            dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
+            prod_dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
+            dev_dest_path: android/app/build/outputs/apk/release/app-release.apk
     steps:
       - uses: actions/checkout@v3
 
@@ -207,7 +209,11 @@ jobs:
             --keystorealias $ANDROID_KEYSTORE_ALIAS \
             --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS \
             --androidreleasetype ${target^^}
-          mv ${{ matrix.dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+          if [ "${{ github.event.inputs.production_code_signing }}" = "true" ]; then
+            mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+          else
+            mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+          fi
 
       - name: Upload apk
         if: (github.event.release.tag_name || github.event.inputs.version) != ''
