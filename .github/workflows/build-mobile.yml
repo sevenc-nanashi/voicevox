@@ -25,7 +25,6 @@ on:
         default: false
 
 env:
-  VOICEVOX_CORE_REPO_URL: "https://github.com/VOICEVOX/voicevox_core"
   VOICEVOX_CORE_VERSION: 0.15.0-preview.3
   VOICEVOX_RESOURCE_VERSION: 0.14.2
   VOICEVOX_EDITOR_VERSION:
