@@ -192,9 +192,9 @@ jobs:
         shell: bash
         run: |
           keytool -genkey -v -keystore /tmp/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias androiddebugkey -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
-          echo "ANDROID_KEYSTORE_PASS=password" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS=voicevox" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS_PASS=password" >> $GITHUB_ENV
+          echo "ANDROID_KEYSTORE_PASS=android" >> $GITHUB_ENV
+          echo "ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
+          echo "ANDROID_KEYSTORE_ALIAS_PASS=android" >> $GITHUB_ENV
 
       - name: Build Android
         shell: bash
