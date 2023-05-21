@@ -193,7 +193,9 @@ jobs:
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
-          keytool -genkey -v -keystore /tmp/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          cd /tmp
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'C=US, O=Android, CN=Android Debug'
+          cd -
           echo "ANDROID_KEYSTORE_PATH=/tmp/debug.keystore" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_PASS=android" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
