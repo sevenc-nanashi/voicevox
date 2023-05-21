@@ -49,7 +49,7 @@ const loadMock = () => {
       return await fetch("/updateInfos.json").then((res) => res.json());
     },
     async getOssCommunityInfos() {
-      return await fetch("/ossCommunityInfos.md").then((res) => res.json());
+      return await fetch("/ossCommunityInfos.md").then((res) => res.text());
     },
     async getQAndAText() {
       return await fetch("/qAndA.md").then((res) => res.text());
@@ -181,7 +181,7 @@ const loadMock = () => {
       };
     },
     vuexReady() {
-      console.log("vuexReady");
+      SplashScreen.hide();
     },
     getSetting(key) {
       const setting = electronStoreSchema.parse(

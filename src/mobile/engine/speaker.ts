@@ -19,9 +19,9 @@ const speakerProvider: ApiProvider = ({ corePlugin }) => {
       );
     },
     async speakerInfoSpeakerInfoGet({ speakerUuid }) {
-      const speakerInfo = await fetch(`/speakerInfos/${speakerUuid}.json`).then(
-        (res) => SpeakerInfoFromJSON(res.json())
-      );
+      const speakerInfo = await fetch(`/speakerInfos/${speakerUuid}.json`)
+        .then((res) => res.json())
+        .then((res) => SpeakerInfoFromJSON(res));
       if (!speakerInfo) {
         throw new Error(`SpeakerInfo not found: ${speakerUuid}`);
       }
