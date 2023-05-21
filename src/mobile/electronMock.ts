@@ -181,7 +181,7 @@ const loadMock = () => {
       };
     },
     vuexReady() {
-      SplashScreen.hide();
+      console.log("vuexReady");
     },
     getSetting(key) {
       const setting = electronStoreSchema.parse(
