@@ -238,6 +238,7 @@ class CorePlugin : Plugin() {
             return destRoot.absolutePath
         } else if (destHash.exists()) {
             Log.i("extractIfNotFound", "Outdated (Hashes don't match)")
+            destRoot.deleteRecursively()
         } else {
             Log.i("extractIfNotFound", "Not exists")
         }

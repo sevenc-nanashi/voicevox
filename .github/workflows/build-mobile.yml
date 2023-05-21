@@ -43,11 +43,9 @@ jobs:
           - aab
         include:
           - target: apk
-            prod_dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
-            dev_dest_path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+            dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
           - target: aab
-            prod_dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
-            dev_dest_path: android/app/build/outputs/bundle/release/app-release.aab
+            dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
     steps:
       - uses: actions/checkout@v3
 
@@ -193,7 +191,7 @@ jobs:
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
-          keytool -genkey -v -keystore /tmp/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias voicevox -storepass password -keypass password -dname "CN=voicevox, OU=voicevox, O=voicevox, L=voicevox, ST=voicevox, C=JP"
+          keytool -genkey -v -keystore /tmp/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias androiddebugkey -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
           echo "ANDROID_KEYSTORE_PASS=password" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS=voicevox" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS_PASS=password" >> $GITHUB_ENV
@@ -209,11 +207,7 @@ jobs:
             --keystorealias $ANDROID_KEYSTORE_ALIAS \
             --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS \
             --androidreleasetype ${target^^}
-          if [ "${{ github.event.inputs.production_code_signing }}" = "true" ]; then
-            mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
-          else
-            mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
-          fi
+          mv ${{ matrix.dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
 
       - name: Upload apk
         if: (github.event.release.tag_name || github.event.inputs.version) != ''
