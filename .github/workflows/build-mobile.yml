@@ -174,7 +174,7 @@ jobs:
           cat - | base64 -d > /tmp/keystore.jks <<EOF
           ${{ secrets.ANDROID_KEYSTORE_DATA }}
           EOF
-          if [ -s keystore.jks ]; then
+          if [ -s /tmp/keystore.jks ]; then
             echo "Created keystore.jks"
             SHA256=$(sha256sum keystore.jks | cut -d ' ' -f 1)
             echo "SHA256: $SHA256"
@@ -183,6 +183,8 @@ jobs:
             echo "Have you set ANDROID_KEYSTORE_DATA, ANDROID_KEYSTORE_PASS, ANDROID_KEYSTORE_ALIAS and ANDROID_KEYSTORE_ALIAS_PASS?"
             exit 1
           fi
+
+          echo "ANDROID_KEYSTORE_PATH=/tmp/keystore.jks" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_PASS=${{ secrets.ANDROID_KEYSTORE_PASS }}" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS=${{ secrets.ANDROID_KEYSTORE_ALIAS }}" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS_PASS=${{ secrets.ANDROID_KEYSTORE_ALIAS_PASS }}" >> $GITHUB_ENV
@@ -191,7 +193,8 @@ jobs:
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
-          keytool -genkey -v -keystore /tmp/keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias androiddebugkey -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkey -v -keystore /tmp/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          echo "ANDROID_KEYSTORE_PATH=/tmp/debug.keystore" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_PASS=android" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
           echo "ANDROID_KEYSTORE_ALIAS_PASS=android" >> $GITHUB_ENV
@@ -202,7 +205,7 @@ jobs:
           chmod +x ./android/gradlew
           target=${{ matrix.target }}
           npm run cap:build:android -- \
-            --keystorepath /tmp/keystore.jks \
+            --keystorepath $ANDROID_KEYSTORE_PATH \
             --keystorepass $ANDROID_KEYSTORE_PASS \
             --keystorealias $ANDROID_KEYSTORE_ALIAS \
             --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS \
