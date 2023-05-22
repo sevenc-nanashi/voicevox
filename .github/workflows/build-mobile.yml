@@ -102,7 +102,7 @@ jobs:
         shell: bash
         run: npm run license:generate -- -o public/licenses.json
 
-      - name: Generate public/speakerInfos.json
+      - name: Generate public/speakerInfos
         shell: bash
         run: npx ts-node ./build/generateProductionSpeakerInfos.mts --speaker-info-dir ./resource/character_info
 
