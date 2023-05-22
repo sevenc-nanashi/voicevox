@@ -211,6 +211,7 @@ jobs:
           else
             ./gradlew bundleDebug
           fi
+          cd ..
           mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
 
       - name: Upload apk
