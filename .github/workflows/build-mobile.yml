@@ -132,7 +132,7 @@ jobs:
             /tmp/arm64_core.so
             /tmp/voicevox_core.h
             /tmp/model.zip
-          key: v1
+          key: ${{ env.VOICEVOX_CORE_VERSION }}
 
       - name: Download core
         if: steps.cache-core.outputs.cache-hit != 'true'
