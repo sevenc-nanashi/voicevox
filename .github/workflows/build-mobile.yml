@@ -52,15 +52,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Replace package name & version
-        shell: bash
-        run: |
-          sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
-
-          echo "VersionCode: ${{ github.run_number }}"
-          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
-          sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
-
       - name: Setup environment
         uses: ./.github/actions/setup-environment
 
@@ -97,6 +88,15 @@ jobs:
           # GTM ID
           gtm_id=$(jq -r '.gtm_container_id' resource/editor/metas.json)
           sed -i 's/VITE_GTM_CONTAINER_ID=.*/VITE_GTM_CONTAINER_ID='"$gtm_id"'/' .env.production
+
+      - name: Replace package version
+        shell: bash
+        run: |
+          sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
+
+          echo "VersionCode: ${{ github.run_number }}"
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i 's/versionName "999.999.999"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
 
       - name: Generate public/licenses.json
         shell: bash
@@ -173,7 +173,7 @@ jobs:
           EOF
           if [ -s /tmp/keystore.jks ]; then
             echo "Created keystore.jks"
-            SHA256=$(sha256sum keystore.jks | cut -d ' ' -f 1)
+            SHA256=$(sha256sum /tmp/keystore.jks | cut -d ' ' -f 1)
             echo "SHA256: $SHA256"
           else
             echo "Failed to create keystore.jks"
