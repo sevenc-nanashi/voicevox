@@ -190,6 +190,7 @@ jobs:
           target=${{ matrix.target }}
 
           chmod +x android/gradlew
+          npm run cap:sync
           npm run cap:build:android -- \
             --keystorepath /tmp/keystore.jks \
             --keystorepass ${{ secrets.ANDROID_KEYSTORE_PASS }} \
@@ -198,11 +199,11 @@ jobs:
             --androidreleasetype ${target^^}
           mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
 
-
-      - name: Build
+      - name: Run non-production build
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
+          npm run cap:sync
           cd android
           chmod +x gradlew
           if [ ${{ matrix.target }} == 'apk' ]; then
