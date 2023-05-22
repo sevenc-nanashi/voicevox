@@ -52,7 +52,7 @@
 
       <audio-info
         :active-audio-key="activeAudioKey"
-        is-in-audio-detail
+        horizontal
         v-if="selectedDetail === 'parameter'"
       />
       <div

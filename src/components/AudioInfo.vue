@@ -1,7 +1,7 @@
 <template>
   <div
     class="root full-height q-py-md"
-    :class="{ 'is-in-audio-detail': props.isInAudioDetail }"
+    :class="{ horizontal: props.horizontal }"
     v-if="query"
   >
     <div v-if="enablePreset" class="q-px-md">
@@ -322,10 +322,10 @@ import { useDefaultPreset } from "@/composables/useDefaultPreset";
 const props = withDefaults(
   defineProps<{
     activeAudioKey: AudioKey;
-    isInAudioDetail?: boolean;
+    horizontal?: boolean;
   }>(),
   {
-    isInAudioDetail: false,
+    horizontal: false,
   }
 );
 
@@ -978,21 +978,20 @@ const adjustSliderValue = (
   gap: 0px 0;
   overflow-y: scroll;
 
-  &.is-in-audio-detail {
+  .parameters {
+    flex-grow: 1;
+    padding: 0 16px;
+  }
+
+  &.horizontal {
     width: 100%;
 
     .parameters {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      padding: 0 16px;
       gap: 16px;
     }
   }
-}
-
-.parameters {
-  flex-grow: 1;
-  padding: 0 16px;
 }
 
 .preset-select-label {
