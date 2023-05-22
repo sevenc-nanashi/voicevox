@@ -43,11 +43,12 @@ jobs:
           - aab
         include:
           - target: apk
-            dev_dest_path: android/app/build/outputs/apk/release/app-release-unsigned.apk
             prod_dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
+            dev_dest_path: android/app/build/outputs/apk/debug/app-debug.apk
+
           - target: aab
-            dev_dest_path: android/app/build/outputs/bundle/release/app-release.aab
             prod_dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
+            dev_dest_path: android/app/build/outputs/bundle/debug/app-debug.aab
     steps:
       - uses: actions/checkout@v3
 
@@ -169,7 +170,7 @@ jobs:
             ~/.gradle/wrapper
           key: v1
 
-      - name: Configure build for production
+      - name: Run production build
         if: ${{ github.event.inputs.production_code_signing == 'true' }}
         shell: bash
         run: |
@@ -186,39 +187,30 @@ jobs:
             exit 1
           fi
 
-          echo "ANDROID_KEYSTORE_PATH=/tmp/keystore.jks" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_PASS=${{ secrets.ANDROID_KEYSTORE_PASS }}" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS=${{ secrets.ANDROID_KEYSTORE_ALIAS }}" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS_PASS=${{ secrets.ANDROID_KEYSTORE_ALIAS_PASS }}" >> $GITHUB_ENV
+          target=${{ matrix.target }}
 
-      - name: Configure build for non-production
+          chmod +x android/gradlew
+          npm run cap:build:android -- \
+            --keystorepath /tmp/keystore.jks \
+            --keystorepass ${{ secrets.ANDROID_KEYSTORE_PASS }} \
+            --keystorealias ${{ secrets.ANDROID_KEYSTORE_ALIAS }} \
+            --keystorealiaspass ${{ secrets.ANDROID_KEYSTORE_ALIAS_PASS }} \
+            --androidreleasetype ${target^^}
+          mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+
+
+      - name: Build
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
-          cd /tmp
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'C=US, O=Android, CN=Android Debug'
-          cd -
-          echo "ANDROID_KEYSTORE_PATH=/tmp/debug.keystore" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_PASS=android" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS=androiddebugkey" >> $GITHUB_ENV
-          echo "ANDROID_KEYSTORE_ALIAS_PASS=android" >> $GITHUB_ENV
-
-      - name: Build Android
-        shell: bash
-        run: |
-          chmod +x ./android/gradlew
-          target=${{ matrix.target }}
-          npm run cap:build:android -- \
-            --keystorepath $ANDROID_KEYSTORE_PATH \
-            --keystorepass $ANDROID_KEYSTORE_PASS \
-            --keystorealias $ANDROID_KEYSTORE_ALIAS \
-            --keystorealiaspass $ANDROID_KEYSTORE_ALIAS_PASS \
-            --androidreleasetype ${target^^}
-          if [ "${{ github.event.inputs.production_code_signing }}" = "true" ]; then
-            mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+          cd android
+          chmod +x gradlew
+          if [ ${{ matrix.target }} == 'apk' ]; then
+            ./gradlew assembleDebug
           else
-            mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+            ./gradlew bundleDebug
           fi
+          mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
 
       - name: Upload apk
         if: (github.event.release.tag_name || github.event.inputs.version) != ''
