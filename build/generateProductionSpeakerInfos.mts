@@ -25,6 +25,8 @@ const main = async () => {
     throw new Error(`speaker-info-dir not found: ${speakerInfoDir}`);
   }
   const destDir = path.resolve(__dirname, "../public/speakerInfos");
+  await fs.promises.rm(destDir, { recursive: true });
+  await fs.promises.mkdir(destDir, { recursive: true });
 
   await Promise.all(
     await fs.promises.readdir(speakerInfoDir).then((d) =>
