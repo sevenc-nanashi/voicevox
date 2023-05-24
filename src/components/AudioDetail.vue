@@ -769,15 +769,8 @@ const getHoveredText = (
   accentPhraseIndex: number,
   moraIndex: number
 ) => {
-  if (selectedDetail.value !== "length") {
-    return mora.text;
-  } else if (isMobile) {
-    if (mora.consonant) {
-      return `${mora.consonant.toUpperCase()} ${mora.vowel.toUpperCase()}`;
-    } else {
-      return mora.vowel.toUpperCase();
-    }
-  } else if (
+  if (selectedDetail.value != "length") return mora.text;
+  if (
     accentPhraseIndex === lengthHoveredInfo.accentPhraseIndex &&
     moraIndex === lengthHoveredInfo.moraIndex
   ) {
@@ -965,12 +958,6 @@ $pitch-label-height: 24px;
       // hover色に負けるので、importantが必要
       background-color: colors.$active-point-focus !important;
     }
-  }
-}
-
-[data-selected-detail="length"] {
-  .text-cell-inner {
-    font-size: 0.85em;
   }
 }
 </style>
