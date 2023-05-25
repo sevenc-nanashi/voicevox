@@ -183,6 +183,7 @@ const loadMock = () => {
     },
     vuexReady() {
       requestAnimationFrame(() => {
+        // 1回だけだと文字の描画が終わっていないので2回待機する
         requestAnimationFrame(() => {
           SplashScreen.hide();
         });
