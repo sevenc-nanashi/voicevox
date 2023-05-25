@@ -182,7 +182,11 @@ const loadMock = () => {
       };
     },
     vuexReady() {
-      SplashScreen.hide();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          SplashScreen.hide();
+        });
+      });
     },
     getSetting(key) {
       const setting = electronStoreSchema.parse(
