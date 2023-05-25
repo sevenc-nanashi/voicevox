@@ -1,3 +1,4 @@
+/// <reference types="@capacitor/splash-screen" />
 import { networkInterfaces } from "os";
 import { CapacitorConfig } from "@capacitor/cli";
 
@@ -5,7 +6,11 @@ const config: CapacitorConfig = {
   appId: "jp.hiroshiba.voicevox",
   appName: "VOICEVOX",
   webDir: "dist",
-  bundledWebRuntime: false,
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: false,
+    },
+  },
 };
 
 if (process.env.CAPACITOR_MODE === "serve") {

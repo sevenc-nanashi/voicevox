@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
+import { SplashScreen } from "@capacitor/splash-screen";
 import {
   defaultHotkeySettings,
   defaultToolbarButtonSetting,
@@ -181,7 +182,7 @@ const loadMock = () => {
       };
     },
     vuexReady() {
-      console.log("vuexReady");
+      SplashScreen.hide();
     },
     getSetting(key) {
       const setting = electronStoreSchema.parse(
