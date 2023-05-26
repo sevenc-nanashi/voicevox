@@ -16,42 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ComputedRef } from "vue";
-import { useQuasar } from "quasar";
+import { computed } from "vue";
 import { useStore } from "@/store";
-import { setHotkeyFunctions } from "@/store/setting";
-import {
-  HotkeyAction,
-  HotkeyReturnType,
-  ToolbarButtonTagType,
-} from "@/type/preload";
-import {
-  generateAndConnectAndSaveAudioWithDialog,
-  generateAndSaveAllAudioWithDialog,
-  generateAndSaveOneAudioWithDialog,
-} from "@/components/Dialog";
-import { getToolbarButtonName } from "@/store/utility";
-
-type ButtonContent = {
-  text: string;
-  click(): void;
-  disable: ComputedRef<boolean>;
-};
-
-type SpacerContent = {
-  text: null;
-};
-
 const store = useStore();
-const $q = useQuasar();
 
 const uiLocked = computed(() => store.getters.UI_LOCKED);
 const canUndo = computed(() => store.getters.CAN_UNDO);
 const canRedo = computed(() => store.getters.CAN_REDO);
-const activeAudioKey = computed(() => store.getters.ACTIVE_AUDIO_KEY);
-const nowPlayingContinuously = computed(
-  () => store.state.nowPlayingContinuously
-);
 
 const headerButtons = computed(() => [
   {
