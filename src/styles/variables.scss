@@ -1,6 +1,16 @@
 $window-border-width: 2px;
 
-$header-height: 66px;
-$menubar-height: 24px;
+$header-height: var(--header-height);
+$menubar-height: var(--menubar-height);
+body {
+  &:not([data-target="mobile"]) {
+    --header-height: 66px;
+    --menubar-height: 24px;
+  }
+  &[data-target="mobile"] {
+    --header-height: 44px;
+    --menubar-height: 0px;
+  }
+}
 
 $detail-view-splitter-cell-z-index: 2;

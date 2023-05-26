@@ -35,6 +35,8 @@ if (Capacitor.isNativePlatform()) {
   console.log("Running in Electron");
 }
 
+document.body.setAttribute("data-target", import.meta.env.VITE_TARGET);
+
 createApp(App)
   .use(store, storeKey)
   .use(router)
