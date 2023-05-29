@@ -227,9 +227,7 @@ const openStyleSelectDialog = (characterInfo: CharacterInfo) => {
 }
 
 .main {
-  height: calc(
-    100vh - #{vars.$top-bar-height}
-  );
+  height: calc(100vh - #{vars.$top-bar-height});
 
   display: flex;
   flex-direction: row;

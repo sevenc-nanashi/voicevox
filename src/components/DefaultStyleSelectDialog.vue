@@ -256,9 +256,7 @@ const closeDialog = () => {
   }
 }
 .q-page {
-  height: calc(
-    100vh - #{vars.$top-bar-height}
-  );
+  height: calc(100vh - #{vars.$top-bar-height});
   overflow-y: scroll;
 
   > :deep(.scroll) {

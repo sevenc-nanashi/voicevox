@@ -365,9 +365,7 @@ const resetHotkey = (action: string) => {
 
 .hotkey-table {
   width: calc(100vw - #{vars.$window-border-width * 2});
-  height: calc(
-    100vh - #{vars.$top-bar-height}
-  );
+  height: calc(100vh - #{vars.$top-bar-height});
 
   > :deep(.scroll) {
     overflow-y: scroll;

@@ -65,9 +65,55 @@ const headerButtons = computed(() => [
 const menudata = ref<MenuItemData[]>([
   {
     type: "button",
-    label: "音声書き出し",
+    label: "選択している音声を書き出し",
     onClick: () => {
-      alert("TODO: 音声書き出し");
+      alert("TODO");
+    },
+    disableWhenUiLocked: true,
+  },
+  {
+    type: "button",
+    label: "すべての音声を書き出し",
+    onClick: () => {
+      alert("TODO");
+    },
+    disableWhenUiLocked: true,
+  },
+  {
+    type: "button",
+    label: "すべての音声を繋げて書き出し",
+    onClick: () => {
+      alert("TODO");
+    },
+    disableWhenUiLocked: true,
+  },
+  {
+    type: "separator",
+  },
+  {
+    type: "button",
+    label: "テキストを繋げて書き出し",
+    onClick: () => {
+      alert("TODO");
+    },
+    disableWhenUiLocked: true,
+  },
+  {
+    type: "button",
+    label: "テキスト読み込み",
+    onClick: () => {
+      alert("TODO");
+    },
+    disableWhenUiLocked: true,
+  },
+  {
+    type: "separator",
+  },
+  {
+    type: "button",
+    label: "メニューに戻る",
+    onClick: () => {
+      alert("TODO");
     },
     disableWhenUiLocked: true,
   },
