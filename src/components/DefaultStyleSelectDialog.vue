@@ -257,8 +257,7 @@ const closeDialog = () => {
 }
 .q-page {
   height: calc(
-    100vh - #{vars.$menubar-height + vars.$header-height +
-      vars.$window-border-width}
+    100vh - #{vars.$top-bar-height}
   );
   overflow-y: scroll;
 

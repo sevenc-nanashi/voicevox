@@ -8,9 +8,10 @@ body {
     --menubar-height: 24px;
   }
   &[data-target="mobile"] {
-    --header-height: 44px;
+    --header-height: 50px;
     --menubar-height: 0px;
   }
 }
+$top-bar-height: "(#{$header-height} + #{$menubar-height} + #{$window-border-width})";
 
 $detail-view-splitter-cell-z-index: 2;
