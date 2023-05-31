@@ -184,7 +184,7 @@
               ? parameter.slider.state.currentValue.value.toFixed(2)
               : parameter.slider.qSliderProps.min.value.toFixed(2)
           "
-          @update:model-value="handleParameterChange(parameter, $event)"
+          @change="handleParameterChange(parameter, $event)"
         >
           <template v-slot:before
             ><span class="text-body1 text-display">{{
