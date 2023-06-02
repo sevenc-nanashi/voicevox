@@ -423,7 +423,7 @@ const shouldShowPanes = computed<boolean>(
   () => store.getters.SHOULD_SHOW_PANES
 );
 const shouldShowSidePanes = computed<boolean>(
-  () => shouldShowPanes.value && $q.screen.gt.xs
+  () => shouldShowPanes.value && $q.screen.gt.xs // 横幅がある程度大きいかどうか
 );
 const clamp = (value: number, min: number, max: number) =>
   Math.max(Math.min(value, max), min);
