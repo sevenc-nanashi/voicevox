@@ -915,16 +915,7 @@ const adjustSliderValue = (
   justify-content: flex-start;
   gap: 0px 0;
   overflow-y: scroll;
-
-  &.horizontal {
-    width: 100%;
-
-    .parameters {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-  }
+  width: 100%;
 }
 
 .parameters {
@@ -932,6 +923,12 @@ const adjustSliderValue = (
   flex-grow: 1;
   flex-direction: column;
   align-items: stretch;
+
+  .horizontal & {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
 }
 
 .preset-select-label {
