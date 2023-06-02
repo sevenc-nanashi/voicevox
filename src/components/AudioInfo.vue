@@ -916,11 +916,6 @@ const adjustSliderValue = (
   gap: 0px 0;
   overflow-y: scroll;
 
-  .parameters {
-    flex-grow: 1;
-    padding: 0 16px;
-  }
-
   &.horizontal {
     width: 100%;
 
@@ -934,6 +929,7 @@ const adjustSliderValue = (
 
 .parameters {
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
   align-items: stretch;
 }
