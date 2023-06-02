@@ -915,12 +915,10 @@ const adjustSliderValue = (
   justify-content: flex-start;
   gap: 0px 0;
   overflow-y: scroll;
-  width: 100%;
 }
 
 .parameters {
   display: flex;
-  flex-grow: 1;
   flex-direction: column;
   align-items: stretch;
 
