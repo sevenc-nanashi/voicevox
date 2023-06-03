@@ -735,6 +735,14 @@ export type EngineStoreTypes = {
     action(): void;
   };
 
+  SET_ENGINE_INFO: {
+    mutation: { engineId: EngineId; engineInfo: EngineInfo };
+  };
+
+  GET_ONLY_ENGINE_INFOS: {
+    action: (payload: { engineIds: EngineId[] }) => Promise<void>;
+  };
+
   GET_SORTED_ENGINE_INFOS: {
     getter: EngineInfo[];
   };
@@ -1073,6 +1081,10 @@ export type SettingStoreTypes = {
   SET_CONFIRMED_TIPS: {
     mutation: { confirmedTips: ConfirmedTips };
     action(payload: { confirmedTips: ConfirmedTips }): void;
+  };
+
+  RESET_CONFIRMED_TIPS: {
+    action(): void;
   };
 
   SET_ENGINE_SETTING: {

@@ -52,9 +52,9 @@
             <q-splitter
               :limits="[MIN_PORTRAIT_PANE_WIDTH, MAX_PORTRAIT_PANE_WIDTH]"
               separator-class="home-splitter"
-              :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+              :separator-style="{ width: shouldShowSidePanes ? '3px' : '0' }"
               before-class="overflow-hidden"
-              :disable="!shouldShowPanes"
+              :disable="!shouldShowSidePanes"
               :model-value="portraitPaneWidth"
               @update:model-value="updatePortraitPane"
             >
@@ -67,9 +67,11 @@
                   unit="px"
                   :limits="[audioInfoPaneMinWidth, audioInfoPaneMaxWidth]"
                   separator-class="home-splitter"
-                  :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+                  :separator-style="{
+                    width: shouldShowSidePanes ? '3px' : '0',
+                  }"
                   class="full-width overflow-hidden"
-                  :disable="!shouldShowPanes"
+                  :disable="!shouldShowSidePanes"
                   :model-value="audioInfoPaneWidth"
                   @update:model-value="updateAudioInfoPane"
                 >
@@ -293,7 +295,7 @@ const MIN_PORTRAIT_PANE_WIDTH = 0;
 const MAX_PORTRAIT_PANE_WIDTH = 40;
 const MIN_AUDIO_INFO_PANE_WIDTH = 160; // px
 const MAX_AUDIO_INFO_PANE_WIDTH = 250;
-const MIN_AUDIO_DETAIL_PANE_HEIGHT = 185; // px
+const MIN_AUDIO_DETAIL_PANE_HEIGHT = 220; // px
 const MAX_AUDIO_DETAIL_PANE_HEIGHT = 500;
 
 const portraitPaneWidth = ref(0);
@@ -416,13 +418,38 @@ const duplicateAudioItem = async () => {
 const shouldShowPanes = computed<boolean>(
   () => store.getters.SHOULD_SHOW_PANES
 );
+const shouldShowSidePanes = computed<boolean>(
+  () => shouldShowPanes.value && $q.screen.gt.xs // 横幅がある程度大きいかどうか
+);
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(Math.min(value, max), min);
+
 watch(shouldShowPanes, (val, old) => {
   if (val === old) return;
 
   if (val) {
-    const clamp = (value: number, min: number, max: number) =>
-      Math.max(Math.min(value, max), min);
+    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
+    changeAudioDetailPaneMaxHeight(
+      resizeObserverRef.value?.$el.parentElement.clientHeight
+    );
 
+    audioDetailPaneHeight.value = clamp(
+      splitterPosition.value.audioDetailPaneHeight ??
+        MIN_AUDIO_DETAIL_PANE_HEIGHT,
+      audioDetailPaneMinHeight.value,
+      audioDetailPaneMaxHeight.value
+    );
+  } else {
+    audioDetailPaneHeight.value = 0;
+    audioDetailPaneMinHeight.value = 0;
+    audioDetailPaneMaxHeight.value = 0;
+  }
+});
+
+watch(shouldShowSidePanes, (val, old) => {
+  if (val === old) return;
+
+  if (val) {
     // 設定ファイルを書き換えれば異常な値が入り得るのですべてclampしておく
     portraitPaneWidth.value = clamp(
       splitterPosition.value.portraitPaneWidth ?? DEFAULT_PORTRAIT_PANE_WIDTH,
@@ -437,26 +464,11 @@ watch(shouldShowPanes, (val, old) => {
     );
     audioInfoPaneMinWidth.value = MIN_AUDIO_INFO_PANE_WIDTH;
     audioInfoPaneMaxWidth.value = MAX_AUDIO_INFO_PANE_WIDTH;
-
-    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
-    changeAudioDetailPaneMaxHeight(
-      resizeObserverRef.value?.$el.parentElement.clientHeight
-    );
-
-    audioDetailPaneHeight.value = clamp(
-      splitterPosition.value.audioDetailPaneHeight ??
-        MIN_AUDIO_DETAIL_PANE_HEIGHT,
-      audioDetailPaneMinHeight.value,
-      audioDetailPaneMaxHeight.value
-    );
   } else {
     portraitPaneWidth.value = 0;
     audioInfoPaneWidth.value = 0;
     audioInfoPaneMinWidth.value = 0;
     audioInfoPaneMaxWidth.value = 0;
-    audioDetailPaneHeight.value = 0;
-    audioDetailPaneMinHeight.value = 0;
-    audioDetailPaneMaxHeight.value = 0;
   }
 });
 
