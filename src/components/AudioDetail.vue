@@ -4,6 +4,12 @@
       <div class="side">
         <div class="detail-selector">
           <q-tabs dense vertical class="text-display" v-model="selectedDetail">
+            <q-tab
+              name="parameter"
+              label="ﾊﾟﾗﾒｰﾀ"
+              class="lt-sm"
+              v-if="isMobile"
+            />
             <q-tab name="accent" label="ｱｸｾﾝﾄ" />
             <q-tab
               name="pitch"
@@ -44,10 +50,20 @@
         </div>
       </div>
 
-      <div class="overflow-hidden-y accent-phrase-table" ref="audioDetail">
+      <audio-info
+        :active-audio-key="activeAudioKey"
+        horizontal
+        v-if="selectedDetail === 'parameter'"
+      />
+      <div
+        class="overflow-hidden-y accent-phrase-table"
+        ref="audioDetail"
+        :data-selected-detail="selectedDetail"
+        v-else
+      >
         <tool-tip
           tip-key="tweakableSliderByScroll"
-          v-if="selectedDetail === 'pitch'"
+          v-if="selectedDetail === 'pitch' && !isMobile"
           class="tip-tweakable-slider-by-scroll"
         >
           <p>
@@ -270,6 +286,7 @@ import {
 } from "vue";
 import { useQuasar } from "quasar";
 import ToolTip from "./ToolTip.vue";
+import AudioInfo from "./AudioInfo.vue";
 import AudioAccent from "./AudioAccent.vue";
 import AudioParameter from "./AudioParameter.vue";
 import { useStore } from "@/store";
@@ -289,6 +306,8 @@ const props =
 
 const store = useStore();
 const $q = useQuasar();
+
+const isMobile = import.meta.env.VITE_TARGET === "mobile";
 
 const supportedFeatures = computed(
   () =>
@@ -363,7 +382,14 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
 setHotkeyFunctions(hotkeyMap, true);
 
 // detail selector
-type DetailTypes = "accent" | "pitch" | "length" | "play" | "stop" | "save";
+type DetailTypes =
+  | "parameter"
+  | "accent"
+  | "pitch"
+  | "length"
+  | "play"
+  | "stop"
+  | "save";
 const selectedDetail = ref<DetailTypes>("accent");
 
 // accent phrase

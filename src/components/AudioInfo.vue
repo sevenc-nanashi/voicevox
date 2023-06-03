@@ -1,5 +1,9 @@
 <template>
-  <div class="root full-height q-py-md" v-if="query">
+  <div
+    class="root full-height q-py-md"
+    :class="{ horizontal: props.horizontal }"
+    v-if="query"
+  >
     <div v-if="enablePreset" class="q-px-md">
       <div class="row items-center no-wrap q-mb-xs">
         <div class="text-body1">プリセット</div>
@@ -318,10 +322,15 @@ import {
 import { EngineManifest } from "@/openapi";
 import { useDefaultPreset } from "@/composables/useDefaultPreset";
 
-const props =
+const props = withDefaults(
   defineProps<{
     activeAudioKey: AudioKey;
-  }>();
+    horizontal?: boolean;
+  }>(),
+  {
+    horizontal: false,
+  }
+);
 
 const store = useStore();
 
@@ -912,6 +921,12 @@ const adjustSliderValue = (
   display: flex;
   flex-direction: column;
   align-items: stretch;
+
+  .horizontal & {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
 }
 
 .preset-select-label {
