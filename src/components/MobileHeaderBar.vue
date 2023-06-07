@@ -1,3 +1,4 @@
+<!-- TODO: PC版ヘッダーと統合する -->
 <template>
   <q-toolbar class="bg-primary text-white">
     <q-btn flat round dense>
