@@ -7,6 +7,7 @@ import type { EngineId, EngineInfo } from "@/type/preload";
 export const engineStoreState: EngineStoreState = {
   engineStates: {},
   engineSupportedDevices: {},
+  altPortInfos: {},
 };
 
 export const engineStore = createPartialStore<EngineStoreTypes>({
@@ -31,6 +32,26 @@ export const engineStore = createPartialStore<EngineStoreTypes>({
     },
   },
 
+  SET_ENGINE_INFO: {
+    mutation(state, { engineId, engineInfo }) {
+      state.engineInfos[engineId] = engineInfo;
+    },
+  },
+
+  GET_ONLY_ENGINE_INFOS: {
+    async action({ commit }, { engineIds }) {
+      const engineInfos = await window.electron.engineInfos();
+      for (const engineInfo of engineInfos) {
+        if (engineIds.includes(engineInfo.uuid)) {
+          commit("SET_ENGINE_INFO", {
+            engineId: engineInfo.uuid,
+            engineInfo,
+          });
+        }
+      }
+    },
+  },
+
   GET_SORTED_ENGINE_INFOS: {
     getter: (state) => {
       return Object.values(state.engineInfos).sort((a, b) => {
@@ -44,6 +65,21 @@ export const engineStore = createPartialStore<EngineStoreTypes>({
       });
     },
   },
+
+  GET_ALT_PORT_INFOS: {
+    async action({ commit }) {
+      const altPortInfos = await window.electron.getAltPortInfos();
+      commit("SET_ALT_PORT_INFOS", { altPortInfos });
+      return altPortInfos;
+    },
+  },
+
+  SET_ALT_PORT_INFOS: {
+    mutation(state, { altPortInfos }) {
+      state.altPortInfos = altPortInfos;
+    },
+  },
+
   SET_ENGINE_INFOS: {
     mutation(
       state,
@@ -181,6 +217,8 @@ export const engineStore = createPartialStore<EngineStoreTypes>({
         })
       );
 
+      await dispatch("GET_ONLY_ENGINE_INFOS", { engineIds });
+
       const result = await dispatch("POST_ENGINE_START", {
         engineIds,
       });
@@ -191,6 +229,7 @@ export const engineStore = createPartialStore<EngineStoreTypes>({
 
   POST_ENGINE_START: {
     async action({ state, dispatch }, { engineIds }) {
+      await dispatch("GET_ALT_PORT_INFOS");
       const result = await Promise.all(
         engineIds.map(async (engineId) => {
           if (state.engineStates[engineId] === "STARTING") {

@@ -25,6 +25,7 @@ describe("store/vuex.js test", () => {
           [engineId]: "STARTING",
         },
         engineSupportedDevices: {},
+        altPortInfos: {},
         characterInfos: {},
         morphableTargetsInfo: {},
         defaultStyleIds: [],
@@ -135,8 +136,10 @@ describe("store/vuex.js test", () => {
         },
         confirmedTips: {
           tweakableSliderByScroll: false,
+          engineStartedOnAltPort: false,
         },
         progress: -1,
+        isVuexReady: false,
         defaultPresetKeys: {},
       },
       getters: {
@@ -250,5 +253,7 @@ describe("store/vuex.js test", () => {
     );
     assert.propertyVal(store.state.splitterPosition, "audioInfoPaneWidth", 20);
     assert.propertyVal(store.state.splitterPosition, "portraitPaneWidth", 50);
+    assert.equal(store.state.confirmedTips.tweakableSliderByScroll, false);
+    assert.equal(store.state.confirmedTips.engineStartedOnAltPort, false);
   });
 });

@@ -89,6 +89,7 @@
                     >
                       <draggable
                         class="audio-cells"
+                        ref="cellsRef"
                         :modelValue="audioKeys"
                         @update:modelValue="updateAudioKeys"
                         :itemKey="itemKey"
@@ -618,6 +619,47 @@ watch(allEngineState, (newEngineState) => {
     isEngineWaitingLong.value = false;
   }
 });
+
+// 代替ポート情報の変更を監視
+watch(
+  () => [store.state.altPortInfos, store.state.isVuexReady],
+  async () => {
+    // この watch がエンジンが起動した時 (=> 設定ファイルを読み込む前) に発火して, "今後この通知をしない" を無視するのを防ぐ
+    if (!store.state.isVuexReady) return;
+
+    // "今後この通知をしない" を考慮
+    if (store.state.confirmedTips.engineStartedOnAltPort) return;
+
+    // 代替ポートをトースト通知する
+    for (const engineId of store.state.engineIds) {
+      const engineName = store.state.engineInfos[engineId].name;
+      const altPort = store.state.altPortInfos[engineId];
+      if (!altPort) return;
+
+      $q.notify({
+        message: `${altPort.from}番ポートが使用中であるため ${engineName} は、${altPort.to}番ポートで起動しました`,
+        color: "toast",
+        textColor: "toast-display",
+        icon: "compare_arrows",
+        timeout: 5000,
+        actions: [
+          {
+            label: "今後この通知をしない",
+            textColor: "toast-button-display",
+            handler: () =>
+              store.dispatch("SET_CONFIRMED_TIPS", {
+                confirmedTips: {
+                  ...store.state.confirmedTips,
+                  engineStartedOnAltPort: true,
+                },
+              }),
+          },
+        ],
+      });
+    }
+  }
+);
+
 const restartAppWithMultiEngineOffMode = () => {
   store.dispatch("RESTART_APP", { isMultiEngineOffMode: true });
 };
@@ -723,8 +765,8 @@ const isAcceptRetrieveTelemetryDialogOpenComputed = computed({
 
 // ドラッグ＆ドロップ
 const dragEventCounter = ref(0);
-const loadDraggedFile = (event?: { dataTransfer: DataTransfer }) => {
-  if (!event || event.dataTransfer.files.length === 0) return;
+const loadDraggedFile = (event: { dataTransfer: DataTransfer | null }) => {
+  if (!event.dataTransfer || event.dataTransfer.files.length === 0) return;
   const file = event.dataTransfer.files[0];
   switch (path.extname(file.name)) {
     case ".txt":
@@ -746,6 +788,28 @@ const loadDraggedFile = (event?: { dataTransfer: DataTransfer }) => {
       });
   }
 };
+
+// AudioCellの自動スクロール
+const cellsRef = ref<InstanceType<typeof draggable> | undefined>();
+watch(activeAudioKey, (audioKey) => {
+  if (audioKey == undefined) return;
+  const activeCellElement = audioCellRefs[audioKey].$el;
+  const cellsElement = cellsRef.value?.$el;
+  if (
+    !(activeCellElement instanceof Element) ||
+    !(cellsElement instanceof Element)
+  )
+    throw new Error(
+      `invalid element: activeCellElement=${activeCellElement}, cellsElement=${cellsElement}`
+    );
+  const activeCellRect = activeCellElement.getBoundingClientRect();
+  const cellsRect = cellsElement.getBoundingClientRect();
+  const overflowTop = activeCellRect.top <= cellsRect.top;
+  const overflowBottom = activeCellRect.bottom >= cellsRect.bottom;
+  if (overflowTop || overflowBottom) {
+    activeCellElement.scrollIntoView(overflowTop || !overflowBottom);
+  }
+});
 </script>
 
 <style scoped lang="scss">

@@ -524,8 +524,8 @@ async function start() {
   }
   store.set("engineSettings", engineSettings);
 
-  await createWindow();
   await engineManager.runEngineAll(win);
+  await createWindow();
 }
 
 const menuTemplateForMac: Electron.MenuItemConstructorOptions[] = [
@@ -597,6 +597,10 @@ ipcMainHandle("GET_Q_AND_A_TEXT", () => {
 
 ipcMainHandle("GET_PRIVACY_POLICY_TEXT", () => {
   return privacyPolicyText;
+});
+
+ipcMainHandle("GET_ALT_PORT_INFOS", () => {
+  return engineManager.altPortInfo;
 });
 
 ipcMainHandle("SHOW_AUDIO_SAVE_DIALOG", async (_, { title, defaultPath }) => {

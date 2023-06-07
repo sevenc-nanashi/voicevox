@@ -80,6 +80,10 @@ export type Command = {
 };
 
 export type EngineState = "STARTING" | "FAILED_STARTING" | "ERROR" | "READY";
+
+// ポートが塞がれていたときの代替ポート情報
+export type AltPortInfos = Record<EngineId, { from: number; to: number }>;
+
 export type SaveResult =
   | "SUCCESS"
   | "WRITE_ERROR"
@@ -726,6 +730,7 @@ export type CommandStoreTypes = {
 export type EngineStoreState = {
   engineStates: Record<EngineId, EngineState>;
   engineSupportedDevices: Record<EngineId, SupportedDevicesInfo>;
+  altPortInfos: AltPortInfos;
 };
 
 export type EngineStoreTypes = {
@@ -733,8 +738,24 @@ export type EngineStoreTypes = {
     action(): void;
   };
 
+  SET_ENGINE_INFO: {
+    mutation: { engineId: EngineId; engineInfo: EngineInfo };
+  };
+
+  GET_ONLY_ENGINE_INFOS: {
+    action: (payload: { engineIds: EngineId[] }) => Promise<void>;
+  };
+
   GET_SORTED_ENGINE_INFOS: {
     getter: EngineInfo[];
+  };
+
+  GET_ALT_PORT_INFOS: {
+    action(): Promise<AltPortInfos>;
+  };
+
+  SET_ALT_PORT_INFOS: {
+    mutation: { altPortInfos: AltPortInfos };
   };
 
   SET_ENGINE_MANIFESTS: {
@@ -1069,6 +1090,10 @@ export type SettingStoreTypes = {
     action(payload: { confirmedTips: ConfirmedTips }): void;
   };
 
+  RESET_CONFIRMED_TIPS: {
+    action(): void;
+  };
+
   SET_ENGINE_SETTING: {
     mutation: { engineSetting: EngineSetting; engineId: EngineId };
     action(payload: {
@@ -1113,6 +1138,7 @@ export type UiStoreState = {
   isPinned: boolean;
   isFullscreen: boolean;
   progress: number;
+  isVuexReady: boolean;
 };
 
 export type UiStoreTypes = {
@@ -1184,6 +1210,7 @@ export type UiStoreTypes = {
   };
 
   ON_VUEX_READY: {
+    mutation: void;
     action(): void;
   };
 

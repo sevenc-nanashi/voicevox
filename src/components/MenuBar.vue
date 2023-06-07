@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, ComputedRef, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { useQuasar } from "quasar";
 import { useStore } from "@/store";
 import MenuButton from "@/components/MenuButton.vue";
@@ -63,24 +63,32 @@ export type MenuItemButton = MenuItemBase<"button"> & {
   disableWhenUiLocked: boolean;
 };
 
-export type MenuItemCheckbox = MenuItemBase<"checkbox"> & {
-  checked: ComputedRef<boolean>;
-  onClick: () => void;
-  disabled?: boolean;
-  disableWhenUiLocked: boolean;
-};
-
-export type MenuItemData =
-  | MenuItemSeparator
-  | MenuItemRoot
-  | MenuItemButton
-  | MenuItemCheckbox;
+export type MenuItemData = MenuItemSeparator | MenuItemRoot | MenuItemButton;
 
 export type MenuItemType = MenuItemData["type"];
 
 const store = useStore();
 const $q = useQuasar();
 const currentVersion = ref("");
+
+// デフォルトエンジンの代替先ポート
+const defaultEngineAltPortTo = computed<number | undefined>(() => {
+  const altPortInfos = store.state.altPortInfos;
+
+  // ref: https://github.com/VOICEVOX/voicevox/blob/32940eab36f4f729dd0390dca98f18656240d60d/src/views/EditorHome.vue#L522-L528
+  const defaultEngineInfo = Object.values(store.state.engineInfos).find(
+    (engine) => engine.type === "default"
+  );
+  if (defaultEngineInfo == undefined) return undefined;
+
+  // <defaultEngineId>: { from: number, to: number } -> to (代替先ポート)
+  if (defaultEngineInfo.uuid in altPortInfos) {
+    return altPortInfos[defaultEngineInfo.uuid].to;
+  } else {
+    return undefined;
+  }
+});
+
 window.electron.getAppInfos().then((obj) => {
   currentVersion.value = obj.version;
 });
@@ -103,7 +111,10 @@ const titleText = computed(
     (projectName.value !== undefined ? projectName.value + " - " : "") +
     "VOICEVOX" +
     (currentVersion.value ? " - Ver. " + currentVersion.value : "") +
-    (isMultiEngineOffMode.value ? " - マルチエンジンオフ" : "")
+    (isMultiEngineOffMode.value ? " - マルチエンジンオフ" : "") +
+    (defaultEngineAltPortTo.value != null
+      ? ` - Port: ${defaultEngineAltPortTo.value}`
+      : "")
 );
 
 // FIXME: App.vue内に移動する

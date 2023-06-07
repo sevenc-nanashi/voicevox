@@ -5,10 +5,16 @@ import treeKill from "tree-kill";
 import Store from "electron-store";
 import shlex from "shlex";
 
-import { BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog } from "electron";
 
 import log from "electron-log";
 import { z } from "zod";
+import {
+  findAltPort,
+  getPidFromPort,
+  getProcessNameFromPid,
+  url2HostInfo,
+} from "./portManager";
 import { ipcMainSend } from "@/electron/ipc";
 
 import {
@@ -20,6 +26,7 @@ import {
   engineIdSchema,
   minimumEngineManifestSchema,
 } from "@/type/preload";
+import { AltPortInfos } from "@/store/type";
 
 type EngineProcessContainer = {
   willQuitEngine: boolean;
@@ -65,6 +72,8 @@ export class EngineManager {
 
   defaultEngineInfos: EngineInfo[];
   engineProcessContainers: Record<EngineId, EngineProcessContainer>;
+
+  public altPortInfo: AltPortInfos = {};
 
   constructor({
     store,
@@ -209,6 +218,7 @@ export class EngineManager {
     const engineInfo = engineInfos.find(
       (engineInfo) => engineInfo.uuid === engineId
     );
+
     if (!engineInfo)
       throw new Error(`No such engineInfo registered: engineId == ${engineId}`);
 
@@ -222,6 +232,48 @@ export class EngineManager {
         `ENGINE ${engineId}: Skipped engineInfo execution: empty executionFilePath`
       );
       return;
+    }
+
+    // { hostname (localhost), port (50021) } <- url (http://localhost:50021)
+    const engineHostInfo = url2HostInfo(new URL(engineInfo.host));
+
+    log.info(
+      `ENGINE ${engineId}: Checking whether port ${engineHostInfo.port} is assignable...`
+    );
+
+    // ポートを既に割り当てているプロセスidの取得: undefined → ポートが空いている
+    const pid = await getPidFromPort(engineHostInfo);
+    if (pid != undefined) {
+      const processName = await getProcessNameFromPid(engineHostInfo, pid);
+      log.warn(
+        `ENGINE ${engineId}: Port ${engineHostInfo.port} has already been assigned by ${processName} (pid=${pid})`
+      );
+
+      // 代替ポートの検索
+      const altPort = await findAltPort(engineHostInfo);
+
+      // 代替ポートが見つからないとき
+      if (altPort == undefined) {
+        log.error(`ENGINE ${engineId}: No Alternative Port Found`);
+        dialog.showErrorBox(
+          `${engineInfo.name} の起動に失敗しました`,
+          `${engineHostInfo.port}番ポートの代わりに利用可能なポートが見つかりませんでした。PCを再起動してください。`
+        );
+        app.exit(1);
+        throw new Error("No Alternative Port Found");
+      }
+
+      // 代替ポートの情報
+      this.altPortInfo[engineId] = {
+        from: engineHostInfo.port,
+        to: altPort,
+      };
+
+      // 代替ポートを設定
+      engineInfo.host = `${engineHostInfo.protocol}//${engineHostInfo.hostname}:${altPort}`;
+      log.warn(
+        `ENGINE ${engineId}: Applied Alternative Port: ${engineHostInfo.port} -> ${altPort}`
+      );
     }
 
     log.info(`ENGINE ${engineId}: Starting process`);
@@ -244,7 +296,12 @@ export class EngineManager {
 
     // エンジンプロセスの起動
     const enginePath = engineInfo.executionFilePath;
-    const args = engineInfo.executionArgs.concat(useGpu ? ["--use_gpu"] : []);
+    const args = engineInfo.executionArgs.concat(useGpu ? ["--use_gpu"] : [], [
+      "--host",
+      new URL(engineInfo.host).hostname,
+      "--port",
+      new URL(engineInfo.host).port,
+    ]);
 
     log.info(`ENGINE ${engineId} path: ${enginePath}`);
     log.info(`ENGINE ${engineId} args: ${JSON.stringify(args)}`);
