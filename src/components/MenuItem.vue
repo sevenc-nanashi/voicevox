@@ -16,7 +16,6 @@
     <q-item-section>{{ menudata.label }}</q-item-section>
     <q-item-section
       side
-      class="gt-sm"
       v-if="menudata.label != undefined && getMenuBarHotkey(menudata.label)"
     >
       {{ getMenuBarHotkey(menudata.label) }}
@@ -64,7 +63,6 @@
     <q-item-section>{{ menudata.label }}</q-item-section>
     <q-item-section
       side
-      class="gt-sm"
       v-if="menudata.label != undefined && getMenuBarHotkey(menudata.label)"
     >
       {{ getMenuBarHotkey(menudata.label) }}
@@ -77,7 +75,6 @@ import { ref, computed, watch } from "vue";
 import type { MenuItemData } from "@/components/MenuBar.vue";
 import { useStore } from "@/store";
 import { HotkeyAction } from "@/type/preload";
-
 const props = withDefaults(
   defineProps<{
     selected?: boolean;
