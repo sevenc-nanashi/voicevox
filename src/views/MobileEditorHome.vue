@@ -1,15 +1,12 @@
 <!-- FIXME: ロジックがEditorHome.vueからコピーされているので、良い感じに共通化する -->
 <template>
-  <menu-bar />
-
   <q-layout reveal elevated container class="layout-container">
-    <header-bar />
+    <mobile-header-bar />
 
     <q-page-container>
       <q-page class="main-row-panes">
         <progress-dialog />
 
-        <!-- TODO: 複数エンジン対応 -->
         <div
           v-if="!isCompletedInitialStartup || allEngineState === 'STARTING'"
           class="waiting-engine"
@@ -174,11 +171,10 @@ import draggable from "vuedraggable";
 import { QResizeObserver, useQuasar } from "quasar";
 import cloneDeep from "clone-deep";
 import { useStore } from "@/store";
-import HeaderBar from "@/components/HeaderBar.vue";
+import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 import AudioCell from "@/components/AudioCell.vue";
 import AudioDetail from "@/components/AudioDetail.vue";
 import AudioInfo from "@/components/AudioInfo.vue";
-import MenuBar from "@/components/MenuBar.vue";
 import HelpDialog from "@/components/HelpDialog.vue";
 import SettingDialog from "@/components/SettingDialog.vue";
 import HotkeySettingDialog from "@/components/HotkeySettingDialog.vue";
@@ -839,10 +835,7 @@ const loadDraggedFile = (event: { dataTransfer: DataTransfer | null }) => {
   display: flex;
 
   .q-splitter--horizontal {
-    height: calc(
-      100vh - #{vars.$menubar-height + vars.$header-height +
-        vars.$window-border-width}
-    );
+    height: calc(100vh - #{vars.$top-bar-height});
   }
 }
 

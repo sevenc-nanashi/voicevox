@@ -747,10 +747,7 @@ const toDialogClosedState = () => {
 .word-list {
   // menubar-height + header-height + window-border-width +
   // 82(title & buttons) + 30(margin 15x2)
-  height: calc(
-    100vh - #{vars.$menubar-height + vars.$header-height +
-      vars.$window-border-width + 82px + 30px}
-  );
+  height: calc(100vh - #{vars.$top-bar-height + 82px + 30px});
   width: 100%;
   overflow-y: auto;
 }
@@ -788,10 +785,7 @@ const toDialogClosedState = () => {
 .word-editor {
   display: flex;
   flex-flow: column;
-  height: calc(
-    100vh - #{vars.$menubar-height + vars.$header-height +
-      vars.$window-border-width}
-  ) !important;
+  height: calc(100vh - #{vars.$top-bar-height}) !important;
   overflow: auto;
 }
 

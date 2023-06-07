@@ -858,10 +858,7 @@ watch(activeAudioKey, (audioKey) => {
   display: flex;
 
   .q-splitter--horizontal {
-    height: calc(
-      100vh - #{vars.$menubar-height + vars.$header-height +
-        vars.$window-border-width}
-    );
+    height: calc(100vh - #{vars.$top-bar-height});
   }
 }
 
