@@ -15,3 +15,5 @@ body {
 $top-bar-height: "(#{$header-height} + #{$menubar-height} + #{$window-border-width})";
 
 $detail-view-splitter-cell-z-index: 2;
+
+$character-item-size: 215px; // キャラクター並び替えダイアログなどでの１キャラ表示要素の横幅
