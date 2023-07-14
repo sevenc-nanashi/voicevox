@@ -61,12 +61,6 @@ const loadMock = () => {
     async getPrivacyPolicyText() {
       return "# Privacy Policy\ndummy";
     },
-    async saveTempAudioFile(obj) {
-      throw new Error(`Not implemented: saveTempAudioFile ${obj}`);
-    },
-    async loadTempFile() {
-      throw new Error("Not implemented: loadTempFile");
-    },
     async showAudioSaveDialog(obj) {
       throw new Error(`Not implemented: showAudioSaveDialog ${obj}`);
     },
