@@ -8,8 +8,8 @@
           <menu-item
             v-for="(item, index) in menudata"
             :key="item.label"
-            :menudata="item"
             v-model:selected="subMenuOpenFlags[index]"
+            :menudata="item"
           />
         </q-list>
       </q-menu>
@@ -22,8 +22,8 @@
       flat
       round
       dense
-      @click="button.onClick"
       :icon="button.icon"
+      @click="button.onClick"
     />
   </q-toolbar>
 </template>
