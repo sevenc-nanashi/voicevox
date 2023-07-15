@@ -8,8 +8,8 @@
     <menu-button
       v-for="(root, index) of menudata"
       :key="index"
-      :menudata="root"
       v-model:selected="subMenuOpenFlags[index]"
+      :menudata="root"
       :disable="menubarLocked"
       @mouseover="reassignSubMenuOpen(index)"
       @mouseleave="
@@ -70,13 +70,25 @@ export type MenuItemType = MenuItemData["type"];
 const store = useStore();
 const $q = useQuasar();
 const currentVersion = ref("");
-const altPorts = ref<number[]>([]);
 
-store.dispatch("GET_ALT_PORT_INFOS").then(
-  (altPortInfo) =>
-    // {[engineId]: {from: number, to: number}} -> to: number[]
-    (altPorts.value = Object.values(altPortInfo).map(({ to }) => to))
-);
+// デフォルトエンジンの代替先ポート
+const defaultEngineAltPortTo = computed<number | undefined>(() => {
+  const altPortInfos = store.state.altPortInfos;
+
+  // ref: https://github.com/VOICEVOX/voicevox/blob/32940eab36f4f729dd0390dca98f18656240d60d/src/views/EditorHome.vue#L522-L528
+  const defaultEngineInfo = Object.values(store.state.engineInfos).find(
+    (engine) => engine.type === "default"
+  );
+  if (defaultEngineInfo == undefined) return undefined;
+
+  // <defaultEngineId>: { from: number, to: number } -> to (代替先ポート)
+  if (defaultEngineInfo.uuid in altPortInfos) {
+    return altPortInfos[defaultEngineInfo.uuid].to;
+  } else {
+    return undefined;
+  }
+});
+
 window.electron.getAppInfos().then((obj) => {
   currentVersion.value = obj.version;
 });
@@ -100,8 +112,9 @@ const titleText = computed(
     "VOICEVOX" +
     (currentVersion.value ? " - Ver. " + currentVersion.value : "") +
     (isMultiEngineOffMode.value ? " - マルチエンジンオフ" : "") +
-    // メインエンジン (0番目) の代替ポートの表示のみ
-    (altPorts.value.length ? " - Port: " + altPorts.value[0] : "")
+    (defaultEngineAltPortTo.value != null
+      ? ` - Port: ${defaultEngineAltPortTo.value}`
+      : "")
 );
 
 // FIXME: App.vue内に移動する
@@ -119,7 +132,9 @@ const generateAndSaveAllAudio = async () => {
   if (!uiLocked.value) {
     await generateAndSaveAllAudioWithDialog({
       encoding: store.state.savingSetting.fileEncoding,
+      disableNotifyOnGenerate: store.state.confirmedTips.notifyOnGenerate,
       quasarDialog: $q.dialog,
+      quasarNotify: $q.notify,
       dispatch: store.dispatch,
     });
   }
@@ -129,8 +144,10 @@ const generateAndConnectAndSaveAllAudio = async () => {
   if (!uiLocked.value) {
     await generateAndConnectAndSaveAudioWithDialog({
       quasarDialog: $q.dialog,
+      quasarNotify: $q.notify,
       dispatch: store.dispatch,
       encoding: store.state.savingSetting.fileEncoding,
+      disableNotifyOnGenerate: store.state.confirmedTips.notifyOnGenerate,
     });
   }
 };
@@ -156,6 +173,8 @@ const generateAndSaveOneAudio = async () => {
     audioKey: activeAudioKey,
     encoding: store.state.savingSetting.fileEncoding,
     quasarDialog: $q.dialog,
+    quasarNotify: $q.notify,
+    disableNotifyOnGenerate: store.state.confirmedTips.notifyOnGenerate,
     dispatch: store.dispatch,
   });
 };
@@ -164,8 +183,10 @@ const connectAndExportText = async () => {
   if (!uiLocked.value) {
     await connectAndExportTextWithDialog({
       quasarDialog: $q.dialog,
+      quasarNotify: $q.notify,
       dispatch: store.dispatch,
       encoding: store.state.savingSetting.fileEncoding,
+      disableNotifyOnGenerate: store.state.confirmedTips.notifyOnGenerate,
     });
   }
 };
@@ -176,15 +197,15 @@ const importTextFile = () => {
   }
 };
 
-const saveProject = () => {
+const saveProject = async () => {
   if (!uiLocked.value) {
-    store.dispatch("SAVE_PROJECT_FILE", { overwrite: true });
+    await store.dispatch("SAVE_PROJECT_FILE", { overwrite: true });
   }
 };
 
-const saveProjectAs = () => {
+const saveProjectAs = async () => {
   if (!uiLocked.value) {
-    store.dispatch("SAVE_PROJECT_FILE", {});
+    await store.dispatch("SAVE_PROJECT_FILE", {});
   }
 };
 
@@ -280,16 +301,16 @@ const menudata = ref<MenuItemData[]>([
       {
         type: "button",
         label: "プロジェクトを上書き保存",
-        onClick: () => {
-          saveProject();
+        onClick: async () => {
+          await saveProject();
         },
         disableWhenUiLocked: true,
       },
       {
         type: "button",
         label: "プロジェクトを名前を付けて保存",
-        onClick: () => {
-          saveProjectAs();
+        onClick: async () => {
+          await saveProjectAs();
         },
         disableWhenUiLocked: true,
       },

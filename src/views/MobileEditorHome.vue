@@ -1,15 +1,12 @@
 <!-- FIXME: ロジックがEditorHome.vueからコピーされているので、良い感じに共通化する -->
 <template>
-  <menu-bar />
-
   <q-layout reveal elevated container class="layout-container">
-    <header-bar />
+    <mobile-header-bar />
 
     <q-page-container>
       <q-page class="main-row-panes">
         <progress-dialog />
 
-        <!-- TODO: 複数エンジン対応 -->
         <div
           v-if="!isCompletedInitialStartup || allEngineState === 'STARTING'"
           class="waiting-engine"
@@ -28,13 +25,13 @@
               <q-separator spaced />
               エンジン起動に時間がかかっています。<br />
               <q-btn
+                v-if="isMultipleEngine"
                 outline
                 @click="restartAppWithMultiEngineOffMode"
-                v-if="isMultipleEngine"
               >
                 マルチエンジンをオフにして再起動する</q-btn
               >
-              <q-btn outline @click="openFaq" v-else>FAQを見る</q-btn>
+              <q-btn v-else outline @click="openFaq">FAQを見る</q-btn>
             </template>
           </div>
         </div>
@@ -55,9 +52,9 @@
             <q-splitter
               :limits="[MIN_PORTRAIT_PANE_WIDTH, MAX_PORTRAIT_PANE_WIDTH]"
               separator-class="home-splitter"
-              :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+              :separator-style="{ width: shouldShowSidePanes ? '3px' : '0' }"
               before-class="overflow-hidden"
-              :disable="!shouldShowPanes"
+              :disable="!shouldShowSidePanes"
               :model-value="portraitPaneWidth"
               @update:model-value="updatePortraitPane"
             >
@@ -70,9 +67,11 @@
                   unit="px"
                   :limits="[audioInfoPaneMinWidth, audioInfoPaneMaxWidth]"
                   separator-class="home-splitter"
-                  :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+                  :separator-style="{
+                    width: shouldShowSidePanes ? '3px' : '0',
+                  }"
                   class="full-width overflow-hidden"
-                  :disable="!shouldShowPanes"
+                  :disable="!shouldShowSidePanes"
                   :model-value="audioInfoPaneWidth"
                   @update:model-value="updateAudioInfoPane"
                 >
@@ -90,19 +89,19 @@
                     >
                       <draggable
                         class="audio-cells"
-                        :modelValue="audioKeys"
-                        @update:modelValue="updateAudioKeys"
-                        :itemKey="itemKey"
+                        :model-value="audioKeys"
+                        :item-key="itemKey"
                         ghost-class="ghost"
                         filter="input"
-                        :preventOnFilter="false"
+                        :prevent-on-filter="false"
+                        @update:model-value="updateAudioKeys"
                       >
-                        <template v-slot:item="{ element }">
+                        <template #item="{ element }">
                           <audio-cell
-                            class="draggable-cursor"
-                            :audioKey="element"
                             :ref="addAudioCellRef"
-                            @focusCell="focusCell"
+                            class="draggable-cursor"
+                            :audio-key="element"
+                            @focus-cell="focusCell"
                           />
                         </template>
                       </draggable>
@@ -121,7 +120,7 @@
                   <template #after>
                     <audio-info
                       v-if="activeAudioKey != undefined"
-                      :activeAudioKey="activeAudioKey"
+                      :active-audio-key="activeAudioKey"
                     />
                   </template>
                 </q-splitter>
@@ -131,7 +130,7 @@
           <template #after>
             <audio-detail
               v-if="activeAudioKey != undefined"
-              :activeAudioKey="activeAudioKey"
+              :active-audio-key="activeAudioKey"
             />
           </template>
         </q-splitter>
@@ -149,13 +148,13 @@
   <header-bar-custom-dialog v-model="isToolbarSettingDialogOpenComputed" />
   <character-order-dialog
     v-if="orderedAllCharacterInfos.length > 0"
-    :characterInfos="orderedAllCharacterInfos"
     v-model="isCharacterOrderDialogOpenComputed"
+    :character-infos="orderedAllCharacterInfos"
   />
   <default-style-list-dialog
     v-if="orderedAllCharacterInfos.length > 0"
-    :characterInfos="orderedAllCharacterInfos"
     v-model="isDefaultStyleSelectDialogOpenComputed"
+    :character-infos="orderedAllCharacterInfos"
   />
   <dictionary-manage-dialog v-model="isDictionaryManageDialogOpenComputed" />
   <engine-manage-dialog v-model="isEngineManageDialogOpenComputed" />
@@ -172,11 +171,10 @@ import draggable from "vuedraggable";
 import { QResizeObserver, useQuasar } from "quasar";
 import cloneDeep from "clone-deep";
 import { useStore } from "@/store";
-import HeaderBar from "@/components/HeaderBar.vue";
+import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 import AudioCell from "@/components/AudioCell.vue";
 import AudioDetail from "@/components/AudioDetail.vue";
 import AudioInfo from "@/components/AudioInfo.vue";
-import MenuBar from "@/components/MenuBar.vue";
 import HelpDialog from "@/components/HelpDialog.vue";
 import SettingDialog from "@/components/SettingDialog.vue";
 import HotkeySettingDialog from "@/components/HotkeySettingDialog.vue";
@@ -297,7 +295,7 @@ const MIN_PORTRAIT_PANE_WIDTH = 0;
 const MAX_PORTRAIT_PANE_WIDTH = 40;
 const MIN_AUDIO_INFO_PANE_WIDTH = 160; // px
 const MAX_AUDIO_INFO_PANE_WIDTH = 250;
-const MIN_AUDIO_DETAIL_PANE_HEIGHT = 185; // px
+const MIN_AUDIO_DETAIL_PANE_HEIGHT = 220; // px
 const MAX_AUDIO_DETAIL_PANE_HEIGHT = 500;
 
 const portraitPaneWidth = ref(0);
@@ -420,13 +418,38 @@ const duplicateAudioItem = async () => {
 const shouldShowPanes = computed<boolean>(
   () => store.getters.SHOULD_SHOW_PANES
 );
+const shouldShowSidePanes = computed<boolean>(
+  () => shouldShowPanes.value && $q.screen.gt.xs // 横幅がある程度大きいかどうか
+);
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(Math.min(value, max), min);
+
 watch(shouldShowPanes, (val, old) => {
   if (val === old) return;
 
   if (val) {
-    const clamp = (value: number, min: number, max: number) =>
-      Math.max(Math.min(value, max), min);
+    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
+    changeAudioDetailPaneMaxHeight(
+      resizeObserverRef.value?.$el.parentElement.clientHeight
+    );
 
+    audioDetailPaneHeight.value = clamp(
+      splitterPosition.value.audioDetailPaneHeight ??
+        MIN_AUDIO_DETAIL_PANE_HEIGHT,
+      audioDetailPaneMinHeight.value,
+      audioDetailPaneMaxHeight.value
+    );
+  } else {
+    audioDetailPaneHeight.value = 0;
+    audioDetailPaneMinHeight.value = 0;
+    audioDetailPaneMaxHeight.value = 0;
+  }
+});
+
+watch(shouldShowSidePanes, (val, old) => {
+  if (val === old) return;
+
+  if (val) {
     // 設定ファイルを書き換えれば異常な値が入り得るのですべてclampしておく
     portraitPaneWidth.value = clamp(
       splitterPosition.value.portraitPaneWidth ?? DEFAULT_PORTRAIT_PANE_WIDTH,
@@ -441,26 +464,11 @@ watch(shouldShowPanes, (val, old) => {
     );
     audioInfoPaneMinWidth.value = MIN_AUDIO_INFO_PANE_WIDTH;
     audioInfoPaneMaxWidth.value = MAX_AUDIO_INFO_PANE_WIDTH;
-
-    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
-    changeAudioDetailPaneMaxHeight(
-      resizeObserverRef.value?.$el.parentElement.clientHeight
-    );
-
-    audioDetailPaneHeight.value = clamp(
-      splitterPosition.value.audioDetailPaneHeight ??
-        MIN_AUDIO_DETAIL_PANE_HEIGHT,
-      audioDetailPaneMinHeight.value,
-      audioDetailPaneMaxHeight.value
-    );
   } else {
     portraitPaneWidth.value = 0;
     audioInfoPaneWidth.value = 0;
     audioInfoPaneMinWidth.value = 0;
     audioInfoPaneMaxWidth.value = 0;
-    audioDetailPaneHeight.value = 0;
-    audioDetailPaneMinHeight.value = 0;
-    audioDetailPaneMaxHeight.value = 0;
   }
 });
 
@@ -827,10 +835,7 @@ const loadDraggedFile = (event: { dataTransfer: DataTransfer | null }) => {
   display: flex;
 
   .q-splitter--horizontal {
-    height: calc(
-      100vh - #{vars.$menubar-height + vars.$header-height +
-        vars.$window-border-width}
-    );
+    height: calc(100vh - #{vars.$top-bar-height});
   }
 }
 

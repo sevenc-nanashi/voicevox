@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-console */
+import { SplashScreen } from "@capacitor/splash-screen";
 import {
   defaultHotkeySettings,
   defaultToolbarButtonSetting,
@@ -59,12 +60,6 @@ const loadMock = () => {
     },
     async getPrivacyPolicyText() {
       return await fetch("/privacyPolicy.md").then((res) => res.text());
-    },
-    async saveTempAudioFile(obj) {
-      throw new Error(`Not implemented: saveTempAudioFile ${obj}`);
-    },
-    async loadTempFile() {
-      throw new Error("Not implemented: loadTempFile");
     },
     async showAudioSaveDialog(obj) {
       throw new Error(`Not implemented: showAudioSaveDialog ${obj}`);
@@ -181,7 +176,12 @@ const loadMock = () => {
       };
     },
     vuexReady() {
-      console.log("vuexReady");
+      requestAnimationFrame(() => {
+        // 1回だけだと文字の描画が終わっていないので2回待機する
+        requestAnimationFrame(() => {
+          SplashScreen.hide();
+        });
+      });
     },
     getSetting(key) {
       const setting = electronStoreSchema.parse(

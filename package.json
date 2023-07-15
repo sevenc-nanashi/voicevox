@@ -8,6 +8,10 @@
     "node": ">=18.13.0 <19",
     "npm": ">=8.19.3 <9"
   },
+  "volta": {
+    "node": "18.13.0",
+    "npm": "8.19.3"
+  },
   "scripts": {
     "serve": "cross-env VITE_TARGET=web vite",
     "build": "cross-env VITE_TARGET=web vite build",
@@ -39,6 +43,7 @@
   "dependencies": {
     "@capacitor/android": "5.0.3",
     "@capacitor/core": "5.0.3",
+    "@capacitor/splash-screen": "5.0.2",
     "@gtm-support/vue-gtm": "1.2.3",
     "@quasar/extras": "1.10.10",
     "buffer": "6.0.3",
@@ -97,7 +102,7 @@
     "@vue/test-utils": "2.3.0",
     "cross-env": "7.0.3",
     "cross-var": "1.1.0",
-    "electron": "20.3.12",
+    "electron": "23.3.10",
     "electron-builder": "24.0.0-alpha.12",
     "electron-devtools-installer": "3.2.0",
     "eslint": "8.24.0",

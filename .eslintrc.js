@@ -5,11 +5,11 @@ module.exports = {
     node: true,
   },
   extends: [
-    "plugin:vue/vue3-essential",
+    "plugin:vue/vue3-recommended",
     "eslint:recommended",
     "@vue/typescript/recommended",
     "@vue/prettier",
-    "@vue/eslint-config-typescript",
+    "@vue/eslint-config-typescript/recommended",
     "@vue/eslint-config-prettier",
   ],
   plugins: ["import"],
@@ -20,6 +20,10 @@ module.exports = {
   },
   ignorePatterns: ["dist_electron/**/*", "dist/**/*", "node_modules/**/*"],
   rules: {
+    "linebreak-style":
+      process.env.NODE_ENV === "production" && process.platform !== "win32"
+        ? ["error", "unix"]
+        : "off",
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     "prettier/prettier": [
@@ -60,6 +64,8 @@ module.exports = {
         "./src/background/*.ts",
         "./src/electron/*.ts",
         "./tests/**/*.ts",
+        "./build/*.js",
+        "./build/*.mts",
       ],
       rules: {
         "no-console": "off",

@@ -80,12 +80,15 @@ export type Command = {
 };
 
 export type EngineState = "STARTING" | "FAILED_STARTING" | "ERROR" | "READY";
-export type AltPortInfos = Record<EngineId, { from: number; to: number }>; // ポートが塞がれていたときの代替ポート
+
+// ポートが塞がれていたときの代替ポート情報
+export type AltPortInfos = Record<EngineId, { from: number; to: number }>;
 
 export type SaveResult =
   | "SUCCESS"
   | "WRITE_ERROR"
   | "ENGINE_ERROR"
+  | "UNKNOWN_ERROR"
   | "CANCELED";
 export type SaveResultObject = {
   result: SaveResult;
@@ -728,6 +731,7 @@ export type CommandStoreTypes = {
 export type EngineStoreState = {
   engineStates: Record<EngineId, EngineState>;
   engineSupportedDevices: Record<EngineId, SupportedDevicesInfo>;
+  altPortInfos: AltPortInfos;
 };
 
 export type EngineStoreTypes = {
@@ -749,6 +753,10 @@ export type EngineStoreTypes = {
 
   GET_ALT_PORT_INFOS: {
     action(): Promise<AltPortInfos>;
+  };
+
+  SET_ALT_PORT_INFOS: {
+    mutation: { altPortInfos: AltPortInfos };
   };
 
   SET_ENGINE_MANIFESTS: {
@@ -1008,6 +1016,7 @@ export type SettingStoreState = {
   themeSetting: ThemeSetting;
   editorFont: EditorFontType;
   showTextLineNumber: boolean;
+  showAddAudioItemButton: boolean;
   acceptRetrieveTelemetry: AcceptRetrieveTelemetryStatus;
   experimentalSetting: ExperimentalSetting;
   splitTextWhenPaste: SplitTextWhenPasteType;
@@ -1051,6 +1060,11 @@ export type SettingStoreTypes = {
     action(payload: { showTextLineNumber: boolean }): void;
   };
 
+  SET_SHOW_ADD_AUDIO_ITEM_BUTTON: {
+    mutation: { showAddAudioItemButton: boolean };
+    action(payload: { showAddAudioItemButton: boolean }): void;
+  };
+
   SET_ACCEPT_RETRIEVE_TELEMETRY: {
     mutation: { acceptRetrieveTelemetry: AcceptRetrieveTelemetryStatus };
     action(payload: {
@@ -1081,6 +1095,14 @@ export type SettingStoreTypes = {
   SET_CONFIRMED_TIPS: {
     mutation: { confirmedTips: ConfirmedTips };
     action(payload: { confirmedTips: ConfirmedTips }): void;
+  };
+
+  SET_CONFIRMED_TIP: {
+    action(payload: { confirmedTip: Partial<ConfirmedTips> }): void;
+  };
+
+  RESET_CONFIRMED_TIPS: {
+    action(): void;
   };
 
   SET_ENGINE_SETTING: {
@@ -1127,6 +1149,7 @@ export type UiStoreState = {
   isPinned: boolean;
   isFullscreen: boolean;
   progress: number;
+  isVuexReady: boolean;
 };
 
 export type UiStoreTypes = {
@@ -1198,6 +1221,7 @@ export type UiStoreTypes = {
   };
 
   ON_VUEX_READY: {
+    mutation: void;
     action(): void;
   };
 

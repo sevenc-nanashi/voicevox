@@ -25,6 +25,7 @@ describe("store/vuex.js test", () => {
           [engineId]: "STARTING",
         },
         engineSupportedDevices: {},
+        altPortInfos: {},
         characterInfos: {},
         morphableTargetsInfo: {},
         defaultStyleIds: [],
@@ -76,6 +77,7 @@ describe("store/vuex.js test", () => {
         },
         editorFont: "default",
         showTextLineNumber: false,
+        showAddAudioItemButton: true,
         isPinned: false,
         isFullscreen: false,
         presetItems: {},
@@ -136,8 +138,10 @@ describe("store/vuex.js test", () => {
         confirmedTips: {
           tweakableSliderByScroll: false,
           engineStartedOnAltPort: false,
+          notifyOnGenerate: false,
         },
         progress: -1,
+        isVuexReady: false,
         defaultPresetKeys: {},
       },
       getters: {
@@ -244,6 +248,7 @@ describe("store/vuex.js test", () => {
       false
     );
     assert.equal(store.state.showTextLineNumber, false);
+    assert.equal(store.state.showAddAudioItemButton, true);
     assert.propertyVal(
       store.state.splitterPosition,
       "audioDetailPaneHeight",
@@ -253,5 +258,6 @@ describe("store/vuex.js test", () => {
     assert.propertyVal(store.state.splitterPosition, "portraitPaneWidth", 50);
     assert.equal(store.state.confirmedTips.tweakableSliderByScroll, false);
     assert.equal(store.state.confirmedTips.engineStartedOnAltPort, false);
+    assert.equal(store.state.confirmedTips.notifyOnGenerate, false);
   });
 });

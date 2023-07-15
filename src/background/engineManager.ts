@@ -9,7 +9,13 @@ import { app, BrowserWindow, dialog } from "electron";
 
 import log from "electron-log";
 import { z } from "zod";
-import { PortManager } from "./portManager";
+import {
+  findAltPort,
+  getPidFromPort,
+  getProcessNameFromPid,
+  isAssignablePort,
+  url2HostInfo,
+} from "./portManager";
 import { ipcMainSend } from "@/electron/ipc";
 
 import {
@@ -65,7 +71,8 @@ export class EngineManager {
   defaultEngineDir: string;
   vvppEngineDir: string;
 
-  defaultEngineInfos: EngineInfo[];
+  defaultEngineInfos: EngineInfo[] = [];
+  additionalEngineInfos: EngineInfo[] = [];
   engineProcessContainers: Record<EngineId, EngineProcessContainer>;
 
   public altPortInfo: AltPortInfos = {};
@@ -83,15 +90,15 @@ export class EngineManager {
     this.defaultEngineDir = defaultEngineDir;
     this.vvppEngineDir = vvppEngineDir;
 
-    this.defaultEngineInfos = createDefaultEngineInfos(defaultEngineDir);
+    this.initializeEngineInfosAndAltPortInfo();
     this.engineProcessContainers = {};
   }
 
   /**
-   * 追加エンジンの一覧を取得する。
+   * 追加エンジンの一覧を作成する。
    * FIXME: store.get("registeredEngineDirs")への副作用をEngineManager外に移動する
    */
-  fetchAdditionalEngineInfos(): EngineInfo[] {
+  private createAdditionalEngineInfos(): EngineInfo[] {
     const engines: EngineInfo[] = [];
     const addEngine = (engineDir: string, type: "vvpp" | "path") => {
       const manifestPath = path.join(engineDir, "engine_manifest.json");
@@ -159,8 +166,7 @@ export class EngineManager {
    * 全てのエンジンの一覧を取得する。デフォルトエンジン＋追加エンジン。
    */
   fetchEngineInfos(): EngineInfo[] {
-    const additionalEngineInfos = this.fetchAdditionalEngineInfos();
-    return [...this.defaultEngineInfos, ...additionalEngineInfos];
+    return [...this.defaultEngineInfos, ...this.additionalEngineInfos];
   }
 
   /**
@@ -188,6 +194,15 @@ export class EngineManager {
     }
 
     return engineDirectory;
+  }
+
+  /**
+   * EngineInfosとAltPortInfoを初期化する。
+   */
+  initializeEngineInfosAndAltPortInfo() {
+    this.defaultEngineInfos = createDefaultEngineInfos(this.defaultEngineDir);
+    this.additionalEngineInfos = this.createAdditionalEngineInfos();
+    this.altPortInfo = {};
   }
 
   /**
@@ -229,33 +244,42 @@ export class EngineManager {
       return;
     }
 
-    const engineInfoUrl = new URL(engineInfo.host);
-    const portManager = new PortManager(
-      engineInfoUrl.hostname,
-      parseInt(engineInfoUrl.port)
-    );
+    // { hostname (localhost), port (50021) } <- url (http://localhost:50021)
+    const engineHostInfo = url2HostInfo(new URL(engineInfo.host));
 
     log.info(
-      `ENGINE ${engineId}: Checking whether port ${engineInfoUrl.port} is assignable...`
+      `ENGINE ${engineId}: Checking whether port ${engineHostInfo.port} is assignable...`
     );
 
-    // ポートを既に割り当てられているプロセスidの取得: undefined → ポートが空いている
-    const processId = await portManager.getProcessIdFromPort();
-    if (processId !== undefined) {
-      const processName = await portManager.getProcessNameFromPid(processId);
-      log.warn(
-        `ENGINE ${engineId}: Port ${engineInfoUrl.port} has already been assigned by ${processName} (pid=${processId})`
+    if (
+      !(await isAssignablePort(engineHostInfo.port, engineHostInfo.hostname))
+    ) {
+      // ポートを既に割り当てているプロセスidの取得
+      const pid = await getPidFromPort(engineHostInfo);
+      if (pid != undefined) {
+        const processName = await getProcessNameFromPid(engineHostInfo, pid);
+        log.warn(
+          `ENGINE ${engineId}: Port ${engineHostInfo.port} has already been assigned by ${processName} (pid=${pid})`
+        );
+      } else {
+        // ポートは使用不可能だがプロセスidは見つからなかった
+        log.warn(
+          `ENGINE ${engineId}: Port ${engineHostInfo.port} was unavailable`
+        );
+      }
+
+      // 代替ポートの検索
+      const altPort = await findAltPort(
+        engineHostInfo.port,
+        engineHostInfo.hostname
       );
 
-      // 代替ポート検索
-      const altPort = await portManager.findAltPort();
-
       // 代替ポートが見つからないとき
-      if (!altPort) {
+      if (altPort == undefined) {
         log.error(`ENGINE ${engineId}: No Alternative Port Found`);
         dialog.showErrorBox(
           `${engineInfo.name} の起動に失敗しました`,
-          `${engineInfoUrl.port}番ポートの代わりに利用可能なポートが見つかりませんでした。PCを再起動してください。`
+          `${engineHostInfo.port}番ポートの代わりに利用可能なポートが見つかりませんでした。PCを再起動してください。`
         );
         app.exit(1);
         throw new Error("No Alternative Port Found");
@@ -263,14 +287,14 @@ export class EngineManager {
 
       // 代替ポートの情報
       this.altPortInfo[engineId] = {
-        from: parseInt(engineInfoUrl.port),
+        from: engineHostInfo.port,
         to: altPort,
       };
 
       // 代替ポートを設定
-      engineInfo.host = `http://${engineInfoUrl.hostname}:${altPort}`;
+      engineInfo.host = `${engineHostInfo.protocol}//${engineHostInfo.hostname}:${altPort}`;
       log.warn(
-        `ENGINE ${engineId}: Applied Alternative Port: ${engineInfoUrl.port} -> ${altPort}`
+        `ENGINE ${engineId}: Applied Alternative Port: ${engineHostInfo.port} -> ${altPort}`
       );
     }
 
