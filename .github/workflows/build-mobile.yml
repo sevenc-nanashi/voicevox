@@ -99,7 +99,7 @@ jobs:
 
       - name: Generate public/speakerInfos
         shell: bash
-        run: npx ts-node ./build/generateProductionSpeakerInfos.mts --speaker-info-dir ./resource/character_info
+        run: npx ts-node ./build/generateProductionSpeakerInfo.mts --speaker-info-dir ./resource/character_info
 
       - name: Show disk space (debug info)
         shell: bash
