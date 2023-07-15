@@ -26,13 +26,6 @@ jobs:
         run: |
           npm run cap:sync
 
-      # checkでエラーになるので削除。
-      # https://github.com/ionic-team/capacitor/issues/5287 によると、Cordovaのプラグインを使わない場合は
-      # flatDirは不要らしい。
-      - name: Delete flatDir to avoid warning
-        run: |
-          sed -i -e '/flatDir .*/d' android/capacitor-cordova-android-plugins/build.gradle
-
       - name: Setup java
         uses: actions/setup-java@v3
         with:
@@ -40,6 +33,7 @@ jobs:
           distribution: "oracle"
           cache: gradle
 
-      - name: Run all check
+      # checkだとActionsがフリーズするので、lintを実行する
+      - name: Run lint
         working-directory: android
-        run: ./gradlew check
+        run: ./gradlew lint

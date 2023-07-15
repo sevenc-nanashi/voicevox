@@ -49,9 +49,12 @@ android {
 }
 
 repositories {
-    flatDir {
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
+    // checkでエラーになるのでコメントアウト。
+    // https://github.com/ionic-team/capacitor/issues/5287 によると、Cordovaのプラグインを使わない場合は
+    // flatDirは不要らしい。
+    // flatDir {
+    //     dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    // }
 }
 
 dependencies {
