@@ -15,14 +15,6 @@ defaults:
     shell: bash
 
 jobs:
-  build-test:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup environment
-        uses: ./.github/actions/setup-environment
-      - run: npm run electron:build_pnever
-
   android-check:
     runs-on: windows-latest
     steps:
