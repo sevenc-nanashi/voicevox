@@ -39,7 +39,9 @@ const speakerProvider: ApiProvider = ({ corePlugin }) => {
       await corePlugin.loadModel({ speakerId: speaker });
     },
     async isInitializedSpeakerIsInitializedSpeakerGet({ speaker }) {
-      return await corePlugin.isModelLoaded({ speakerId: speaker });
+      return await corePlugin
+        .isModelLoaded({ speakerId: speaker })
+        .then((res) => res.value);
     },
   };
 };
