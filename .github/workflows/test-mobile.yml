@@ -27,6 +27,7 @@ jobs:
         with:
           java-version: 20
           distribution: "oracle"
+          cache: gradle
 
       - name: Run all check
         working-directory: android

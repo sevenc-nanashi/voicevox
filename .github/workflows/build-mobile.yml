@@ -110,6 +110,7 @@ jobs:
         with:
           java-version: 20
           distribution: "oracle"
+          cache: gradle
 
       - name: Cache core
         id: cache-core
