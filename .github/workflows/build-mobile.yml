@@ -198,6 +198,7 @@ jobs:
         if: ${{ github.event.inputs.production_code_signing != 'true' }}
         shell: bash
         run: |
+          cp ./android/debug.keystore ~/.android/debug.keystore
           npm run cap:sync
           cd android
           chmod +x gradlew
