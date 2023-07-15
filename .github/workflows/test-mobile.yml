@@ -1,0 +1,42 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+env:
+  VOICEVOX_ENGINE_VERSION: 0.14.4
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
+      - run: npm run electron:build_pnever
+
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 20
+          distribution: "oracle"
+
+      - name: Run all check
+        working-directory: android
+        run: ./gradlew check
+

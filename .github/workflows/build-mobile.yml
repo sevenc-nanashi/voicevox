@@ -1,0 +1,207 @@
+name: Build for Mobile
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョン情報（A.BB.C / A.BB.C-preview.D）"
+        required: true
+      prerelease:
+        description: "プレリリースかどうか"
+        type: boolean
+        default: true
+      production_code_signing:
+        description: "secretsのkeystoreから署名するかどうか"
+        type: boolean
+      upload_artifact:
+        description: "デバッグ用に成果物をartifactにアップロードするか"
+        type: boolean
+        default: false
+
+env:
+  VOICEVOX_CORE_VERSION: 0.15.0-preview.3
+  VOICEVOX_RESOURCE_VERSION: 0.14.3-preview.1
+  VOICEVOX_EDITOR_VERSION:
+    |- # releaseタグ名か、workflow_dispatchでのバージョン名か、999.999.999-developが入る
+    ${{ github.event.release.tag_name || github.event.inputs.version || '999.999.999-develop' }}
+
+jobs:
+  build-and-upload-for-android:
+    environment: ${{ github.event.inputs.production_code_signing == 'true' && 'code_signing' || '' }} # コード署名用のenvironment（false時の挙動は2022年7月10日時点で未定義動作）
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - apk
+          - aab
+        include:
+          - target: apk
+            prod_dest_path: android/app/build/outputs/apk/release/app-release-signed.apk
+            dev_dest_path: android/app/build/outputs/apk/debug/app-debug.apk
+
+          - target: aab
+            prod_dest_path: android/app/build/outputs/bundle/release/app-release-signed.aab
+            dev_dest_path: android/app/build/outputs/bundle/debug/app-debug.aab
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-environment
+
+      - name: Show disk space (debug info)
+        shell: bash
+        run: |
+          df -h
+      - name: Checkout Product Version Resource
+        uses: actions/checkout@v3
+        with:
+          repository: VOICEVOX/voicevox_resource
+          ref: ${{ env.VOICEVOX_RESOURCE_VERSION }}
+          path: resource
+
+      - name: Create and replace software resources
+        shell: bash
+        run: |
+          rm build/README.txt
+          rm public/policy.md
+          {
+            cat resource/editor/README.md
+            echo
+            cat resource/editor/ACKNOWLEDGMENTS.md
+          } \
+          > build/README.txt
+          cp build/README.txt public/policy.md
+          cp resource/editor/PRIVACYPOLICY.md public/privacyPolicy.md
+      - name: Replace .env.production infomations
+        shell: bash
+        run: |
+          # GTM ID
+          gtm_id=$(jq -r '.gtm_container_id' resource/editor/metas.json)
+          sed -i 's/VITE_GTM_CONTAINER_ID=.*/VITE_GTM_CONTAINER_ID='"$gtm_id"'/' .env.production
+      - name: Replace package version
+        shell: bash
+        run: |
+          sed -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
+          echo "VersionCode: ${{ github.run_number }}"
+          sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i 's/versionName ".*"/versionName "${{ env.VOICEVOX_EDITOR_VERSION }}"/' android/app/build.gradle
+          cat android/app/build.gradle
+      - name: Generate public/licenses.json
+        shell: bash
+        run: npm run license:generate -- -o public/licenses.json
+
+      - name: Generate public/speakerInfos
+        shell: bash
+        run: npx ts-node ./build/generateProductionSpeakerInfos.mts --speaker-info-dir ./resource/character_info
+
+      - name: Show disk space (debug info)
+        shell: bash
+        run: |
+          df -h
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 20
+          distribution: "oracle"
+
+      - name: Cache core
+        id: cache-core
+        uses: actions/cache@v3
+        with:
+          path: |
+            /tmp/x86_64_core.so
+            /tmp/arm64_core.so
+            /tmp/voicevox_core.h
+            /tmp/model.zip
+          key: ${{ env.VOICEVOX_CORE_VERSION }}
+
+      - name: Download core
+        if: steps.cache-core.outputs.cache-hit != 'true'
+        run: |
+          cd /tmp
+          for arch in x86_64 arm64; do
+            curl https://github.com/VOICEVOX/voicevox_core/releases/download/${{ env.VOICEVOX_CORE_VERSION }}/voicevox_core-android-$arch-cpu-${{ env.VOICEVOX_CORE_VERSION }}.zip -fsSLo $arch.zip
+            unzip -o $arch.zip
+            rm $arch.zip
+            mv voicevox_core-android-$arch-cpu-${{ env.VOICEVOX_CORE_VERSION }}/libvoicevox_core.so ${arch}_core.so
+          done
+          cd voicevox_core-android-x86_64-cpu-${{ env.VOICEVOX_CORE_VERSION }}/model
+          zip -r /tmp/model.zip .
+          cd /tmp
+          cp voicevox_core-android-x86_64-cpu-${{ env.VOICEVOX_CORE_VERSION }}/voicevox_core.h .
+          rm -rf voicevox_core-android-*
+      - name: Copy core
+        run: |
+          cp /tmp/x86_64_core.so android/app/src/main/jniLibs/x86_64/libvoicevox_core.so
+          cp /tmp/arm64_core.so android/app/src/main/jniLibs/arm64-v8a/libvoicevox_core.so
+          cp /tmp/voicevox_core.h android/app/src/main/jniLibs/include/voicevox_core.h
+          cp /tmp/model.zip android/app/src/main/assets/model.zip
+          sha256sum android/app/src/main/assets/model.zip | cut -d ' ' -f 1 > android/app/src/main/assets/model.zip.sha256
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Cache gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1
+
+      - name: Run production build
+        if: ${{ github.event.inputs.production_code_signing == 'true' }}
+        shell: bash
+        run: |
+          cat - | base64 -d > /tmp/keystore.jks <<EOF
+          ${{ secrets.ANDROID_KEYSTORE_DATA }}
+          EOF
+          if [ -s /tmp/keystore.jks ]; then
+            echo "Created keystore.jks"
+            SHA256=$(sha256sum /tmp/keystore.jks | cut -d ' ' -f 1)
+            echo "SHA256: $SHA256"
+          else
+            echo "Failed to create keystore.jks"
+            echo "Have you set ANDROID_KEYSTORE_DATA, ANDROID_KEYSTORE_PASS, ANDROID_KEYSTORE_ALIAS and ANDROID_KEYSTORE_ALIAS_PASS?"
+            exit 1
+          fi
+          target=${{ matrix.target }}
+          chmod +x android/gradlew
+          npm run cap:sync
+          npm run cap:build:android -- \
+            --keystorepath /tmp/keystore.jks \
+            --keystorepass ${{ secrets.ANDROID_KEYSTORE_PASS }} \
+            --keystorealias ${{ secrets.ANDROID_KEYSTORE_ALIAS }} \
+            --keystorealiaspass ${{ secrets.ANDROID_KEYSTORE_ALIAS_PASS }} \
+            --androidreleasetype ${target^^}
+          mv ${{ matrix.prod_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+      - name: Run non-production build
+        if: ${{ github.event.inputs.production_code_signing != 'true' }}
+        shell: bash
+        run: |
+          cp ./android/debug.keystore ~/.android/debug.keystore
+          npm run cap:sync
+          cd android
+          chmod +x gradlew
+          if [ ${{ matrix.target }} == 'apk' ]; then
+            ./gradlew assembleDebug
+          else
+            ./gradlew bundleDebug
+          fi
+          cd ..
+          mv ${{ matrix.dev_dest_path }} /tmp/voicevox-mobile-$VOICEVOX_EDITOR_VERSION.${{ matrix.target }}
+      - name: Upload apk
+        if: (github.event.release.tag_name || github.event.inputs.version) != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: ${{ github.event.inputs.prerelease }}
+          tag_name: ${{ env.VOICEVOX_EDITOR_VERSION }}
+          files: |-
+            /tmp/voicevox-mobile-${{ env.VOICEVOX_EDITOR_VERSION }}.${{ matrix.target }}
+          target_commitish: ${{ github.sha }}
