@@ -31,4 +31,6 @@ jobs:
 
       - name: Run check
         working-directory: android
-        run: ./gradlew check
+        run: |
+          chmod +x gradlew
+          ./gradlew check
