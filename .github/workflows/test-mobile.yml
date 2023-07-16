@@ -29,7 +29,6 @@ jobs:
           distribution: "oracle"
           cache: gradle
 
-      # checkだとActionsがフリーズするので、lintを実行する
-      - name: Run lint
+      - name: Run check
         working-directory: android
-        run: ./gradlew lint
+        run: ./gradlew check
