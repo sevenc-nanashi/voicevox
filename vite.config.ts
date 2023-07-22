@@ -8,12 +8,13 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import vue from "@vitejs/plugin-vue";
 import checker from "vite-plugin-checker";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
-import { BuildOptions, defineConfig } from "vite";
+import { BuildOptions, defineConfig, Plugin } from "vite";
 import { quasar } from "@quasar/vite-plugin";
 
 rmSync(path.resolve(__dirname, "dist"), { recursive: true, force: true });
 
 const isElectron = process.env.VITE_TARGET === "electron";
+const isBrowser = process.env.VITE_TARGET === "browser";
 
 export default defineConfig((options) => {
   const shouldEmitSourcemap = ["development", "test"].includes(options.mode);
@@ -68,6 +69,10 @@ export default defineConfig((options) => {
     },
     define: {
       __availableThemes: JSON.stringify(themes),
+      [`process.env`]: {
+        APP_NAME: process.env.npm_package_name,
+        APP_VERSION: process.env.npm_package_version,
+      },
     },
 
     plugins: [
@@ -107,6 +112,21 @@ export default defineConfig((options) => {
             },
           },
         }),
+      isBrowser && injectBrowserPreloadPlugin(),
     ],
   };
 });
+
+const injectBrowserPreloadPlugin = (): Plugin => {
+  return {
+    name: "inject-browser-preload",
+    transformIndexHtml: {
+      enforce: "pre" as const,
+      transform: (html: string) =>
+        html.replace(
+          "<!-- %BROWSER_PRELOAD% -->",
+          `<script type="module" src="./browser/preload.ts"></script>`
+        ),
+    },
+  };
+};

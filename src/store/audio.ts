@@ -1794,7 +1794,7 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
           }
         }
 
-        // setSinkIdが実装されていない環境では無視する
+        // 一部ブラウザではsetSinkIdが実装されていないので、その環境では無視する
         if (audioElem.setSinkId) {
           audioElem
             .setSinkId(state.savingSetting.audioOutputDevice)
