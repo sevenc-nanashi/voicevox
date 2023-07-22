@@ -33,8 +33,6 @@ function ipcRendererOn(
 }
 
 const api: Sandbox = {
-  isMock: false,
-
   getAppInfos: async () => {
     return await ipcRendererInvoke("GET_APP_INFOS");
   },
