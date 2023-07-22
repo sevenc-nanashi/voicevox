@@ -6,6 +6,7 @@ import {
 } from "vue-router";
 import EditorHome from "@/views/EditorHome.vue";
 import MobileEditorHome from "@/views/MobileEditorHome.vue";
+import { isBrowser } from "@/type/preload";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -17,10 +18,9 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 const router = createRouter({
-  history:
-    import.meta.env.VITE_TARGET === "web"
-      ? createWebHistory(import.meta.env.BASE_URL)
-      : createWebHashHistory(import.meta.env.BASE_URL),
+  history: isBrowser
+    ? createWebHistory(import.meta.env.BASE_URL)
+    : createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 

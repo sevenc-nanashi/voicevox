@@ -3,6 +3,8 @@ import { IpcSOData } from "./ipc";
 import { AltPortInfos } from "@/store/type";
 import { Result } from "@/type/result";
 
+export const isElectron = import.meta.env.VITE_TARGET === "electron";
+export const isBrowser = import.meta.env.VITE_TARGET === "browser";
 export const isMac =
   typeof process === "undefined"
     ? navigator.userAgent.includes("Mac")
@@ -135,7 +137,6 @@ export const defaultToolbarButtonSetting: ToolbarSetting = [
 ];
 
 export interface Sandbox {
-  isMock: boolean;
   getAppInfos(): Promise<AppInfos>;
   getHowToUseText(): Promise<string>;
   getPolicyText(): Promise<string>;

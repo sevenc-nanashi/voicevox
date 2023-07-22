@@ -30,7 +30,6 @@ const engineInfos: EngineInfo[] = [
 
 const loadMock = () => {
   const electronMock: Sandbox = {
-    isMock: true,
     async getAppInfos() {
       return {
         name: "VOICEVOX Web",
