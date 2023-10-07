@@ -1,6 +1,10 @@
 // @ts-check
 const path = require("path");
 const fs = require("fs");
+const dotenv = require("dotenv");
+
+const dotenvPath = path.join(process.cwd(), ".env.production");
+dotenv.config({ path: dotenvPath });
 
 const VOICEVOX_ENGINE_DIR =
   process.env.VOICEVOX_ENGINE_DIR ?? "../voicevox_engine/run.dist/";
@@ -16,6 +20,12 @@ const LINUX_EXECUTABLE_NAME = process.env.LINUX_EXECUTABLE_NAME;
 
 // ${productName}-${version}.${ext}
 const MACOS_ARTIFACT_NAME = process.env.MACOS_ARTIFACT_NAME;
+
+// コード署名証明書
+const WIN_CERTIFICATE_SHA1 = process.env.WIN_CERTIFICATE_SHA1;
+const WIN_SIGNING_HASH_ALGORITHMS = process.env.WIN_SIGNING_HASH_ALGORITHMS
+  ? JSON.parse(process.env.WIN_SIGNING_HASH_ALGORITHMS)
+  : undefined;
 
 const isMac = process.platform === "darwin";
 
@@ -79,10 +89,6 @@ const builderOptions = {
       to: extraFilePrefix + "README.txt",
     },
     {
-      from: ".env.production",
-      to: extraFilePrefix + ".env",
-    },
-    {
       from: VOICEVOX_ENGINE_DIR,
       to: extraFilePrefix,
     },
@@ -108,6 +114,12 @@ const builderOptions = {
         arch: ["x64"],
       },
     ],
+    certificateSha1:
+      WIN_CERTIFICATE_SHA1 !== "" ? WIN_CERTIFICATE_SHA1 : undefined,
+    signingHashAlgorithms:
+      WIN_SIGNING_HASH_ALGORITHMS !== ""
+        ? WIN_SIGNING_HASH_ALGORITHMS
+        : undefined,
   },
   nsisWeb: {
     artifactName:

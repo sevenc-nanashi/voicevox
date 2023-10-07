@@ -9,8 +9,16 @@
         <progress-dialog />
 
         <!-- TODO: 複数エンジン対応 -->
+        <!-- TODO: allEngineStateが "ERROR" のときエラーになったエンジンを探してトーストで案内 -->
+        <div v-if="allEngineState === 'FAILED_STARTING'" class="waiting-engine">
+          <div>
+            エンジンの起動に失敗しました。エンジンの再起動をお試しください。
+          </div>
+        </div>
         <div
-          v-if="!isCompletedInitialStartup || allEngineState === 'STARTING'"
+          v-else-if="
+            !isCompletedInitialStartup || allEngineState === 'STARTING'
+          "
           class="waiting-engine"
         >
           <div>
@@ -29,9 +37,10 @@
               <q-btn
                 v-if="isMultipleEngine"
                 outline
-                @click="restartAppWithMultiEngineOffMode"
+                :disable="reloadingLocked"
+                @click="reloadAppWithMultiEngineOffMode"
               >
-                マルチエンジンをオフにして再起動する</q-btn
+                マルチエンジンをオフにして再読み込みする</q-btn
               >
               <q-btn v-else outline @click="openQa">Q&Aを見る</q-btn>
             </template>
@@ -113,7 +122,7 @@
                         <q-btn
                           fab
                           icon="add"
-                          color="primary-light"
+                          color="primary"
                           text-color="display-on-primary"
                           :disable="uiLocked"
                           aria-label="テキストを追加"
@@ -173,15 +182,16 @@
 import path from "path";
 import { computed, onBeforeUpdate, onMounted, ref, VNodeRef, watch } from "vue";
 import draggable from "vuedraggable";
-import { QResizeObserver, useQuasar } from "quasar";
+import { QResizeObserver } from "quasar";
 import cloneDeep from "clone-deep";
+import Mousetrap from "mousetrap";
 import { useStore } from "@/store";
 import HeaderBar from "@/components/HeaderBar.vue";
 import AudioCell from "@/components/AudioCell.vue";
 import AudioDetail from "@/components/AudioDetail.vue";
 import AudioInfo from "@/components/AudioInfo.vue";
 import MenuBar from "@/components/MenuBar.vue";
-import HelpDialog from "@/components/HelpDialog.vue";
+import HelpDialog from "@/components/help/HelpDialog.vue";
 import SettingDialog from "@/components/SettingDialog.vue";
 import HotkeySettingDialog from "@/components/HotkeySettingDialog.vue";
 import HeaderBarCustomDialog from "@/components/HeaderBarCustomDialog.vue";
@@ -212,10 +222,10 @@ const props =
   }>();
 
 const store = useStore();
-const $q = useQuasar();
 
 const audioKeys = computed(() => store.state.audioKeys);
 const uiLocked = computed(() => store.getters.UI_LOCKED);
+const reloadingLocked = computed(() => store.state.reloadingLock);
 
 const isMultipleEngine = computed(() => store.state.engineIds.length > 1);
 
@@ -225,7 +235,7 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
     "テキスト欄にフォーカスを戻す",
     () => {
       if (activeAudioKey.value !== undefined) {
-        focusCell({ audioKey: activeAudioKey.value });
+        focusCell({ audioKey: activeAudioKey.value, focusTarget: "textField" });
       }
       return false; // this is the same with event.preventDefault()
     },
@@ -404,7 +414,7 @@ const addAudioItem = async () => {
     audioItem,
     prevAudioKey: activeAudioKey.value,
   });
-  audioCellRefs[newAudioKey].focusTextField();
+  audioCellRefs[newAudioKey].focusCell({ focusTarget: "textField" });
 };
 const duplicateAudioItem = async () => {
   const prevAudioKey = activeAudioKey.value;
@@ -418,7 +428,7 @@ const duplicateAudioItem = async () => {
     audioItem: cloneDeep(prevAudioItem),
     prevAudioKey: activeAudioKey.value,
   });
-  audioCellRefs[newAudioKey].focusTextField();
+  audioCellRefs[newAudioKey].focusCell({ focusTarget: "textField" });
 };
 
 // Pane
@@ -470,8 +480,16 @@ watch(shouldShowPanes, (val, old) => {
 });
 
 // セルをフォーカス
-const focusCell = ({ audioKey }: { audioKey: AudioKey }) => {
-  audioCellRefs[audioKey].focusTextField();
+const focusCell = ({
+  audioKey,
+  focusTarget,
+}: {
+  audioKey: AudioKey;
+  focusTarget?: "root" | "textField";
+}) => {
+  audioCellRefs[audioKey].focusCell({
+    focusTarget: focusTarget ?? "textField",
+  });
 };
 
 // Electronのデフォルトのundo/redoを無効化
@@ -516,7 +534,10 @@ watch(userOrderedCharacterInfos, (userOrderedCharacterInfos) => {
     };
 
     // FIXME: UNDOができてしまうのでできれば直したい
-    store.dispatch("COMMAND_CHANGE_VOICE", { audioKey: first, voice: voice });
+    store.dispatch("COMMAND_MULTI_CHANGE_VOICE", {
+      audioKeys: [first],
+      voice: voice,
+    });
   }
 });
 
@@ -560,15 +581,33 @@ onMounted(async () => {
     const newAudioKey = await store.dispatch("REGISTER_AUDIO_ITEM", {
       audioItem,
     });
-    focusCell({ audioKey: newAudioKey });
+    focusCell({ audioKey: newAudioKey, focusTarget: "textField" });
 
     // 最初の話者を初期化
     store.dispatch("SETUP_SPEAKER", {
-      audioKey: newAudioKey,
+      audioKeys: [newAudioKey],
       engineId: audioItem.voice.engineId,
       styleId: audioItem.voice.styleId,
     });
   }
+
+  // ショートカットキー操作を止める条件の設定
+  // 止めるなら`true`を返す
+  Mousetrap.prototype.stopCallback = (
+    e: Mousetrap.ExtendedKeyboardEvent, // 未使用
+    element: Element,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    combo: string // 未使用
+  ) => {
+    return (
+      element.tagName === "INPUT" ||
+      element.tagName === "SELECT" ||
+      element.tagName === "TEXTAREA" ||
+      (element instanceof HTMLElement && element.contentEditable === "true") ||
+      // メニュー項目ではショートカットキーを無効化
+      element.classList.contains("q-item")
+    );
+  };
 
   // ショートカットキーの設定
   document.addEventListener("keydown", disableDefaultUndoRedo);
@@ -644,32 +683,20 @@ watch(
       const altPort = store.state.altPortInfos[engineId];
       if (!altPort) return;
 
-      $q.notify({
+      store.dispatch("SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON", {
         message: `${altPort.from}番ポートが使用中であるため ${engineName} は、${altPort.to}番ポートで起動しました`,
-        color: "toast",
-        textColor: "toast-display",
         icon: "compare_arrows",
-        timeout: 5000,
-        actions: [
-          {
-            label: "今後この通知をしない",
-            textColor: "toast-button-display",
-            handler: () =>
-              store.dispatch("SET_CONFIRMED_TIPS", {
-                confirmedTips: {
-                  ...store.state.confirmedTips,
-                  engineStartedOnAltPort: true,
-                },
-              }),
-          },
-        ],
+        tipName: "engineStartedOnAltPort",
       });
     }
   }
 );
 
-const restartAppWithMultiEngineOffMode = () => {
-  store.dispatch("RESTART_APP", { isMultiEngineOffMode: true });
+const reloadAppWithMultiEngineOffMode = () => {
+  store.dispatch("CHECK_EDITED_AND_NOT_SAVE", {
+    closeOrReload: "reload",
+    isMultiEngineOffMode: true,
+  });
 };
 
 const openQa = () => {
@@ -784,15 +811,10 @@ const loadDraggedFile = (event: { dataTransfer: DataTransfer | null }) => {
       store.dispatch("LOAD_PROJECT_FILE", { filePath: file.path });
       break;
     default:
-      $q.dialog({
+      store.dispatch("SHOW_ALERT_DIALOG", {
         title: "対応していないファイルです",
         message:
           "テキストファイル (.txt) とVOICEVOXプロジェクトファイル (.vvproj) に対応しています。",
-        ok: {
-          label: "閉じる",
-          flat: true,
-          textColor: "display",
-        },
       });
   }
 };

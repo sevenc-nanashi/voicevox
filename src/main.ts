@@ -7,8 +7,6 @@ import App from "./App.vue";
 import router from "./router";
 import { store, storeKey } from "./store";
 import { ipcMessageReceiver } from "./plugins/ipcMessageReceiverPlugin";
-// eslint-disable-next-line no-restricted-imports
-import loadElectronMock from "./electron/mock";
 import * as mobile from "./mobile";
 import { markdownItPlugin } from "@/plugins/markdownItPlugin";
 
@@ -26,10 +24,6 @@ if (Capacitor.isNativePlatform()) {
   mobile.loadMock();
   mobile.loadPlugin();
   mobile.loadCoreBasedApi();
-} else if (!window.electron) {
-  // eslint-disable-next-line no-console
-  console.log("Running in browser");
-  loadElectronMock();
 } else {
   // eslint-disable-next-line no-console
   console.log("Running in Electron");
