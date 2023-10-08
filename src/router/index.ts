@@ -10,10 +10,11 @@ import { isBrowser } from "@/type/preload";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
+    path: "/home",
     component:
       import.meta.env.VITE_TARGET === "mobile" ? MobileEditorHome : EditorHome,
     props: (route) => ({ projectFilePath: route.query["projectFilePath"] }),
+    alias: "/",
   },
 ];
 
