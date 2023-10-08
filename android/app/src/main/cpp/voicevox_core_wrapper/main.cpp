@@ -11,6 +11,7 @@ VoicevoxCore *voicevoxCore;
 
 bool assertCoreLoaded(JNIEnv *env) {
     if (!voicevoxCore) {
+        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "voicevoxCore is not loaded");
         jclass jExceptionClass = env->FindClass("java/lang/RuntimeException");
         env->ThrowNew(jExceptionClass, "voicevoxCore is not loaded");
         return false;

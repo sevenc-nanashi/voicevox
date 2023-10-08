@@ -8,7 +8,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import vue from "@vitejs/plugin-vue";
 import checker from "vite-plugin-checker";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
-import { BuildOptions, defineConfig, Plugin } from "vite";
+import { BuildOptions, defineConfig, loadEnv, Plugin } from "vite";
 import { quasar } from "@quasar/vite-plugin";
 
 rmSync(path.resolve(__dirname, "dist"), { recursive: true, force: true });
@@ -17,6 +17,13 @@ const isElectron = process.env.VITE_TARGET === "electron";
 const isBrowser = process.env.VITE_TARGET === "browser";
 
 export default defineConfig((options) => {
+  const package_name = process.env.npm_package_name;
+  const env = loadEnv(options.mode, __dirname);
+  if (!package_name.startsWith(env.VITE_APP_NAME)) {
+    throw new Error(
+      `"package.json"の"name":"${package_name}"は"VITE_APP_NAME":"${env.VITE_APP_NAME}"から始まっている必要があります`
+    );
+  }
   const shouldEmitSourcemap = ["development", "test"].includes(options.mode);
   process.env.VITE_7Z_BIN_NAME =
     (options.mode === "development"
@@ -65,6 +72,14 @@ export default defineConfig((options) => {
         path.resolve(__dirname, "tests/unit/**/*.spec.ts").replace(/\\/g, "/"),
       ],
       environment: "happy-dom",
+      environmentMatchGlobs: [
+        [
+          path
+            .resolve(__dirname, "tests/unit/background/**/*.spec.ts")
+            .replace(/\\/g, "/"),
+          "node",
+        ],
+      ],
       globals: true,
     },
     define: {
@@ -86,8 +101,7 @@ export default defineConfig((options) => {
             lintCommand: "eslint --ext .ts,.vue .",
           },
           typescript: true,
-          // FIXME: vue-tscの型エラーを解決したら有効化する
-          // vueTsc: true,
+          vueTsc: true,
         }),
       isElectron &&
         electron({

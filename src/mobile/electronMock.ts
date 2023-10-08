@@ -93,9 +93,6 @@ const loadMock = () => {
     async readFile(obj) {
       throw new Error(`Not implemented: readFile ${obj}`);
     },
-    async openTextEditContextMenu() {
-      throw new Error("Not implemented: openTextEditContextMenu");
-    },
     async isAvailableGPUMode() {
       return false;
     },
@@ -137,12 +134,12 @@ const loadMock = () => {
       throw new Error(`Not implemented: openEngineDirectory ${engineId}`);
     },
     async hotkeySettings(newData) {
-      if (newData !== undefined) {
+      if (newData != undefined) {
         const hotkeySettings = await this.getSetting("hotkeySettings");
         const hotkeySetting = hotkeySettings.find(
           (hotkey) => hotkey.action == newData.action
         );
-        if (hotkeySetting !== undefined) {
+        if (hotkeySetting != undefined) {
           hotkeySetting.combination = newData.combination;
         }
         await this.setSetting("hotkeySettings", hotkeySettings);
@@ -214,11 +211,14 @@ const loadMock = () => {
     async validateEngineDir(engineDir) {
       throw new Error(`Not implemented: validateEngineDir ${engineDir}`);
     },
-    async restartApp(obj) {
+    async reloadApp() {
       window.location.reload();
     },
     async getAltPortInfos() {
       return {};
+    },
+    async openLogDirectory() {
+      throw new Error("Not implemented: openLogDirectory");
     },
   };
 

@@ -107,7 +107,7 @@ Issue 側で取り組み始めたことを伝えるか、最初に Draft プル�
 ## 環境構築
 
 [.node-version](.node-version) に記載されているバージョンの Node.js をインストールしてください。  
-Node.js の管理ツール ([nvs](https://github.com/jasongin/nvs)や[Volta](https://volta.sh)など)を利用すると簡単にインストールでき、Node.js の自動切り替えもできます。
+Node.js の管理ツール（[nvs](https://github.com/jasongin/nvs)や[Volta](https://volta.sh)など）を利用すると簡単にインストールでき、Node.js の自動切り替えもできます。
 
 Node.js をインストール後、[このリポジトリ](https://github.com/VOICEVOX/voicevox.git) を
 Fork して `git clone` し、次のコマンドを実行してください。
@@ -118,7 +118,7 @@ npm ci
 
 ## 実行
 
-`.env.production`をコピーして`.env`を作成し、`DEFAULT_ENGINE_INFOS`内の`executionFilePath`に`voicevox_engine`のフルパスを指定します。
+`.env.production`をコピーして`.env`を作成し、`VITE_DEFAULT_ENGINE_INFOS`内の`executionFilePath`に`voicevox_engine`のフルパスを指定します。
 
 [製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) のディレクトリのパスを指定すれば動きます。
 
@@ -132,7 +132,7 @@ AppImage 版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファ
 VOICEVOX エディタの実行とは別にエンジン API のサーバを立てている場合は`executionFilePath`を指定する必要はありません。
 これは製品版 VOICEVOX を起動している場合もあてはまります。
 
-また、エンジン API の宛先エンドポイントを変更する場合は`DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
+また、エンジン API の宛先エンドポイントを変更する場合は`VITE_DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
 
 ```bash
 npm run electron:serve
@@ -159,16 +159,41 @@ npm run electron:build
 
 ## テスト
 
+### 単体テスト
+
 ```bash
 npm run test:unit
-npm run test:e2e
+npm run test-watch:unit # 監視モード
 ```
 
-### 監視モード
+### ブラウザ End to End テスト
+
+Electron の機能が不要な、UI や音声合成などの End to End テストを実行します。
+> **Note**
+> 一部のエンジンの設定を書き換えるテストは、CI(Github Actions)上でのみ実行されるようになっています。
 
 ```bash
-npm run test-watch:unit
-npm run test-watch:e2e
+npm run test:browser-e2e
+npm run test-watch:browser-e2e # 監視モード
+npm run test-watch:browser-e2e -- --headed # テスト中の UI を表示
+```
+
+Playwright を使用しているためテストパターンを生成することもできます。
+ブラウザ版を起動している状態で以下のコマンドを実行してください。
+
+```bash
+npx playwright codegen http://localhost:5173/#/home  --viewport-size=800,600
+```
+
+詳細は [Playwright ドキュメントの Test generator](https://playwright.dev/docs/codegen-intro) を参照してください。
+
+### Electron End to End テスト
+
+Electron の機能が必要な、エンジン起動・終了などを含めた End to End テストを実行します。
+
+```bash
+npm run test:electron-e2e
+npm run test-watch:electron-e2e # 監視モード
 ```
 
 ## 依存ライブラリのライセンス情報の生成
@@ -204,15 +229,9 @@ typos
 ## 型チェック
 
 TypeScript の型チェックを行います。
-※ 現在チェック方法は 2 種類ありますが、将来的に 1 つになります。
 
 ```bash
-# .tsのみ型チェック
 npm run typecheck
-
-# .vueも含めて型チェック
-# ※ 現状、大量にエラーが検出されます。
-npm run typecheck:vue-tsc
 ```
 
 ## Markdownlint
@@ -234,9 +253,7 @@ shellcheck ./build/*.sh
 
 ## OpenAPI generator
 
-音声合成エンジンが起動している状態で以下のコマンドを実行してください。  
-なお、2023/07/02 現在、openapi-generator の最新版に[パッチ](https://github.com/OpenAPITools/openapi-generator/pull/15943)を当てたものを使わないと更新できない状態になっています。  
-詳細は[こちら](https://github.com/VOICEVOX/voicevox/pull/1361)
+音声合成エンジンが起動している状態で以下のコマンドを実行してください。
 
 ```bash
 curl http://127.0.0.1:50021/openapi.json >openapi.json

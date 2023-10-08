@@ -1,4 +1,3 @@
-<!-- FIXME: ロジックがEditorHome.vueからコピーされているので、良い感じに共通化する -->
 <template>
   <q-layout reveal elevated container class="layout-container">
     <mobile-header-bar />
@@ -7,8 +6,17 @@
       <q-page class="main-row-panes">
         <progress-dialog />
 
+        <!-- TODO: 複数エンジン対応 -->
+        <!-- TODO: allEngineStateが "ERROR" のときエラーになったエンジンを探してトーストで案内 -->
+        <div v-if="allEngineState === 'FAILED_STARTING'" class="waiting-engine">
+          <div>
+            エンジンの起動に失敗しました。エンジンの再起動をお試しください。
+          </div>
+        </div>
         <div
-          v-if="!isCompletedInitialStartup || allEngineState === 'STARTING'"
+          v-else-if="
+            !isCompletedInitialStartup || allEngineState === 'STARTING'
+          "
           class="waiting-engine"
         >
           <div>
@@ -27,11 +35,12 @@
               <q-btn
                 v-if="isMultipleEngine"
                 outline
-                @click="restartAppWithMultiEngineOffMode"
+                :disable="reloadingLocked"
+                @click="reloadAppWithMultiEngineOffMode"
               >
-                マルチエンジンをオフにして再起動する</q-btn
+                マルチエンジンをオフにして再読み込みする</q-btn
               >
-              <q-btn v-else outline @click="openFaq">FAQを見る</q-btn>
+              <q-btn v-else outline @click="openQa">Q&Aを見る</q-btn>
             </template>
           </div>
         </div>
@@ -52,9 +61,9 @@
             <q-splitter
               :limits="[MIN_PORTRAIT_PANE_WIDTH, MAX_PORTRAIT_PANE_WIDTH]"
               separator-class="home-splitter"
-              :separator-style="{ width: shouldShowSidePanes ? '3px' : '0' }"
+              :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
               before-class="overflow-hidden"
-              :disable="!shouldShowSidePanes"
+              :disable="!shouldShowPanes"
               :model-value="portraitPaneWidth"
               @update:model-value="updatePortraitPane"
             >
@@ -67,11 +76,9 @@
                   unit="px"
                   :limits="[audioInfoPaneMinWidth, audioInfoPaneMaxWidth]"
                   separator-class="home-splitter"
-                  :separator-style="{
-                    width: shouldShowSidePanes ? '3px' : '0',
-                  }"
+                  :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
                   class="full-width overflow-hidden"
-                  :disable="!shouldShowSidePanes"
+                  :disable="!shouldShowPanes"
                   :model-value="audioInfoPaneWidth"
                   @update:model-value="updateAudioInfoPane"
                 >
@@ -88,6 +95,7 @@
                       "
                     >
                       <draggable
+                        ref="cellsRef"
                         class="audio-cells"
                         :model-value="audioKeys"
                         :item-key="itemKey"
@@ -105,13 +113,17 @@
                           />
                         </template>
                       </draggable>
-                      <div class="add-button-wrapper">
+                      <div
+                        v-if="showAddAudioItemButton"
+                        class="add-button-wrapper"
+                      >
                         <q-btn
                           fab
                           icon="add"
-                          color="primary-light"
+                          color="primary"
                           text-color="display-on-primary"
                           :disable="uiLocked"
+                          aria-label="テキストを追加"
                           @click="addAudioItem"
                         ></q-btn>
                       </div>
@@ -168,14 +180,15 @@
 import path from "path";
 import { computed, onBeforeUpdate, onMounted, ref, VNodeRef, watch } from "vue";
 import draggable from "vuedraggable";
-import { QResizeObserver, useQuasar } from "quasar";
+import { QResizeObserver } from "quasar";
 import cloneDeep from "clone-deep";
+import Mousetrap from "mousetrap";
 import { useStore } from "@/store";
 import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 import AudioCell from "@/components/AudioCell.vue";
 import AudioDetail from "@/components/AudioDetail.vue";
 import AudioInfo from "@/components/AudioInfo.vue";
-import HelpDialog from "@/components/HelpDialog.vue";
+import HelpDialog from "@/components/help/HelpDialog.vue";
 import SettingDialog from "@/components/SettingDialog.vue";
 import HotkeySettingDialog from "@/components/HotkeySettingDialog.vue";
 import HeaderBarCustomDialog from "@/components/HeaderBarCustomDialog.vue";
@@ -197,6 +210,7 @@ import {
   SplitterPosition,
   Voice,
 } from "@/type/preload";
+import { isOnCommandOrCtrlKeyDown } from "@/store/utility";
 import { parseCombo, setHotkeyFunctions } from "@/store/setting";
 
 const props =
@@ -205,10 +219,10 @@ const props =
   }>();
 
 const store = useStore();
-const $q = useQuasar();
 
 const audioKeys = computed(() => store.state.audioKeys);
 const uiLocked = computed(() => store.getters.UI_LOCKED);
+const reloadingLocked = computed(() => store.state.reloadingLock);
 
 const isMultipleEngine = computed(() => store.state.engineIds.length > 1);
 
@@ -217,8 +231,8 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
   [
     "テキスト欄にフォーカスを戻す",
     () => {
-      if (activeAudioKey.value !== undefined) {
-        focusCell({ audioKey: activeAudioKey.value });
+      if (activeAudioKey.value != undefined) {
+        focusCell({ audioKey: activeAudioKey.value, focusTarget: "textField" });
       }
       return false; // this is the same with event.preventDefault()
     },
@@ -295,7 +309,7 @@ const MIN_PORTRAIT_PANE_WIDTH = 0;
 const MAX_PORTRAIT_PANE_WIDTH = 40;
 const MIN_AUDIO_INFO_PANE_WIDTH = 160; // px
 const MAX_AUDIO_INFO_PANE_WIDTH = 250;
-const MIN_AUDIO_DETAIL_PANE_HEIGHT = 220; // px
+const MIN_AUDIO_DETAIL_PANE_HEIGHT = 185; // px
 const MAX_AUDIO_DETAIL_PANE_HEIGHT = 500;
 
 const portraitPaneWidth = ref(0);
@@ -381,7 +395,7 @@ const addAudioItem = async () => {
   let presetKey: PresetKey | undefined = undefined;
   let baseAudioItem: AudioItem | undefined = undefined;
 
-  if (prevAudioKey !== undefined) {
+  if (prevAudioKey != undefined) {
     voice = store.state.audioItems[prevAudioKey].voice;
     presetKey = store.state.audioItems[prevAudioKey].presetKey;
     baseAudioItem = store.state.audioItems[prevAudioKey];
@@ -397,7 +411,7 @@ const addAudioItem = async () => {
     audioItem,
     prevAudioKey: activeAudioKey.value,
   });
-  audioCellRefs[newAudioKey].focusTextField();
+  audioCellRefs[newAudioKey].focusCell({ focusTarget: "textField" });
 };
 const duplicateAudioItem = async () => {
   const prevAudioKey = activeAudioKey.value;
@@ -411,45 +425,20 @@ const duplicateAudioItem = async () => {
     audioItem: cloneDeep(prevAudioItem),
     prevAudioKey: activeAudioKey.value,
   });
-  audioCellRefs[newAudioKey].focusTextField();
+  audioCellRefs[newAudioKey].focusCell({ focusTarget: "textField" });
 };
 
 // Pane
 const shouldShowPanes = computed<boolean>(
   () => store.getters.SHOULD_SHOW_PANES
 );
-const shouldShowSidePanes = computed<boolean>(
-  () => shouldShowPanes.value && $q.screen.gt.xs // 横幅がある程度大きいかどうか
-);
-const clamp = (value: number, min: number, max: number) =>
-  Math.max(Math.min(value, max), min);
-
 watch(shouldShowPanes, (val, old) => {
   if (val === old) return;
 
   if (val) {
-    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
-    changeAudioDetailPaneMaxHeight(
-      resizeObserverRef.value?.$el.parentElement.clientHeight
-    );
+    const clamp = (value: number, min: number, max: number) =>
+      Math.max(Math.min(value, max), min);
 
-    audioDetailPaneHeight.value = clamp(
-      splitterPosition.value.audioDetailPaneHeight ??
-        MIN_AUDIO_DETAIL_PANE_HEIGHT,
-      audioDetailPaneMinHeight.value,
-      audioDetailPaneMaxHeight.value
-    );
-  } else {
-    audioDetailPaneHeight.value = 0;
-    audioDetailPaneMinHeight.value = 0;
-    audioDetailPaneMaxHeight.value = 0;
-  }
-});
-
-watch(shouldShowSidePanes, (val, old) => {
-  if (val === old) return;
-
-  if (val) {
     // 設定ファイルを書き換えれば異常な値が入り得るのですべてclampしておく
     portraitPaneWidth.value = clamp(
       splitterPosition.value.portraitPaneWidth ?? DEFAULT_PORTRAIT_PANE_WIDTH,
@@ -464,24 +453,47 @@ watch(shouldShowSidePanes, (val, old) => {
     );
     audioInfoPaneMinWidth.value = MIN_AUDIO_INFO_PANE_WIDTH;
     audioInfoPaneMaxWidth.value = MAX_AUDIO_INFO_PANE_WIDTH;
+
+    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
+    changeAudioDetailPaneMaxHeight(
+      resizeObserverRef.value?.$el.parentElement.clientHeight
+    );
+
+    audioDetailPaneHeight.value = clamp(
+      splitterPosition.value.audioDetailPaneHeight ??
+        MIN_AUDIO_DETAIL_PANE_HEIGHT,
+      audioDetailPaneMinHeight.value,
+      audioDetailPaneMaxHeight.value
+    );
   } else {
     portraitPaneWidth.value = 0;
     audioInfoPaneWidth.value = 0;
     audioInfoPaneMinWidth.value = 0;
     audioInfoPaneMaxWidth.value = 0;
+    audioDetailPaneHeight.value = 0;
+    audioDetailPaneMinHeight.value = 0;
+    audioDetailPaneMaxHeight.value = 0;
   }
 });
 
 // セルをフォーカス
-const focusCell = ({ audioKey }: { audioKey: AudioKey }) => {
-  audioCellRefs[audioKey].focusTextField();
+const focusCell = ({
+  audioKey,
+  focusTarget,
+}: {
+  audioKey: AudioKey;
+  focusTarget?: "root" | "textField";
+}) => {
+  audioCellRefs[audioKey].focusCell({
+    focusTarget: focusTarget ?? "textField",
+  });
 };
 
 // Electronのデフォルトのundo/redoを無効化
 const disableDefaultUndoRedo = (event: KeyboardEvent) => {
   // ctrl+z, ctrl+shift+z, ctrl+y
   if (
-    event.ctrlKey &&
+    isOnCommandOrCtrlKeyDown(event) &&
     (event.key == "z" || (!event.shiftKey && event.key == "y"))
   ) {
     event.preventDefault();
@@ -494,8 +506,10 @@ const userOrderedCharacterInfos = computed(
 const audioItems = computed(() => store.state.audioItems);
 // 並び替え後、テキスト欄が１つで空欄なら話者を更新
 // 経緯 https://github.com/VOICEVOX/voicevox/issues/1229
-watch(userOrderedCharacterInfos, (newValue, oldValue) => {
-  if (newValue === oldValue || newValue.length < 1) return;
+watch(userOrderedCharacterInfos, (userOrderedCharacterInfos) => {
+  if (userOrderedCharacterInfos.length < 1) {
+    return;
+  }
 
   if (audioKeys.value.length === 1) {
     const first = audioKeys.value[0] as AudioKey;
@@ -504,11 +518,11 @@ watch(userOrderedCharacterInfos, (newValue, oldValue) => {
       return;
     }
 
-    const speakerId = newValue[0];
+    const speakerId = userOrderedCharacterInfos[0];
     const defaultStyleId = store.state.defaultStyleIds.find(
       (styleId) => styleId.speakerUuid === speakerId
     );
-    if (!defaultStyleId) return;
+    if (!defaultStyleId || audioItem.voice.speakerId === speakerId) return;
 
     const voice: Voice = {
       engineId: defaultStyleId.engineId,
@@ -516,7 +530,11 @@ watch(userOrderedCharacterInfos, (newValue, oldValue) => {
       styleId: defaultStyleId.defaultStyleId,
     };
 
-    store.dispatch("COMMAND_CHANGE_VOICE", { audioKey: first, voice: voice });
+    // FIXME: UNDOができてしまうのでできれば直したい
+    store.dispatch("COMMAND_MULTI_CHANGE_VOICE", {
+      audioKeys: [first],
+      voice: voice,
+    });
   }
 });
 
@@ -560,15 +578,33 @@ onMounted(async () => {
     const newAudioKey = await store.dispatch("REGISTER_AUDIO_ITEM", {
       audioItem,
     });
-    focusCell({ audioKey: newAudioKey });
+    focusCell({ audioKey: newAudioKey, focusTarget: "textField" });
 
     // 最初の話者を初期化
     store.dispatch("SETUP_SPEAKER", {
-      audioKey: newAudioKey,
+      audioKeys: [newAudioKey],
       engineId: audioItem.voice.engineId,
       styleId: audioItem.voice.styleId,
     });
   }
+
+  // ショートカットキー操作を止める条件の設定
+  // 止めるなら`true`を返す
+  Mousetrap.prototype.stopCallback = (
+    e: Mousetrap.ExtendedKeyboardEvent, // 未使用
+    element: Element,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    combo: string // 未使用
+  ) => {
+    return (
+      element.tagName === "INPUT" ||
+      element.tagName === "SELECT" ||
+      element.tagName === "TEXTAREA" ||
+      (element instanceof HTMLElement && element.contentEditable === "true") ||
+      // メニュー項目ではショートカットキーを無効化
+      element.classList.contains("q-item")
+    );
+  };
 
   // ショートカットキーの設定
   document.addEventListener("keydown", disableDefaultUndoRedo);
@@ -585,38 +621,6 @@ onMounted(async () => {
     store.state.acceptTerms !== "Accepted";
 
   isCompletedInitialStartup.value = true;
-
-  // 代替ポートをトースト通知する
-  // FIXME: トーストが何度も出るようにする（altPortInfoをstateに持たせてwatchする）
-  if (!store.state.confirmedTips.engineStartedOnAltPort) {
-    const altPortInfo = await store.dispatch("GET_ALT_PORT_INFOS");
-    for (const engineId of store.state.engineIds) {
-      const engineName = store.state.engineInfos[engineId].name;
-      const altPort = altPortInfo[engineId];
-
-      if (!altPort) return;
-      $q.notify({
-        message: `${altPort.from}番ポートが使用中であるため ${engineName} は、${altPort.to}番ポートで起動しました`,
-        color: "toast",
-        textColor: "toast-display",
-        icon: "compare_arrows",
-        timeout: 5000,
-        actions: [
-          {
-            label: "今後この通知をしない",
-            textColor: "toast-button-display",
-            handler: () =>
-              store.dispatch("SET_CONFIRMED_TIPS", {
-                confirmedTips: {
-                  ...store.state.confirmedTips,
-                  engineStartedOnAltPort: true,
-                },
-              }),
-          },
-        ],
-      });
-    }
-  }
 });
 
 // エンジン待機
@@ -629,7 +633,7 @@ const allEngineState = computed(() => {
   // 登録されているすべてのエンジンについて状態を確認する
   for (const engineId of store.state.engineIds) {
     const engineState: EngineState | undefined = engineStates[engineId];
-    if (engineState === undefined)
+    if (engineState == undefined)
       throw new Error(`No such engineState set: engineId == ${engineId}`);
 
     // FIXME: 1つでも接続テストに成功していないエンジンがあれば、暫定的に起動中とする
@@ -646,7 +650,7 @@ const allEngineState = computed(() => {
 const isEngineWaitingLong = ref<boolean>(false);
 let engineTimer: number | undefined = undefined;
 watch(allEngineState, (newEngineState) => {
-  if (engineTimer !== undefined) {
+  if (engineTimer != undefined) {
     clearTimeout(engineTimer);
     engineTimer = undefined;
   }
@@ -659,11 +663,40 @@ watch(allEngineState, (newEngineState) => {
     isEngineWaitingLong.value = false;
   }
 });
-const restartAppWithMultiEngineOffMode = () => {
-  store.dispatch("RESTART_APP", { isMultiEngineOffMode: true });
+
+// 代替ポート情報の変更を監視
+watch(
+  () => [store.state.altPortInfos, store.state.isVuexReady],
+  async () => {
+    // この watch がエンジンが起動した時 (=> 設定ファイルを読み込む前) に発火して, "今後この通知をしない" を無視するのを防ぐ
+    if (!store.state.isVuexReady) return;
+
+    // "今後この通知をしない" を考慮
+    if (store.state.confirmedTips.engineStartedOnAltPort) return;
+
+    // 代替ポートをトースト通知する
+    for (const engineId of store.state.engineIds) {
+      const engineName = store.state.engineInfos[engineId].name;
+      const altPort = store.state.altPortInfos[engineId];
+      if (!altPort) return;
+
+      store.dispatch("SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON", {
+        message: `${altPort.from}番ポートが使用中であるため ${engineName} は、${altPort.to}番ポートで起動しました`,
+        icon: "compare_arrows",
+        tipName: "engineStartedOnAltPort",
+      });
+    }
+  }
+);
+
+const reloadAppWithMultiEngineOffMode = () => {
+  store.dispatch("CHECK_EDITED_AND_NOT_SAVE", {
+    closeOrReload: "reload",
+    isMultiEngineOffMode: true,
+  });
 };
 
-const openFaq = () => {
+const openQa = () => {
   window.open("https://voicevox.hiroshiba.jp/qa/", "_blank");
 };
 
@@ -775,18 +808,39 @@ const loadDraggedFile = (event: { dataTransfer: DataTransfer | null }) => {
       store.dispatch("LOAD_PROJECT_FILE", { filePath: file.path });
       break;
     default:
-      $q.dialog({
+      store.dispatch("SHOW_ALERT_DIALOG", {
         title: "対応していないファイルです",
         message:
           "テキストファイル (.txt) とVOICEVOXプロジェクトファイル (.vvproj) に対応しています。",
-        ok: {
-          label: "閉じる",
-          flat: true,
-          textColor: "display",
-        },
       });
   }
 };
+
+// AudioCellの自動スクロール
+const cellsRef = ref<InstanceType<typeof draggable> | undefined>();
+watch(activeAudioKey, (audioKey) => {
+  if (audioKey == undefined) return;
+  const activeCellElement = audioCellRefs[audioKey].$el;
+  const cellsElement = cellsRef.value?.$el;
+  if (
+    !(activeCellElement instanceof Element) ||
+    !(cellsElement instanceof Element)
+  )
+    throw new Error(
+      `invalid element: activeCellElement=${activeCellElement}, cellsElement=${cellsElement}`
+    );
+  const activeCellRect = activeCellElement.getBoundingClientRect();
+  const cellsRect = cellsElement.getBoundingClientRect();
+  const overflowTop = activeCellRect.top <= cellsRect.top;
+  const overflowBottom = activeCellRect.bottom >= cellsRect.bottom;
+  if (overflowTop || overflowBottom) {
+    activeCellElement.scrollIntoView(overflowTop || !overflowBottom);
+  }
+});
+
+const showAddAudioItemButton = computed(() => {
+  return store.state.showAddAudioItemButton;
+});
 </script>
 
 <style scoped lang="scss">

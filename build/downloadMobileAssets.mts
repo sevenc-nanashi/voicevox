@@ -54,11 +54,16 @@ const downloadAndCompressModel = async () => {
       "git",
       "clone",
       "https://github.com/VOICEVOX/voicevox_core.git",
-      __dirname + "/vendored/voicevox_core",
-      "--depth",
-      "1"
+      __dirname + "/vendored/voicevox_core"
     );
   }
+  await runCommand(
+    "git",
+    "-C",
+    __dirname + "/vendored/voicevox_core",
+    "checkout",
+    "b8c1b316203a0963ce3d3aca787fd392cceba930"
+  );
   await runCommand(
     sevenZip,
     "a",

@@ -1,6 +1,6 @@
 import semver from "semver";
 import { z } from "zod";
-import { buildProjectFileName, getBaseName } from "./utility";
+import { getBaseName } from "./utility";
 import { createPartialStore } from "./vuex";
 import { createUILockAction } from "@/store/ui";
 import { AudioItem, ProjectStoreState, ProjectStoreTypes } from "@/store/type";
@@ -210,11 +210,11 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
               const audioItem = projectData.audioItems[audioItemsKey];
               if (audioItem.characterIndex != null) {
                 if (audioItem.characterIndex == 0) {
-                  // 四国めたん 0 -> 四国めたん(あまあま) 0
+                  // 四国めたん 0 -> 四国めたん（あまあま） 0
                   audioItem.speaker = 0;
                 }
                 if (audioItem.characterIndex == 1) {
-                  // ずんだもん 1 -> ずんだもん(あまあま) 1
+                  // ずんだもん 1 -> ずんだもん（あまあま） 1
                   audioItem.speaker = 1;
                 }
                 delete audioItem.characterIndex;
@@ -393,7 +393,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
 
             if (!filePath) {
               // if new project: use generated name
-              defaultPath = buildProjectFileName(context.state, "vvproj");
+              defaultPath = `${context.getters.DEFAULT_PROJECT_FILE_BASE_NAME}.vvproj`;
             } else {
               // if saveAs for existing project: use current project path
               defaultPath = filePath;

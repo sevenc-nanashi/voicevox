@@ -18,7 +18,7 @@
                 <q-item-section avatar>
                   <q-avatar
                     icon="add_circle_outline"
-                    color="primary-light"
+                    color="primary"
                     text-color="display-on-primary"
                   ></q-avatar>
                 </q-item-section>
@@ -34,7 +34,7 @@
                 <q-item-section avatar>
                   <q-avatar
                     icon="edit_note"
-                    color="primary-light"
+                    color="primary"
                     text-color="display-on-primary"
                   ></q-avatar>
                 </q-item-section>
@@ -52,7 +52,7 @@
           v-model="presetSelectModel"
           :options="selectablePresetList"
           class="col overflow-hidden"
-          color="primary-light"
+          color="primary"
           text-color="display-on-primary"
           outlined
           dense
@@ -102,7 +102,7 @@
                 autofocus
                 hide-selected
                 label="タイトル"
-                color="primary-light"
+                color="primary"
                 use-input
                 input-debounce="0"
                 :model-value="presetName"
@@ -195,7 +195,7 @@
         <q-slider
           dense
           snap
-          color="primary-light"
+          color="primary"
           track-size="2px"
           :min="parameter.slider.qSliderProps.min.value"
           :max="parameter.slider.qSliderProps.max.value"
@@ -237,6 +237,7 @@
                 : "未設定"
             }}
           </div>
+          <!-- 横幅が狭い場合に改行させるため分割 -->
           <div
             v-if="
               morphingTargetCharacterInfo &&
@@ -278,7 +279,7 @@
         <q-slider
           dense
           snap
-          color="primary-light"
+          color="primary"
           track-size="2px"
           :min="morphingRateSlider.qSliderProps.min.value"
           :max="morphingRateSlider.qSliderProps.max.value"
@@ -349,6 +350,7 @@ const supportedFeatures = computed(
         .supportedFeatures) as EngineManifest["supportedFeatures"] | undefined
 );
 
+// FIXME: slider.onChangeとhandleParameterChangeでstate変更が２経路になっているので統一する
 type Parameter = {
   label: string;
   slider: PreviewSliderHelper;
@@ -367,6 +369,11 @@ const parameters = computed<Parameter[]>(() => [
       step: () => 0.01,
       scrollStep: () => 0.1,
       scrollMinStep: () => 0.01,
+      onChange: (speedScale: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_SPEED_SCALE", {
+          audioKey: props.activeAudioKey,
+          speedScale,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_SPEED_SCALE",
     key: "speedScale",
@@ -381,6 +388,11 @@ const parameters = computed<Parameter[]>(() => [
       min: () => -0.15,
       step: () => 0.01,
       scrollStep: () => 0.01,
+      onChange: (pitchScale: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_PITCH_SCALE", {
+          audioKey: props.activeAudioKey,
+          pitchScale,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_PITCH_SCALE",
     key: "pitchScale",
@@ -397,6 +409,11 @@ const parameters = computed<Parameter[]>(() => [
       step: () => 0.01,
       scrollStep: () => 0.1,
       scrollMinStep: () => 0.01,
+      onChange: (intonationScale: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_INTONATION_SCALE", {
+          audioKey: props.activeAudioKey,
+          intonationScale,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_INTONATION_SCALE",
     key: "intonationScale",
@@ -412,6 +429,11 @@ const parameters = computed<Parameter[]>(() => [
       step: () => 0.01,
       scrollStep: () => 0.1,
       scrollMinStep: () => 0.01,
+      onChange: (volumeScale: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_VOLUME_SCALE", {
+          audioKey: props.activeAudioKey,
+          volumeScale,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_VOLUME_SCALE",
     key: "volumeScale",
@@ -426,6 +448,11 @@ const parameters = computed<Parameter[]>(() => [
       step: () => 0.01,
       scrollStep: () => 0.1,
       scrollMinStep: () => 0.01,
+      onChange: (prePhonemeLength: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_PRE_PHONEME_LENGTH", {
+          audioKey: props.activeAudioKey,
+          prePhonemeLength,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_PRE_PHONEME_LENGTH",
     key: "prePhonemeLength",
@@ -440,6 +467,11 @@ const parameters = computed<Parameter[]>(() => [
       step: () => 0.01,
       scrollStep: () => 0.1,
       scrollMinStep: () => 0.01,
+      onChange: (postPhonemeLength: number) =>
+        store.dispatch("COMMAND_SET_AUDIO_POST_PHONEME_LENGTH", {
+          audioKey: props.activeAudioKey,
+          postPhonemeLength,
+        }),
     }),
     action: "COMMAND_SET_AUDIO_POST_PHONEME_LENGTH",
     key: "postPhonemeLength",
@@ -588,7 +620,7 @@ const setMorphingRate = (rate: number) => {
   if (info == undefined) {
     throw new Error("audioItem.value.morphingInfo == undefined");
   }
-  store.dispatch("COMMAND_SET_MORPHING_INFO", {
+  return store.dispatch("COMMAND_SET_MORPHING_INFO", {
     audioKey: props.activeAudioKey,
     morphingInfo: {
       rate,
@@ -666,12 +698,11 @@ type PresetSelectModelType = {
 };
 
 // プリセットの変更
-const changePreset = (presetKey: PresetKey | undefined): void => {
+const changePreset = (presetKey: PresetKey | undefined) =>
   store.dispatch("COMMAND_SET_AUDIO_PRESET", {
     audioKey: props.activeAudioKey,
     presetKey,
   });
-};
 
 const presetList = computed<{ label: string; key: PresetKey }[]>(() =>
   presetKeys.value

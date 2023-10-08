@@ -299,7 +299,7 @@
                   v-if="isDefaultConfirmedTips && hasResetConfirmedTips"
                   name="check"
                   size="sm"
-                  color="primary-light"
+                  color="primary"
                   style="margin-right: 8px"
                 >
                 </q-icon>
@@ -857,6 +857,63 @@
                 >
                 </q-toggle>
               </q-card-actions>
+              <q-card-actions
+                v-if="!isProduction"
+                class="q-px-md q-py-none bg-surface"
+              >
+                <div>複数選択</div>
+                <div aria-label="複数のテキスト欄を選択できるようにします。">
+                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
+                    <q-tooltip
+                      :delay="500"
+                      anchor="center right"
+                      self="center left"
+                      transition-show="jump-right"
+                      transition-hide="jump-left"
+                    >
+                      複数のテキスト欄を選択できるようにします。
+                    </q-tooltip>
+                  </q-icon>
+                </div>
+                <q-space />
+                <q-toggle
+                  :model-value="experimentalSetting.enableMultiSelect"
+                  @update:model-value="
+                    changeExperimentalSetting('enableMultiSelect', $event)
+                  "
+                >
+                </q-toggle>
+              </q-card-actions>
+              <q-card-actions class="q-px-md q-py-none bg-surface">
+                <div>調整結果の保持</div>
+                <div
+                  aria-label="テキスト変更時、同じ読みのアクセント区間内の調整結果を保持します。"
+                >
+                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
+                    <q-tooltip
+                      :delay="500"
+                      anchor="center right"
+                      self="center left"
+                      transition-show="jump-right"
+                      transition-hide="jump-left"
+                      >ONの場合、テキスト変更時、同じ読みのアクセント区間内の調整結果を保持します。</q-tooltip
+                    >
+                  </q-icon>
+                </div>
+                <q-space />
+                <q-toggle
+                  :model-value="
+                    experimentalSetting.shouldKeepTuningOnTextChange
+                  "
+                  @update:model-value="
+                    changeExperimentalSetting(
+                      'shouldKeepTuningOnTextChange',
+                      $event
+                    )
+                  "
+                >
+                </q-toggle>
+              </q-card-actions>
             </q-card>
             <q-card flat class="setting-card">
               <q-card-actions>
@@ -892,10 +949,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useQuasar } from "quasar";
 import FileNamePatternDialog from "./FileNamePatternDialog.vue";
 import { useStore } from "@/store";
 import {
+  isProduction,
   SavingSetting,
   EngineSetting,
   ExperimentalSetting,
@@ -917,7 +974,6 @@ const emit =
   }>();
 
 const store = useStore();
-const $q = useQuasar();
 
 const settingDialogOpenedComputed = computed({
   get: () => props.modelValue,
@@ -1005,33 +1061,26 @@ const changeShowTextLineNumber = (showTextLineNumber: boolean) => {
 const showAddAudioItemButton = computed(
   () => store.state.showAddAudioItemButton
 );
-const changeShowAddAudioItemButton = (showAddAudioItemButton: boolean) => {
+const changeShowAddAudioItemButton = async (
+  showAddAudioItemButton: boolean
+) => {
   store.dispatch("SET_SHOW_ADD_AUDIO_ITEM_BUTTON", {
     showAddAudioItemButton,
   });
 
   // 設定をオフにする場合はヒントを表示
   if (!showAddAudioItemButton) {
-    $q.dialog({
+    const result = await store.dispatch("SHOW_CONFIRM_DIALOG", {
       title: "エディタの＋ボタンを非表示にする",
       message: "テキスト欄は Shift + Enter で追加できます",
-      persistent: true, // ダイアログ外側押下時にユーザが設定ができたと思い込むことを防止する
-      ok: {
-        flat: true,
-        label: "OK",
-        textColor: "display",
-      },
-      cancel: {
-        flat: true,
-        label: "キャンセル",
-        textColor: "display",
-      },
-    }).onCancel(() => {
+      actionName: "非表示",
+    });
+    if (result === "CANCEL") {
       // キャンセルしたら設定を元に戻す
       store.dispatch("SET_SHOW_ADD_AUDIO_ITEM_BUTTON", {
         showAddAudioItemButton: true,
       });
-    });
+    }
   }
 };
 
@@ -1073,11 +1122,15 @@ const updateAudioOutputDevices = async () => {
       return { label: device.label, key: device.deviceId };
     });
 };
-navigator.mediaDevices.addEventListener(
-  "devicechange",
-  updateAudioOutputDevices
-);
-updateAudioOutputDevices();
+if (navigator.mediaDevices) {
+  navigator.mediaDevices.addEventListener(
+    "devicechange",
+    updateAudioOutputDevices
+  );
+  updateAudioOutputDevices();
+} else {
+  store.dispatch("LOG_WARN", "navigator.mediaDevices is not available.");
+}
 
 const acceptRetrieveTelemetryComputed = computed({
   get: () => store.state.acceptRetrieveTelemetry == "Accepted",
@@ -1090,23 +1143,17 @@ const acceptRetrieveTelemetryComputed = computed({
       return;
     }
 
-    $q.dialog({
+    store.dispatch("SHOW_ALERT_DIALOG", {
       title: "ソフトウェア利用状況のデータ収集の無効化",
       message:
         "ソフトウェア利用状況のデータ収集を完全に無効にするには、VOICEVOXを再起動する必要があります",
-      ok: {
-        flat: true,
-        textColor: "display",
-      },
+      ok: "OK",
     });
   },
 });
 
 const changeUseGpu = async (useGpu: boolean) => {
-  $q.loading.show({
-    spinnerColor: "primary",
-    spinnerSize: 50,
-    boxClass: "bg-background text-display",
+  store.dispatch("SHOW_LOADING_SCREEN", {
     message: "起動モードを変更中です",
   });
 
@@ -1115,7 +1162,7 @@ const changeUseGpu = async (useGpu: boolean) => {
     engineId: selectedEngineId.value,
   });
 
-  $q.loading.hide();
+  store.dispatch("HIDE_ALL_LOADING_SCREEN");
 };
 
 const changeinheritAudioInfo = async (inheritAudioInfo: boolean) => {
@@ -1187,32 +1234,15 @@ const outputSamplingRate = computed({
   },
   set: async (outputSamplingRate: SamplingRateOption) => {
     if (outputSamplingRate !== "engineDefault") {
-      const confirmChange = await new Promise((resolve) => {
-        $q.dialog({
-          title: "出力サンプリングレートを変更します",
-          message:
-            "出力サンプリングレートを変更しても、音質は変化しません。また、音声の生成処理に若干時間がかかる場合があります。<br />変更しますか？",
-          html: true,
-          persistent: true,
-          ok: {
-            label: "変更する",
-            flat: true,
-            textColor: "display",
-          },
-          cancel: {
-            label: "変更しない",
-            flat: true,
-            textColor: "display",
-          },
-        })
-          .onOk(() => {
-            resolve(true);
-          })
-          .onCancel(() => {
-            resolve(false);
-          });
+      const result = await store.dispatch("SHOW_CONFIRM_DIALOG", {
+        title: "出力サンプリングレートを変更します",
+        message:
+          "出力サンプリングレートを変更しても、音質は変化しません。また、音声の生成処理に若干時間がかかる場合があります。<br />変更しますか？",
+        html: true,
+        actionName: "変更する",
+        cancel: "変更しない",
       });
-      if (!confirmChange) {
+      if (result !== "OK") {
         return;
       }
     }

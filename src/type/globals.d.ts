@@ -16,4 +16,11 @@ declare global {
       voicevoxCore: VoicevoxCorePlugin;
     };
   }
+
+  interface Navigator {
+    // navigator.userAgentDataを認識してくれないため
+    userAgentData: {
+      readonly platform: string;
+    };
+  }
 }
