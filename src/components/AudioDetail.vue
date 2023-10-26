@@ -120,6 +120,7 @@ const props =
 const store = useStore();
 const $q = useQuasar();
 
+// $q.platform.is.mobileはブラウザとネイティブで別れているため、desktopでないときにスマホ版とする
 const isMobile = computed(() => !$q.platform.is.desktop);
 
 const supportedFeatures = computed(
