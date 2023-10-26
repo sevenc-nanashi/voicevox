@@ -16,30 +16,30 @@ const main = async () => {
     console.log("speakers already exists. skipping conversion.");
     return;
   }
-  if (fs.existsSync(path.resolve(__dirname, "vendored/voicevox_engine"))) {
+  if (fs.existsSync(path.resolve(__dirname, "vendored/voicevox_resource"))) {
     const updater = spawnSync(
       "git",
       [
         "-C",
-        __dirname + "/vendored/voicevox_engine",
+        __dirname + "/vendored/voicevox_resource",
         "pull",
         "origin",
-        "master",
+        "main",
       ],
       {
         stdio: "inherit",
       }
     );
     if (updater.status !== 0) {
-      throw new Error("Failed to update VOICEVOX/voicevox_engine");
+      throw new Error("Failed to update VOICEVOX/voicevox_resource");
     }
   } else {
     const extractor = spawnSync(
       "git",
       [
         "clone",
-        "https://github.com/VOICEVOX/voicevox_engine.git",
-        __dirname + "/vendored/voicevox_engine",
+        "https://github.com/VOICEVOX/voicevox_resource.git",
+        __dirname + "/vendored/voicevox_resource",
         "--depth",
         "1",
       ],
@@ -48,90 +48,90 @@ const main = async () => {
       }
     );
     if (extractor.status !== 0) {
-      throw new Error("Failed to clone VOICEVOX/voicevox_engine");
+      throw new Error("Failed to clone VOICEVOX/voicevox_resource");
     }
   }
 
   const speakerInfoDir = path.resolve(
     __dirname,
-    "vendored/voicevox_engine/speaker_info"
+    "vendored/voicevox_resource/character_info"
   );
 
-  const policies = await glob(
-    path.join(speakerInfoDir, "*", "policy.md").replace(/\\/g, "/")
-  );
-  const portraits = await glob(
-    path.join(speakerInfoDir, "*", "portrait.png").replace(/\\/g, "/")
-  );
-  const styleIcons = await glob(
-    path.join(speakerInfoDir, "*", "icons", "*.png").replace(/\\/g, "/")
-  );
-  // https://stackoverflow.com/a/73616013
-  const stylePortraits = styleIcons.map((styleIcon) =>
-    styleIcon.replace(/(icons)(?!.*\1)/, "portraits")
-  );
-  const voiceSamples = await glob(
-    path.join(speakerInfoDir, "*", "voice_samples", "*.wav").replace(/\\/g, "/")
-  );
+  const characters = await fs.promises.readdir(speakerInfoDir);
 
-  const metas = JSON.parse(
-    await fs.promises.readFile(
-      path.resolve(__dirname, "vendored/voicevox_core/model/metas.json"),
+  const speakerInfos = {};
+
+  for (const character of characters) {
+    const characterDir = path.join(speakerInfoDir, character);
+    const uuid = path.basename(character).split("_")[1];
+    const policy = await fs.promises.readFile(
+      path.join(characterDir, "policy.md"),
       "utf-8"
-    )
-  );
+    );
+    const portrait = await fs.promises.readFile(
+      path.join(characterDir, "portrait.png")
+    );
 
-  /** @type {string[]} */
-  const coreSpeakerUuids = metas.map((meta) => meta.speaker_uuid);
+    const styleIcons = await fs.promises.readdir(
+      path.join(characterDir, "icons")
+    );
+    /** @type {string[]} */
+    const stylePortraits = await fs.promises
+      .readdir(path.join(characterDir, "portraits"))
+      .catch(() => []);
 
-  let styleIndex = 0;
+    const voiceSamples = await glob(
+      path
+        .join(speakerInfoDir, "*", "voice_samples", "*.wav")
+        .replace(/\\/g, "/")
+    );
+    speakerInfos[uuid] = {
+      policy: policy,
+      portrait: portrait.toString("base64"),
+
+      style_infos: await Promise.all(
+        styleIcons.map(async (style) => {
+          const id = style.split(".")[0];
+          const portrait =
+            stylePortraits.includes(`${id}.png`) &&
+            (await fs.promises
+              .readFile(path.join(characterDir, "portraits", `${id}.png`))
+              .catch(() => undefined));
+
+          const styleDir = path.join(characterDir, "icons", style);
+
+          return {
+            id,
+            icon: await fs.promises
+              .readFile(styleDir)
+              .then((buf) => buf.toString("base64")),
+
+            portrait,
+
+            voice_samples: await Promise.all(
+              voiceSamples
+                .filter((voiceSample) => voiceSample.includes(`/${id}_`))
+                .map(
+                  async (voiceSample) =>
+                    await fs.promises
+                      .readFile(voiceSample)
+                      .then((buf) => buf.toString("base64"))
+                )
+            ),
+          };
+        })
+      ),
+    };
+  }
 
   await fs.promises.writeFile(
     destPath,
-    JSON.stringify(
-      Object.fromEntries(
-        await Promise.all(
-          coreSpeakerUuids.map(async (uuid, i) => [
-            uuid,
-            {
-              policy: await fs.promises.readFile(policies[i], "utf-8"),
-              portrait: await fs.promises
-                .readFile(portraits[i])
-                .then((buf) => buf.toString("base64")),
-              style_infos: await Promise.all(
-                metas[i].styles.map(async (style) => {
-                  const index = styleIndex++;
-                  return {
-                    id: style.id,
-                    icon: await fs.promises
-                      .readFile(styleIcons[index])
-                      .then((buf) => buf.toString("base64")),
-                    portrait: await fs.promises
-                      .readFile(stylePortraits[index])
-                      .then((buf) => buf.toString("base64"))
-                      .catch(() => null),
-                    voice_samples: await Promise.all(
-                      voiceSamples
-                        .filter((voiceSample) =>
-                          voiceSample.includes(`/${index}_`)
-                        )
-                        .map(
-                          async (voiceSample) =>
-                            await fs.promises
-                              .readFile(voiceSample)
-                              .then((buf) => buf.toString("base64"))
-                        )
-                    ),
-                  };
-                })
-              ),
-            },
-          ])
-        )
-      )
-    )
+    JSON.stringify(speakerInfos, undefined, 2),
+    "utf-8"
   );
-  console.log("speakerInfos.json generated.");
+  console.log(
+    `generated speakerInfos.json, ${Object.keys(speakerInfos).length} speakers`
+  );
 };
 
 main();

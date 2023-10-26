@@ -7,7 +7,10 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.google.gson.Gson
+import jp.hiroshiba.voicevoxcore.*
 import java.io.File
+import java.io.FileFilter
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Base64
@@ -16,34 +19,33 @@ import java.util.zip.ZipInputStream
 
 @CapacitorPlugin(name = "VoicevoxCore")
 class CorePlugin : Plugin() {
-    var core: VoicevoxCore? = null
-    override fun load() {
-        val modelPath: String = try {
-            extractIfNotFound("model.zip")
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        }
-        core = VoicevoxCore(modelPath)
-    }
+    lateinit var openJtalk: OpenJtalk
+    lateinit var synthesizer: Synthesizer
+    lateinit var voiceModels: List<VoiceModel>
+    lateinit var gson: Gson
 
     @PluginMethod
     fun getVersion(call: PluginCall) {
         val ret = JSObject()
-        ret.put("value", core!!.voicevoxGetVersion())
+        ret.put("value", BuildConfig.VERSION_NAME)
         call.resolve(ret)
     }
 
     @PluginMethod
     fun getSupportedDevicesJson(call: PluginCall) {
         val ret = JSObject()
-        ret.put("value", core!!.voicevoxGetSupportedDevicesJson())
+        // TODO: ハードコードをやめてちゃんと取得する
+        ret.put("value", "{\"cpu\": true, \"cuda\": false, \"dml\": false}")
         call.resolve(ret)
     }
 
     @PluginMethod
     fun getMetasJson(call: PluginCall) {
         val ret = JSObject()
-        ret.put("value", core!!.voicevoxGetMetasJson())
+        val metas: List<VoiceModel.SpeakerMeta> =
+            voiceModels.flatMap { it.metas.asIterable() }
+        val metasJson = gson.toJson(metas)
+        ret.put("value", metasJson)
         call.resolve(ret)
     }
 
@@ -56,12 +58,32 @@ class CorePlugin : Plugin() {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
+        val modelPath: File = try {
+            File(extractIfNotFound("model.zip"))
+        } catch (e: IOException) {
+            throw RuntimeException(e)
+        }
         try {
-            core!!.voicevoxInitialize(
-                    dictPath,
-            )
+            Log.i("CorePlugin", "Initializing OpenJtalk")
+            openJtalk = OpenJtalk(dictPath)
+
+            Log.i("CorePlugin", "Initializing Synthesizer")
+            synthesizer = Synthesizer.builder(openJtalk).build()
+
+            Log.i("CorePlugin", "Initializing VoiceModels")
+            val vvms = modelPath.listFiles(FileFilter { it.name.endsWith(".vvm") }).slice(1..1)
+            if (vvms == null) {
+                call.reject("Couldn't get vvms")
+                Log.e("CorePlugin", "Couldn't get vvms")
+                return
+            }
+            voiceModels = vvms.map {
+                VoiceModel(it.absolutePath)
+            }
+
+            gson = Gson()
             call.resolve()
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
@@ -75,9 +97,14 @@ class CorePlugin : Plugin() {
         }
 
         try {
-            core!!.voicevoxLoadModel(speakerId)
+            val model = getVoiceModelFromSpeakerId(speakerId)
+            if (model == null) {
+                call.reject("Unknown speaker id")
+                return
+            }
+            synthesizer.loadVoiceModel(model)
             call.resolve()
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
@@ -91,11 +118,16 @@ class CorePlugin : Plugin() {
         }
 
         try {
-            val result = core!!.voicevoxIsModelLoaded(speakerId)
+            val model = getVoiceModelFromSpeakerId(speakerId)
+            if (model == null) {
+                call.reject("Unknown speaker id")
+                return
+            }
+            val result = synthesizer.isLoadedVoiceModel(model.id)
             val ret = JSObject()
             ret.put("value", result)
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
@@ -110,11 +142,11 @@ class CorePlugin : Plugin() {
         }
 
         try {
-            val audioQuery = core!!.voicevoxAudioQuery(text, speakerId)
+            val audioQuery = synthesizer.createAudioQuery(text, speakerId)
             val ret = JSObject()
-            ret.put("value", audioQuery)
+            ret.put("value", gson.toJson(audioQuery))
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
@@ -129,89 +161,100 @@ class CorePlugin : Plugin() {
         }
 
         try {
-            val accentPhrases = core!!.voicevoxAccentPhrases(text, speakerId)
+            val accentPhrases = synthesizer.createAccentPhrases(text, speakerId)
             val ret = JSObject()
-            ret.put("value", accentPhrases)
+            ret.put("value", gson.toJson(accentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
 
     @PluginMethod
     fun moraPitch(call: PluginCall) {
-        val accentPhrases = call.getString("accentPhrases")
+        val accentPhrasesJson = call.getString("accentPhrases")
         val speakerId = call.getInt("speakerId")
-        if (accentPhrases == null || speakerId == null) {
+        if (accentPhrasesJson == null || speakerId == null) {
             call.reject("Type mismatch")
             return
         }
+        val accentPhrases =
+            gson.fromJson(accentPhrasesJson, Array<AccentPhrase>::class.java).asList()
 
         try {
-            val newAccentPhrases = core!!.voicevoxMoraPitch(accentPhrases, speakerId)
+            val newAccentPhrases = synthesizer.replaceMoraPitch(accentPhrases, speakerId)
             val ret = JSObject()
-            ret.put("value", newAccentPhrases)
+            ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
 
     @PluginMethod
-    fun moraLength(call: PluginCall) {
-        val accentPhrases = call.getString("accentPhrases")
+    fun phonemeLength(call: PluginCall) {
+        val accentPhrasesJson = call.getString("accentPhrases")
         val speakerId = call.getInt("speakerId")
-        if (accentPhrases == null || speakerId == null) {
+        if (accentPhrasesJson == null || speakerId == null) {
             call.reject("Type mismatch")
             return
         }
+        val accentPhrases =
+            gson.fromJson(accentPhrasesJson, Array<AccentPhrase>::class.java).asList()
 
         try {
-            val newAccentPhrases = core!!.voicevoxMoraLength(accentPhrases, speakerId)
+            val newAccentPhrases = synthesizer.replacePhonemeLength(accentPhrases, speakerId)
             val ret = JSObject()
-            ret.put("value", newAccentPhrases)
+            ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
 
     @PluginMethod
     fun moraData(call: PluginCall) {
-        val accentPhrases = call.getString("accentPhrases")
+        val accentPhrasesJson = call.getString("accentPhrases")
         val speakerId = call.getInt("speakerId")
-        if (accentPhrases == null || speakerId == null) {
+        if (accentPhrasesJson == null || speakerId == null) {
             call.reject("Type mismatch")
             return
         }
+        val accentPhrases =
+            gson.fromJson(accentPhrasesJson, Array<AccentPhrase>::class.java).asList()
 
         try {
-            val newAccentPhrases = core!!.voicevoxMoraData(accentPhrases, speakerId)
+            val newAccentPhrases = synthesizer.replaceMoraData(accentPhrases, speakerId)
             val ret = JSObject()
-            ret.put("value", newAccentPhrases)
+            ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
 
     @PluginMethod
     fun synthesis(call: PluginCall) {
-        val audioQuery = call.getString("audioQuery")
+        val audioQueryJson = call.getString("audioQuery")
         val speakerId = call.getInt("speakerId")
         val enableInterrogativeUpspeak = call.getBoolean("enableInterrogativeUpspeak")
-        if (audioQuery == null || speakerId == null || enableInterrogativeUpspeak == null) {
+        if (audioQueryJson == null || speakerId == null || enableInterrogativeUpspeak == null) {
             call.reject("Type mismatch")
             return
         }
 
+        val audioQuery = gson.fromJson(audioQueryJson, AudioQuery::class.java)
+
         try {
-            val result = core!!.voicevoxSynthesis(audioQuery, speakerId, enableInterrogativeUpspeak)
+            val result =
+                synthesizer.synthesis(audioQuery, speakerId)
+                    .interrogativeUpspeak(enableInterrogativeUpspeak)
+                    .execute()
             val ret = JSObject()
             val encodedResult = Base64.getEncoder().encodeToString(result)
             ret.put("value", encodedResult)
             call.resolve(ret)
-        } catch (e: VoicevoxCore.VoicevoxException) {
+        } catch (e: VoicevoxException) {
             call.reject(e.message)
         }
     }
@@ -264,5 +307,15 @@ class CorePlugin : Plugin() {
         destHash.writeText(shaSum)
         Log.i("extractIfNotFound", "Done")
         return destRoot.absolutePath
+    }
+
+    private fun getVoiceModelFromSpeakerId(speakerId: Int): VoiceModel? {
+        return voiceModels.find { model ->
+            model.metas.any { meta ->
+                meta.styles.any { style ->
+                    style.id == speakerId
+                }
+            }
+        }
     }
 }

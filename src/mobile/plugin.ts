@@ -23,7 +23,7 @@ export type VoicevoxCorePlugin = {
     accentPhrases: string;
     speakerId: number;
   }) => Promise<{ value: string }>;
-  moraPitch: (obj: {
+  phonemePitch: (obj: {
     accentPhrases: string;
     speakerId: number;
   }) => Promise<{ value: string }>;

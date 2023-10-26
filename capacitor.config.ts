@@ -15,9 +15,21 @@ const config: CapacitorConfig = {
 
 if (process.env.CAPACITOR_MODE === "serve") {
   const nets = networkInterfaces();
-  const net = Object.values(nets)[0]?.find(
-    (net) => net.family === "IPv4" && !net.internal
-  );
+  const net = Object.entries(nets)
+    .flatMap(([name, nets]) =>
+      name.includes("WSL") ||
+      name.includes("VirtualBox") ||
+      name.includes("Loopback")
+        ? []
+        : nets
+    )
+    .find(
+      (net) =>
+        net &&
+        net.family === "IPv4" &&
+        !net.internal &&
+        net.address.startsWith("192.168.")
+    );
   if (!net) throw new Error("assert: net != null");
   config.server = {
     url: `http://${net.address}:5173`,
