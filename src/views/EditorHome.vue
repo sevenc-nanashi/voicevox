@@ -1,8 +1,9 @@
 <template>
-  <menu-bar />
+  <menu-bar v-if="$q.platform.is.desktop" />
 
   <q-layout reveal elevated container class="layout-container">
-    <header-bar />
+    <header-bar v-if="$q.platform.is.desktop" />
+    <mobile-header-bar v-else />
 
     <q-page-container>
       <q-page class="main-row-panes">
@@ -63,9 +64,9 @@
             <q-splitter
               :limits="[MIN_PORTRAIT_PANE_WIDTH, MAX_PORTRAIT_PANE_WIDTH]"
               separator-class="home-splitter"
-              :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+              :separator-style="{ width: shouldShowSidePanes ? '3px' : '0' }"
               before-class="overflow-hidden"
-              :disable="!shouldShowPanes"
+              :disable="!shouldShowSidePanes"
               :model-value="portraitPaneWidth"
               @update:model-value="updatePortraitPane"
             >
@@ -78,9 +79,11 @@
                   unit="px"
                   :limits="[audioInfoPaneMinWidth, audioInfoPaneMaxWidth]"
                   separator-class="home-splitter"
-                  :separator-style="{ width: shouldShowPanes ? '3px' : '0' }"
+                  :separator-style="{
+                    width: shouldShowSidePanes ? '3px' : '0',
+                  }"
                   class="full-width overflow-hidden"
-                  :disable="!shouldShowPanes"
+                  :disable="!shouldShowSidePanes"
                   :model-value="audioInfoPaneWidth"
                   @update:model-value="updateAudioInfoPane"
                 >
@@ -182,7 +185,7 @@
 import path from "path";
 import { computed, onBeforeUpdate, onMounted, ref, VNodeRef, watch } from "vue";
 import draggable from "vuedraggable";
-import { QResizeObserver } from "quasar";
+import { QResizeObserver, useQuasar } from "quasar";
 import cloneDeep from "clone-deep";
 import Mousetrap from "mousetrap";
 import { useStore } from "@/store";
@@ -215,6 +218,7 @@ import {
 } from "@/type/preload";
 import { isOnCommandOrCtrlKeyDown } from "@/store/utility";
 import { parseCombo, setHotkeyFunctions } from "@/store/setting";
+import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 
 const props =
   defineProps<{
@@ -222,6 +226,9 @@ const props =
   }>();
 
 const store = useStore();
+const $q = useQuasar();
+
+const isDesktop = computed(() => $q.platform.is.desktop);
 
 const audioKeys = computed(() => store.state.audioKeys);
 const uiLocked = computed(() => store.getters.UI_LOCKED);
@@ -234,7 +241,7 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
   [
     "テキスト欄にフォーカスを戻す",
     () => {
-      if (activeAudioKey.value !== undefined) {
+      if (activeAudioKey.value != undefined) {
         focusCell({ audioKey: activeAudioKey.value, focusTarget: "textField" });
       }
       return false; // this is the same with event.preventDefault()
@@ -312,7 +319,7 @@ const MIN_PORTRAIT_PANE_WIDTH = 0;
 const MAX_PORTRAIT_PANE_WIDTH = 40;
 const MIN_AUDIO_INFO_PANE_WIDTH = 160; // px
 const MAX_AUDIO_INFO_PANE_WIDTH = 250;
-const MIN_AUDIO_DETAIL_PANE_HEIGHT = 185; // px
+const MIN_AUDIO_DETAIL_PANE_HEIGHT = isDesktop.value ? 185 : 220; // px
 const MAX_AUDIO_DETAIL_PANE_HEIGHT = 500;
 
 const portraitPaneWidth = ref(0);
@@ -398,7 +405,7 @@ const addAudioItem = async () => {
   let presetKey: PresetKey | undefined = undefined;
   let baseAudioItem: AudioItem | undefined = undefined;
 
-  if (prevAudioKey !== undefined) {
+  if (prevAudioKey != undefined) {
     voice = store.state.audioItems[prevAudioKey].voice;
     presetKey = store.state.audioItems[prevAudioKey].presetKey;
     baseAudioItem = store.state.audioItems[prevAudioKey];
@@ -435,13 +442,35 @@ const duplicateAudioItem = async () => {
 const shouldShowPanes = computed<boolean>(
   () => store.getters.SHOULD_SHOW_PANES
 );
+const shouldShowSidePanes = computed<boolean>(
+  () => shouldShowPanes.value && $q.screen.gt.xs // 横幅がある程度大きいかどうか
+);
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(Math.min(value, max), min);
+
 watch(shouldShowPanes, (val, old) => {
   if (val === old) return;
 
   if (val) {
-    const clamp = (value: number, min: number, max: number) =>
-      Math.max(Math.min(value, max), min);
-
+    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
+    changeAudioDetailPaneMaxHeight(
+      resizeObserverRef.value?.$el.parentElement.clientHeight
+    );
+    audioDetailPaneHeight.value = clamp(
+      splitterPosition.value.audioDetailPaneHeight ??
+        MIN_AUDIO_DETAIL_PANE_HEIGHT,
+      audioDetailPaneMinHeight.value,
+      audioDetailPaneMaxHeight.value
+    );
+  } else {
+    audioDetailPaneHeight.value = 0;
+    audioDetailPaneMinHeight.value = 0;
+    audioDetailPaneMaxHeight.value = 0;
+  }
+});
+watch(shouldShowSidePanes, (val, old) => {
+  if (val === old) return;
+  if (val) {
     // 設定ファイルを書き換えれば異常な値が入り得るのですべてclampしておく
     portraitPaneWidth.value = clamp(
       splitterPosition.value.portraitPaneWidth ?? DEFAULT_PORTRAIT_PANE_WIDTH,
@@ -456,26 +485,11 @@ watch(shouldShowPanes, (val, old) => {
     );
     audioInfoPaneMinWidth.value = MIN_AUDIO_INFO_PANE_WIDTH;
     audioInfoPaneMaxWidth.value = MAX_AUDIO_INFO_PANE_WIDTH;
-
-    audioDetailPaneMinHeight.value = MIN_AUDIO_DETAIL_PANE_HEIGHT;
-    changeAudioDetailPaneMaxHeight(
-      resizeObserverRef.value?.$el.parentElement.clientHeight
-    );
-
-    audioDetailPaneHeight.value = clamp(
-      splitterPosition.value.audioDetailPaneHeight ??
-        MIN_AUDIO_DETAIL_PANE_HEIGHT,
-      audioDetailPaneMinHeight.value,
-      audioDetailPaneMaxHeight.value
-    );
   } else {
     portraitPaneWidth.value = 0;
     audioInfoPaneWidth.value = 0;
     audioInfoPaneMinWidth.value = 0;
     audioInfoPaneMaxWidth.value = 0;
-    audioDetailPaneHeight.value = 0;
-    audioDetailPaneMinHeight.value = 0;
-    audioDetailPaneMaxHeight.value = 0;
   }
 });
 
