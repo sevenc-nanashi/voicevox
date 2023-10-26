@@ -98,10 +98,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { useQuasar } from "quasar";
 import ToolTip from "./ToolTip.vue";
 import AudioInfo from "./AudioInfo.vue";
-import AudioAccent from "./AudioAccent.vue";
-import AudioParameter from "./AudioParameter.vue";
 import AccentPhrase from "./AccentPhrase.vue";
 import { useStore } from "@/store";
 import {
@@ -119,8 +118,10 @@ const props =
   }>();
 
 const store = useStore();
+const $q = useQuasar();
 
-const isMobile = import.meta.env.VITE_TARGET === "mobile";
+// $q.platform.is.mobileはネイティブ（Capacitor）の場合falseになるため、desktopを反転させてスマホかどうかを判定する
+const isMobile = computed(() => !$q.platform.is.desktop);
 
 const supportedFeatures = computed(
   () =>

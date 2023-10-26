@@ -3,11 +3,11 @@ $window-border-width: 2px;
 $header-height: var(--header-height);
 $menubar-height: var(--menubar-height);
 body {
-  &:not([data-target="mobile"]) {
+  &.desktop {
     --header-height: 66px;
     --menubar-height: 24px;
   }
-  &[data-target="mobile"] {
+  &:not(.desktop) {
     --header-height: 50px;
     --menubar-height: 0px;
   }
