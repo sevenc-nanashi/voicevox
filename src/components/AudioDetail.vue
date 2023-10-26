@@ -120,7 +120,7 @@ const props =
 const store = useStore();
 const $q = useQuasar();
 
-// $q.platform.is.mobileはブラウザとネイティブで別れているため、desktopでないときにスマホ版とする
+// $q.platform.is.mobileはネイティブ（Capacitor）の場合falseになるため、desktopを反転させてスマホかどうかを判定する
 const isMobile = computed(() => !$q.platform.is.desktop);
 
 const supportedFeatures = computed(
