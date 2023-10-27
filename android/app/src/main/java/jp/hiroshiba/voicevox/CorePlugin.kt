@@ -22,6 +22,7 @@ class CorePlugin : Plugin() {
     lateinit var openJtalk: OpenJtalk
     lateinit var synthesizer: Synthesizer
     lateinit var voiceModels: List<VoiceModel>
+    lateinit var metas: List<VoiceModel.SpeakerMeta>
     lateinit var gson: Gson
 
     @PluginMethod
@@ -42,8 +43,6 @@ class CorePlugin : Plugin() {
     @PluginMethod
     fun getMetasJson(call: PluginCall) {
         val ret = JSObject()
-        val metas: List<VoiceModel.SpeakerMeta> =
-            voiceModels.flatMap { it.metas.asIterable() }
         val metasJson = gson.toJson(metas)
         ret.put("value", metasJson)
         call.resolve(ret)
@@ -64,6 +63,7 @@ class CorePlugin : Plugin() {
             throw RuntimeException(e)
         }
         try {
+            gson = Gson()
             Log.i("CorePlugin", "Initializing OpenJtalk")
             openJtalk = OpenJtalk(dictPath)
 
@@ -81,7 +81,12 @@ class CorePlugin : Plugin() {
                 VoiceModel(it.absolutePath)
             }
 
-            gson = Gson()
+            Log.i("CorePlugin", "Initializing metas")
+            val metasJson = File(modelPath, "metas.json")
+            metas = gson.fromJson(
+                metasJson.readText(), Array<VoiceModel.SpeakerMeta>::class.java
+            ).toList()
+
             call.resolve()
         } catch (e: VoicevoxException) {
             call.reject(e.message)
@@ -246,10 +251,8 @@ class CorePlugin : Plugin() {
         val audioQuery = gson.fromJson(audioQueryJson, AudioQuery::class.java)
 
         try {
-            val result =
-                synthesizer.synthesis(audioQuery, speakerId)
-                    .interrogativeUpspeak(enableInterrogativeUpspeak)
-                    .execute()
+            val result = synthesizer.synthesis(audioQuery, speakerId)
+                .interrogativeUpspeak(enableInterrogativeUpspeak).execute()
             val ret = JSObject()
             val encodedResult = Base64.getEncoder().encodeToString(result)
             ret.put("value", encodedResult)
