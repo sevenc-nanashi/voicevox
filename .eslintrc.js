@@ -57,7 +57,7 @@ module.exports = {
     ],
     "import/order": "error",
     "no-restricted-syntax": [
-      "off",
+      "warn",
       {
         selector:
           "BinaryExpression[operator='==='][right.type='Literal'][right.value=null]",
