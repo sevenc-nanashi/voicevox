@@ -23,8 +23,7 @@ npm ci
 ## 実行
 
 以下のコマンドで Vite の開発サーバーを起動し、Capacitor をライブリロードモードでセットアップします。
-ライブリロードモードのセットアップには、環境変数 `CAPACITOR_ADDRESS` が必要です。
-`.env` 内で `CAPACITOR_ADDRESS` をPCのローカルIPアドレス（例：`192.168.1.2`）に設定してください。
+PC のプライベート IP アドレスは自動で取得されますが、手動で設定する場合は`.env` 内で `CAPACITOR_ADDRESS` を指定してください。
 
 ```bash
 npm run cap:serve
@@ -171,6 +170,7 @@ npm run test-watch:unit # 監視モード
 ### ブラウザ End to End テスト
 
 Electron の機能が不要な、UI や音声合成などの End to End テストを実行します。
+
 > **Note**
 > 一部のエンジンの設定を書き換えるテストは、CI(Github Actions)上でのみ実行されるようになっています。
 
