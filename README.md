@@ -23,6 +23,8 @@ npm ci
 ## 実行
 
 以下のコマンドで Vite の開発サーバーを起動し、Capacitor をライブリロードモードでセットアップします。
+ライブリロードモードのセットアップには、環境変数 `CAPACITOR_ADDRESS` が必要です。
+`.env` 内で `CAPACITOR_ADDRESS` をPCのローカルIPアドレス（例：`192.168.1.2`）に設定してください。
 
 ```bash
 npm run cap:serve
