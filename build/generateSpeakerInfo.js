@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * voicevox/voicevox_engineのモックのSpeakerを使ってspeakerInfos.jsonを生成する
+ * voicevox/voicevox_resourceのデータからspeakerInfosディレクトリとその中のjsonを生成する
  */
 const path = require("path");
 const fs = require("fs");
@@ -12,6 +12,9 @@ const glob = promisify(globBase);
 
 const main = async () => {
   const destPath = path.resolve(__dirname, "../public/speakerInfos");
+  if (fs.existsSync(destPath)) {
+    fs.rmSync(destPath, { recursive: true, force: true });
+  }
   fs.mkdirSync(destPath, { recursive: true });
   if (fs.existsSync(path.resolve(__dirname, "vendored/voicevox_resource"))) {
     const updater = spawnSync(

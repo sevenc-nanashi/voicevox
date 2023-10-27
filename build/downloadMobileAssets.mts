@@ -1,6 +1,7 @@
 /**
- * Voicevox Coreのsample.vvmダウンロードしてZip圧縮し、
- * またOpenJTalkの辞書をzip圧縮するスクリプト。
+ * スマホ版のためのアセットを準備するスクリプト。
+ * - voicevox/voicevox_resourcesのvvm
+ * - zip圧縮されたOpenJTalkの辞書
  */
 import path from "path";
 import fs from "fs";
