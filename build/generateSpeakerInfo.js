@@ -11,11 +11,8 @@ const { glob: globBase } = require("glob");
 const glob = promisify(globBase);
 
 const main = async () => {
-  const destPath = path.resolve(__dirname, "../public/speakerInfos.json");
-  if (fs.existsSync(destPath)) {
-    console.log("speakers already exists. skipping conversion.");
-    return;
-  }
+  const destPath = path.resolve(__dirname, "../public/speakerInfos");
+  fs.mkdirSync(destPath, { recursive: true });
   if (fs.existsSync(path.resolve(__dirname, "vendored/voicevox_resource"))) {
     const updater = spawnSync(
       "git",
@@ -59,8 +56,6 @@ const main = async () => {
 
   const characters = await fs.promises.readdir(speakerInfoDir);
 
-  const speakerInfos = {};
-
   for (const character of characters) {
     const characterDir = path.join(speakerInfoDir, character);
     const uuid = path.basename(character).split("_")[1];
@@ -85,53 +80,51 @@ const main = async () => {
         .join(speakerInfoDir, "*", "voice_samples", "*.wav")
         .replace(/\\/g, "/")
     );
-    speakerInfos[uuid] = {
-      policy: policy,
-      portrait: portrait.toString("base64"),
+    const jsonPath = path.join(destPath, `${uuid}.json`);
+    console.log(`Generating ${jsonPath}`);
+    await fs.promises.writeFile(
+      jsonPath,
+      JSON.stringify({
+        policy: policy,
+        portrait: portrait.toString("base64"),
 
-      style_infos: await Promise.all(
-        styleIcons.map(async (style) => {
-          const id = style.split(".")[0];
-          const portrait =
-            stylePortraits.includes(`${id}.png`) &&
-            (await fs.promises
-              .readFile(path.join(characterDir, "portraits", `${id}.png`))
-              .catch(() => undefined));
+        style_infos: await Promise.all(
+          styleIcons.map(async (style) => {
+            const id = parseInt(style.split(".")[0]);
+            const portrait =
+              (stylePortraits.includes(`${id}.png`) &&
+                (await fs.promises
+                  .readFile(path.join(characterDir, "portraits", `${id}.png`))
+                  .then((buf) => buf.toString("base64"))
+                  .catch(() => undefined))) ||
+              undefined;
 
-          const styleDir = path.join(characterDir, "icons", style);
+            const styleDir = path.join(characterDir, "icons", style);
 
-          return {
-            id,
-            icon: await fs.promises
-              .readFile(styleDir)
-              .then((buf) => buf.toString("base64")),
+            return {
+              id,
+              icon: await fs.promises
+                .readFile(styleDir)
+                .then((buf) => buf.toString("base64")),
 
-            portrait,
+              portrait,
 
-            voice_samples: await Promise.all(
-              voiceSamples
-                .filter((voiceSample) => voiceSample.includes(`/${id}_`))
-                .map(
-                  async (voiceSample) =>
-                    await fs.promises
-                      .readFile(voiceSample)
-                      .then((buf) => buf.toString("base64"))
-                )
-            ),
-          };
-        })
-      ),
-    };
+              voice_samples: await Promise.all(
+                voiceSamples
+                  .filter((voiceSample) => voiceSample.includes(`/${id}_`))
+                  .map(
+                    async (voiceSample) =>
+                      await fs.promises
+                        .readFile(voiceSample)
+                        .then((buf) => buf.toString("base64"))
+                  )
+              ),
+            };
+          })
+        ),
+      })
+    );
   }
-
-  await fs.promises.writeFile(
-    destPath,
-    JSON.stringify(speakerInfos, undefined, 2),
-    "utf-8"
-  );
-  console.log(
-    `generated speakerInfos.json, ${Object.keys(speakerInfos).length} speakers`
-  );
 };
 
 main();

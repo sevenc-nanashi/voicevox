@@ -34,7 +34,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async moraLengthMoraLengthPost({ accentPhrase: accentPhrases, speaker }) {
       const rawMoraLength = await corePlugin
-        .moraLength({
+        .phonemeLength({
           accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
           speakerId: speaker,
         })
@@ -44,7 +44,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async moraPitchMoraPitchPost({ accentPhrase: accentPhrases, speaker }) {
       const rawMoraPitch = await corePlugin
-        .phonemePitch({
+        .moraPitch({
           accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
           speakerId: speaker,
         })

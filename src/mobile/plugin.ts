@@ -19,11 +19,11 @@ export type VoicevoxCorePlugin = {
     speakerId: number;
   }) => Promise<{ value: string }>;
 
-  moraLength: (obj: {
+  phonemeLength: (obj: {
     accentPhrases: string;
     speakerId: number;
   }) => Promise<{ value: string }>;
-  phonemePitch: (obj: {
+  moraPitch: (obj: {
     accentPhrases: string;
     speakerId: number;
   }) => Promise<{ value: string }>;

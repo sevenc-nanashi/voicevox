@@ -71,7 +71,7 @@ class CorePlugin : Plugin() {
             synthesizer = Synthesizer.builder(openJtalk).build()
 
             Log.i("CorePlugin", "Initializing VoiceModels")
-            val vvms = modelPath.listFiles(FileFilter { it.name.endsWith(".vvm") }).slice(1..1)
+            val vvms = modelPath.listFiles(FileFilter { it.name.endsWith(".vvm") })
             if (vvms == null) {
                 call.reject("Couldn't get vvms")
                 Log.e("CorePlugin", "Couldn't get vvms")
@@ -279,6 +279,7 @@ class CorePlugin : Plugin() {
             return destRoot.absolutePath
         } else if (destHash.exists()) {
             Log.i("extractIfNotFound", "Outdated (Hashes don't match)")
+            destRoot.deleteRecursively()
         } else {
             Log.i("extractIfNotFound", "Not exists")
         }
