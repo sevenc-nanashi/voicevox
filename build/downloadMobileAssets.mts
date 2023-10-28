@@ -1,10 +1,12 @@
 /**
- * voicevox/voicevox_coreのmodelディレクトリをダウンロードしてZip圧縮し、
- * またOpenJTalkの辞書をzip圧縮するスクリプト。
+ * スマホ版のためのアセットを準備するスクリプト。
+ * - voicevox/voicevox_resourcesのvvm
+ * - zip圧縮されたOpenJTalkの辞書
  */
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import fetch from "node-fetch";
 import { runCommand, __dirname } from "./utils.mjs";
 
 let sevenZipCommand: string;
@@ -26,8 +28,11 @@ switch (process.platform) {
   }
 }
 const sevenZip = path.resolve(__dirname, "vendored", "7z", sevenZipCommand);
+type Release = {
+  tag_name: string;
+  assets: { name: string; browser_download_url: string }[];
+};
 
-// FIXME: ダミーモデルを使っているので製品版に変える
 const downloadAndCompressModel = async () => {
   const modelZipPath = path.resolve(
     __dirname,
@@ -40,37 +45,42 @@ const downloadAndCompressModel = async () => {
     );
     return;
   }
-  if (fs.existsSync(path.resolve(__dirname, "vendored/voicevox_core"))) {
-    await runCommand(
-      "git",
-      "-C",
-      __dirname + "/vendored/voicevox_core",
-      "pull",
-      "origin",
-      "main"
-    );
-  } else {
-    await runCommand(
-      "git",
-      "clone",
-      "https://github.com/VOICEVOX/voicevox_core.git",
-      __dirname + "/vendored/voicevox_core"
-    );
-  }
-  await runCommand(
-    "git",
-    "-C",
-    __dirname + "/vendored/voicevox_core",
-    "checkout",
-    "b8c1b316203a0963ce3d3aca787fd392cceba930"
+  console.log("Downloading model...");
+  const releases = await fetch(
+    "https://api.github.com/repos/voicevox/voicevox_core/releases"
   );
+  const releasesJson = (await releases.json()) as Release[];
+  const latestRelease = releasesJson[0];
+  const modelUrl = latestRelease.assets.find((asset) =>
+    asset.name.startsWith("model-")
+  )?.browser_download_url;
+  if (!modelUrl) {
+    throw new Error("Failed to get model url");
+  }
+  console.log("Downloading model from " + modelUrl);
+  const modelPath = path.resolve(__dirname, "vendored", "model.zip");
+
+  const response = await fetch(modelUrl);
+  if (!response.ok) {
+    throw new Error("Failed to download model");
+  }
+  const buffer = await response.arrayBuffer();
+  await fs.promises.writeFile(modelPath, Buffer.from(buffer));
+
+  await runCommand(
+    sevenZip,
+    "x",
+    modelPath,
+    "-o" + __dirname + "/vendored",
+    "-y"
+  );
+
   await runCommand(
     sevenZip,
     "a",
     "-tzip",
     modelZipPath,
-    __dirname + "/vendored/voicevox_core/model/*",
-    __dirname + "/vendored/voicevox_core/LICENSE"
+    __dirname + "/vendored/model-" + latestRelease.tag_name + "/*"
   );
   await createFileHash(modelZipPath);
 
@@ -89,9 +99,6 @@ const downloadAndCompressOpenJTalkDict = async () => {
     );
     return;
   }
-
-  // node-fetchはESModuleなので、import()で読み込む
-  const { default: fetch } = await import("node-fetch");
 
   const dictUrl =
     "https://github.com/r9y9/open_jtalk/releases/download/v1.11.1/open_jtalk_dic_utf_8-1.11.tar.gz";

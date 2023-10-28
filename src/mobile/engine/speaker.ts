@@ -2,7 +2,7 @@ import { ApiProvider } from ".";
 import { SpeakerFromJSON, SpeakerInfo, SpeakerInfoFromJSON } from "@/openapi";
 
 const speakerProvider: ApiProvider = ({ corePlugin }) => {
-  let speakerInfosMap: Record<string, SpeakerInfo> | undefined;
+  const speakerInfosMap: Record<string, SpeakerInfo> = {};
 
   return {
     async speakersSpeakersGet() {
@@ -21,12 +21,17 @@ const speakerProvider: ApiProvider = ({ corePlugin }) => {
       );
     },
     async speakerInfoSpeakerInfoGet({ speakerUuid }) {
-      if (!speakerInfosMap) {
-        speakerInfosMap = Object.fromEntries(
-          Object.entries(
-            await fetch("/speakerInfos.json").then((res) => res.json())
-          ).map(([key, value]) => [key, SpeakerInfoFromJSON(value)])
-        );
+      if (!speakerInfosMap[speakerUuid]) {
+        const speakerInfo = await fetch(`/speakerInfos/${speakerUuid}.json`)
+          .then((res) => {
+            if (res.ok) {
+              return res.json();
+            } else {
+              throw new Error(`SpeakerInfo not found: ${speakerUuid}`);
+            }
+          })
+          .then(SpeakerInfoFromJSON);
+        speakerInfosMap[speakerUuid] = speakerInfo;
       }
       const speakerInfo = speakerInfosMap[speakerUuid];
       if (!speakerInfo) {

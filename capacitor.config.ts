@@ -1,5 +1,6 @@
 /// <reference types="@capacitor/splash-screen" />
 import { networkInterfaces } from "os";
+import dotenv from "dotenv";
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
@@ -14,13 +15,35 @@ const config: CapacitorConfig = {
 };
 
 if (process.env.CAPACITOR_MODE === "serve") {
-  const nets = networkInterfaces();
-  const net = Object.values(nets)[0]?.find(
-    (net) => net.family === "IPv4" && !net.internal
-  );
-  if (!net) throw new Error("assert: net != null");
+  dotenv.config();
+  let address = process.env.CAPACITOR_ADDRESS;
+  if (!address) {
+    const nets = networkInterfaces();
+    const net = Object.entries(nets)
+      .flatMap(([name, nets]) =>
+        name.includes("WSL") ||
+        name.includes("VirtualBox") ||
+        name.includes("Loopback")
+          ? []
+          : nets
+      )
+      .find(
+        (net) =>
+          net &&
+          net.family === "IPv4" &&
+          !net.internal &&
+          (net.address.startsWith("192.168.") ||
+            net.address.startsWith("172.16.") ||
+            net.address.startsWith("10."))
+      );
+    if (!net)
+      throw new Error(
+        "ネットワークを選択できませんでした。.envにCAPACITOR_ADDRESSを設定してください。"
+      );
+    address = net.address;
+  }
   config.server = {
-    url: `http://${net.address}:5173`,
+    url: `http://${address}:5173`,
     cleartext: true,
   };
 }
