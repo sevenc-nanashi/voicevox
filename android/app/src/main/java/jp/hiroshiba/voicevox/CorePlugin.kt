@@ -22,7 +22,6 @@ class CorePlugin : Plugin() {
     lateinit var openJtalk: OpenJtalk
     lateinit var synthesizer: Synthesizer
     lateinit var voiceModels: List<VoiceModel>
-    lateinit var metas: List<VoiceModel.SpeakerMeta>
     lateinit var gson: Gson
 
     @PluginMethod
@@ -43,6 +42,16 @@ class CorePlugin : Plugin() {
     @PluginMethod
     fun getMetasJson(call: PluginCall) {
         val ret = JSObject()
+        val flatMetas = voiceModels.flatMap { it.metas.asIterable() }
+        val metas = flatMetas.map { it.speakerUuid }.toSet().map { speakerUuid ->
+            val baseMetas = flatMetas.filter { it.speakerUuid == speakerUuid }
+            val styles = baseMetas.flatMap { it.styles.asIterable() }
+            val mergedMetas =
+                gson.toJsonTree(baseMetas[0]).asJsonObject
+            mergedMetas.add("styles", gson.toJsonTree(styles))
+
+            mergedMetas
+        }
         val metasJson = gson.toJson(metas)
         ret.put("value", metasJson)
         call.resolve(ret)
@@ -80,12 +89,6 @@ class CorePlugin : Plugin() {
             voiceModels = vvms.map {
                 VoiceModel(it.absolutePath)
             }
-
-            Log.i("CorePlugin", "Initializing metas")
-            val metasJson = File(modelPath, "metas.json")
-            metas = gson.fromJson(
-                metasJson.readText(), Array<VoiceModel.SpeakerMeta>::class.java
-            ).toList()
 
             call.resolve()
         } catch (e: VoicevoxException) {
