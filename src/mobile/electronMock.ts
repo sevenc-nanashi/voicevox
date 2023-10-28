@@ -4,7 +4,7 @@ import { SplashScreen } from "@capacitor/splash-screen";
 import {
   defaultHotkeySettings,
   defaultToolbarButtonSetting,
-  electronStoreSchema,
+  configSchema,
   EngineId,
   EngineInfo,
   engineSettingSchema,
@@ -180,14 +180,14 @@ const loadMock = () => {
       });
     },
     getSetting(key) {
-      const setting = electronStoreSchema.parse(
+      const setting = configSchema.parse(
         JSON.parse(localStorage.getItem(storeName) || "{}")
       );
       // 同期でも使いたいので、async functionではなく手動でPromise.resolveを返す
       return Promise.resolve(setting[key]);
     },
     setSetting(key, newValue) {
-      const setting = electronStoreSchema.parse(
+      const setting = configSchema.parse(
         JSON.parse(localStorage.getItem(storeName) || "{}")
       );
       setting[key] = newValue;
@@ -226,17 +226,12 @@ const loadMock = () => {
     localStorage.setItem(
       storeName,
       JSON.stringify(
-        electronStoreSchema.parse(
-          JSON.parse(localStorage.getItem(storeName) || "{}")
-        )
+        configSchema.parse(JSON.parse(localStorage.getItem(storeName) || "{}"))
       )
     );
   } catch (e) {
     console.warn("Failed to load store, reset store");
-    localStorage.setItem(
-      storeName,
-      JSON.stringify(electronStoreSchema.parse({}))
-    );
+    localStorage.setItem(storeName, JSON.stringify(configSchema.parse({})));
   }
 
   const engineSettings = JSON.parse(
