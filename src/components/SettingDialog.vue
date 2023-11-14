@@ -1095,9 +1095,6 @@ const currentAudioOutputDeviceComputed = computed<
   | undefined
 >({
   get: () => {
-    if (store.state.savingSetting.audioOutputDevice === "default") {
-      return null;
-    }
     // 再生デバイスが見つからなかったらデフォルト値に戻す
     // FIXME: watchなどにしてgetter内で操作しないようにする
     const device = availableAudioOutputDevices.value?.find(
