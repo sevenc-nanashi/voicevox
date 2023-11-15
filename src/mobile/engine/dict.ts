@@ -1,20 +1,34 @@
 import { Preferences } from "@capacitor/preferences";
 import { v4 as uuidv4 } from "uuid";
+import { VoicevoxCorePlugin } from "../plugin";
 import { ApiProvider } from ".";
 import { UserDictWord } from "@/openapi";
 
 type InternalUserDict = Record<string, InternalDictWord>;
 
 const preferenceKey = "userDict";
-const getUserDictWords = async () => {
+export const getUserDictWords = async () => {
   const userDictJson = await Preferences.get({ key: preferenceKey });
   const dict: InternalUserDict = userDictJson.value
     ? JSON.parse(userDictJson.value)
     : {};
   return dict;
 };
-const setUserDictWords = async (dict: InternalUserDict) => {
-  await Preferences.set({ key: preferenceKey, value: JSON.stringify(dict) });
+export const useUserDictWords = async (
+  corePlugin: VoicevoxCorePlugin,
+  dict: InternalUserDict
+) => {
+  await corePlugin.useUserDict({
+    wordsJson: JSON.stringify(
+      Object.values(dict).map((word) => ({
+        surface: word.surface,
+        pronunciation: word.pronunciation,
+        accent_type: word.accentType,
+        priority: word.priority,
+        word_type: word.wordType,
+      }))
+    ),
+  });
 };
 
 type InternalWordType =
@@ -90,7 +104,11 @@ const apiWordToInternalWord = (word: UserDictWord): InternalDictWord => {
   };
 };
 
-const dictProvider: ApiProvider = () => {
+const dictProvider: ApiProvider = ({ corePlugin }) => {
+  const setUserDictWords = async (dict: InternalUserDict) => {
+    await Preferences.set({ key: preferenceKey, value: JSON.stringify(dict) });
+    await useUserDictWords(corePlugin, dict);
+  };
   return {
     async getUserDictWordsUserDictGet() {
       const dict = await getUserDictWords();
@@ -112,9 +130,6 @@ const dictProvider: ApiProvider = () => {
       );
     },
     async addUserDictWordUserDictWordPost(word) {
-      if (!word.wordType) {
-        throw new Error("wordType is required");
-      }
       const uuid = uuidv4();
       const dict = await getUserDictWords();
       dict[uuid] = {
@@ -122,7 +137,7 @@ const dictProvider: ApiProvider = () => {
         pronunciation: word.pronunciation,
         accentType: word.accentType,
         priority: word.priority ?? 5,
-        wordType: word.wordType,
+        wordType: word.wordType ?? "COMMON_NOUN",
       };
       await setUserDictWords(dict);
       return uuid;

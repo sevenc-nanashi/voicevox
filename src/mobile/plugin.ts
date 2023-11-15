@@ -38,7 +38,7 @@ export type VoicevoxCorePlugin = {
     enableInterrogativeUpspeak: boolean;
   }) => Promise<{ value: string }>;
 
-  userDictLoad: (obj: { dictJson: string }) => Promise<void>;
+  useUserDict: (obj: { wordsJson: string }) => Promise<void>;
 };
 
 const loadPlugin = () => {

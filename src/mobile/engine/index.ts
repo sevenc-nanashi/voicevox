@@ -2,7 +2,7 @@ import { VoicevoxCorePlugin } from "../plugin";
 import queryProvider from "./query";
 import infoProvider from "./info";
 import speakerProvider from "./speaker";
-import dictProvider from "./dict";
+import dictProvider, { getUserDictWords, useUserDictWords } from "./dict";
 import { DefaultApi, DefaultApiInterface } from "@/openapi";
 
 let api: DefaultApi | undefined;
@@ -16,9 +16,11 @@ const loadApi = () => {
   const corePlugin = window.plugins?.voicevoxCore;
   if (!corePlugin) throw new Error("assert: corePlugin != null");
   let isCoreInitialized = false;
-  corePlugin.initialize().then(() => {
+  (async () => {
+    await corePlugin.initialize();
+    await useUserDictWords(corePlugin, await getUserDictWords());
     isCoreInitialized = true;
-  });
+  })();
 
   // コアベースのOpenAPI Connectorライクなオブジェクト。
   // - コアベースの実装がある場合は呼び出し、
