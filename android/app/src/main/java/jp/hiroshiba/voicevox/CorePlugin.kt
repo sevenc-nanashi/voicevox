@@ -97,8 +97,8 @@ class CorePlugin : Plugin() {
 
             // Rustのtempfileクレートのための設定。
             // /data/local/tmp はAndroid 10から書き込めなくなった。そのため、
-            // filesのディレクトリ内に一時フォルダを用意してそこから書き込むように設定する。
-            val tempDir = File(activity.filesDir.absolutePath + "/.tmp")
+            // キャッシュディレクトリ内に一時フォルダを用意してそこから書き込むように設定する。
+            val tempDir = File(activity.cacheDir.absolutePath + "/.tmp")
             tempDir.mkdirs()
             Os.setenv("TMPDIR", tempDir.absolutePath, true)
 
