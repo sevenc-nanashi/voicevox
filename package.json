@@ -44,6 +44,7 @@
   "dependencies": {
     "@capacitor/android": "5.5.1",
     "@capacitor/core": "5.5.1",
+    "@capacitor/preferences": "5.0.6",
     "@capacitor/splash-screen": "5.0.2",
     "@gtm-support/vue-gtm": "1.2.3",
     "@quasar/extras": "1.10.10",
