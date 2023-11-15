@@ -1,6 +1,7 @@
 package jp.hiroshiba.voicevox
 
 import android.app.Activity
+import android.system.Os
 import android.util.Log
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -34,8 +35,9 @@ class CorePlugin : Plugin() {
     @PluginMethod
     fun getSupportedDevicesJson(call: PluginCall) {
         val ret = JSObject()
-        // TODO: ハードコードをやめてちゃんと取得する
-        ret.put("value", "{\"cpu\": true, \"cuda\": false, \"dml\": false}")
+        val supportedDevices = GlobalInfo.getSupportedDevices()
+        val supportedDevicesJson = gson.toJson(supportedDevices)
+        ret.put("value", supportedDevicesJson)
         call.resolve(ret)
     }
 
@@ -86,12 +88,22 @@ class CorePlugin : Plugin() {
                 Log.e("CorePlugin", "Couldn't get vvms")
                 return
             }
+            vvms.sortWith(compareBy {
+                it.name.split(".")[0].length
+            })
             voiceModels = vvms.map {
                 VoiceModel(it.absolutePath)
             }
 
+            // Rustのtempfileクレートのための設定。
+            // /data/local/tmp はAndroid 10から書き込めなくなった。そのため、
+            // キャッシュディレクトリ内に一時フォルダを用意してそこから書き込むように設定する。
+            val tempDir = File(activity.cacheDir.absolutePath + "/.tmp")
+            tempDir.mkdirs()
+            Os.setenv("TMPDIR", tempDir.absolutePath, true)
+
             call.resolve()
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -112,7 +124,7 @@ class CorePlugin : Plugin() {
             }
             synthesizer.loadVoiceModel(model)
             call.resolve()
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -135,7 +147,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", result)
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -154,7 +166,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", gson.toJson(audioQuery))
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -173,7 +185,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", gson.toJson(accentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -194,7 +206,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -215,7 +227,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -236,7 +248,7 @@ class CorePlugin : Plugin() {
             val ret = JSObject()
             ret.put("value", gson.toJson(newAccentPhrases))
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
@@ -260,7 +272,28 @@ class CorePlugin : Plugin() {
             val encodedResult = Base64.getEncoder().encodeToString(result)
             ret.put("value", encodedResult)
             call.resolve(ret)
-        } catch (e: VoicevoxException) {
+        } catch (e: Exception) {
+            call.reject(e.message)
+        }
+    }
+
+    @PluginMethod
+    fun useUserDict(call: PluginCall) {
+        val wordsJson = call.getString("wordsJson")
+        if (wordsJson == null) {
+            call.reject("Type mismatch")
+            return
+        }
+
+        try {
+            val words = gson.fromJson(wordsJson, Array<UserDict.Word>::class.java).asList()
+            val userDict = UserDict()
+            words.forEach { word ->
+                userDict.addWord(word)
+            }
+            openJtalk.useUserDict(userDict)
+            call.resolve()
+        } catch (e: Exception) {
             call.reject(e.message)
         }
     }
