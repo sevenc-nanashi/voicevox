@@ -27,7 +27,7 @@ const clean = (item: paper.Item, color: paper.Color) => {
 
 const icons: string[] = [];
 
-const findIcon = async (name: string) => {
+const findIcon = async (name: string, kind: "solid" | "outlined") => {
   const iconPath = path.resolve(
     __dirname,
     "./vendored/material-design-icons",
@@ -39,7 +39,7 @@ const findIcon = async (name: string) => {
       iconPath,
       dir,
       name,
-      "materialiconsoutlined",
+      kind === "solid" ? "materialicons" : "materialiconsoutlined",
       "24px.svg"
     );
     if (await fs.stat(p).catch(() => false)) {
@@ -75,7 +75,7 @@ const main = async () => {
   for (const [name, [baseIcon, subIcon]] of Object.entries(recipes)) {
     console.log(`${name} : ${baseIcon} + ${subIcon}`);
     const layer = new paper.Layer({ insert: false });
-    const svgPath = await findIcon(baseIcon);
+    const svgPath = await findIcon(baseIcon, "outlined");
     if (!svgPath) {
       throw new Error(`${baseIcon} が見つかりませんでした`);
     }
@@ -84,7 +84,7 @@ const main = async () => {
     baseSvg.fitBounds(new paper.Rectangle(0, 0, size, size));
     baseSvg.strokeColor = null;
     clean(baseSvg, new paper.Color("#000000"));
-    const subSvgPath = await findIcon(subIcon);
+    const subSvgPath = await findIcon(subIcon, "solid");
     if (!subSvgPath) {
       throw new Error(`${subIcon} が見つかりませんでした`);
     }
