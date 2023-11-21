@@ -16,7 +16,11 @@ export function runCommand(filePath: string, ...args: string[]) {
     process.on("exit", (code) => {
       if (code !== 0) {
         reject(
-          new Error(`Failed to run ${filePath} ${args.join(" ")} : ${code}`)
+          new Error(
+            `Failed to run ${filePath} ${args
+              .map((a) => JSON.stringify(a))
+              .join(" ")}`
+          )
         );
       } else {
         resolve();

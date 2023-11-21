@@ -41,7 +41,7 @@ const canRedo = computed(() => store.getters.CAN_REDO);
 
 const headerButtons = computed(() => [
   {
-    icon: "svguse:icons.svg#saveVoice",
+    icon: "svguse:toolbarIcons.svg#saveVoice",
     onClick: () => {
       alert("TODO: 音声書きだし");
     },
