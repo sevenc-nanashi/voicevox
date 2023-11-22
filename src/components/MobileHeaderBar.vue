@@ -41,6 +41,13 @@ const canRedo = computed(() => store.getters.CAN_REDO);
 
 const headerButtons = computed(() => [
   {
+    icon: "svguse:toolbarIcons.svg#saveVoice",
+    onClick: () => {
+      alert("TODO: 音声書きだし");
+    },
+    disable: uiLocked.value,
+  },
+  {
     icon: "file_upload",
     onClick: () => {
       alert("TODO: 一つ保存する");

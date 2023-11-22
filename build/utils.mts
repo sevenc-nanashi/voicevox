@@ -8,14 +8,19 @@ export const __filename = fileURLToPath(import.meta.url).replace(/\\/g, "/");
 export const __dirname = path.dirname(__filename);
 
 export function runCommand(filePath: string, ...args: string[]) {
+  console.log(`$ ${filePath} ${args.map((a) => JSON.stringify(a)).join(" ")}`);
   const process = spawn(filePath, args, {
-    stdio: ["ignore", "inherit", "inherit"]
+    stdio: ["ignore", "inherit", "inherit"],
   });
   return new Promise<void>((resolve, reject) => {
     process.on("exit", (code) => {
       if (code !== 0) {
         reject(
-          new Error(`Failed to run ${filePath} ${args.join(" ")} : ${code}`)
+          new Error(
+            `Failed to run ${filePath} ${args
+              .map((a) => JSON.stringify(a))
+              .join(" ")}`
+          )
         );
       } else {
         resolve();
