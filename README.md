@@ -79,7 +79,6 @@ npm run cap:build:ios
 npm run generate-icons
 ```
 
-
 ---
 
 以下は元リポジトリの README です。
