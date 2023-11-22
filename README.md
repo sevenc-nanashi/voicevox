@@ -70,6 +70,16 @@ npm run cap:build:android -- \
 npm run cap:build:ios
 ```
 
+## アイコン生成
+
+[matex](https://github.com/sevenc-nanashi/matex)を使ってアイコンを生成します。
+`build/matexRecipes.yml` を編集した後に以下のコマンドを実行してください。
+
+```bash
+npm run generate-icons
+```
+
+
 ---
 
 以下は元リポジトリの README です。
