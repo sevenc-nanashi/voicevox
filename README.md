@@ -2,7 +2,7 @@
 
 [VOICEVOX](https://voicevox.hiroshiba.jp/) のスマホ版エディターです。
 
-> **Warning**
+> [!IMPORTANT]
 > このリポジトリは現在開発中です。
 
 ## 環境構築
