@@ -31,7 +31,7 @@ describe("useModifierKey", () => {
     wrapper.vm.elem.dispatchEvent(new KeyboardEvent("keyup", { key: "Shift" }));
     expect(wrapper.vm.isActive).toBe(false);
 
-    // もう一度押してblurさせる
+    // もう一度押したあとblurさせる
     wrapper.vm.elem.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Shift" })
     );
