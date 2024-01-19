@@ -87,8 +87,8 @@
           "
           :is-active="accentPhraseIndex === activePoint"
           :selected-detail="selectedDetail"
-          :shift-key-flag="shiftKeyFlag"
-          :alt-key-flag="altKeyFlag"
+          :shift-key-flag="isShiftKeyDown"
+          :alt-key-flag="isAltKeyDown"
           @click="setPlayAndStartPoint"
         />
       </div>
@@ -97,20 +97,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useQuasar } from "quasar";
+import { computed, nextTick, ref, watch } from "vue";
 import ToolTip from "./ToolTip.vue";
 import AudioInfo from "./AudioInfo.vue";
 import AccentPhrase from "./AccentPhrase.vue";
 import { useStore } from "@/store";
 import {
   AudioKey,
-  HotkeyAction,
+  HotkeyActionType,
   HotkeyReturnType,
   isMac,
 } from "@/type/preload";
 import { setHotkeyFunctions } from "@/store/setting";
 import { EngineManifest } from "@/openapi/models";
+import { useShiftKey, useAltKey } from "@/composables/useModifierKey";
 
 const props =
   defineProps<{
@@ -133,7 +134,7 @@ const supportedFeatures = computed(
         .supportedFeatures) as EngineManifest["supportedFeatures"] | undefined
 );
 
-const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
+const hotkeyMap = new Map<HotkeyActionType, () => HotkeyReturnType>([
   [
     "再生/停止",
     () => {
@@ -170,8 +171,11 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
     "全体のイントネーションをリセット",
     () => {
       if (!uiLocked.value && store.getters.ACTIVE_AUDIO_KEY) {
-        store.dispatch("COMMAND_RESET_MORA_PITCH_AND_LENGTH", {
-          audioKey: store.getters.ACTIVE_AUDIO_KEY,
+        const audioKeys = store.state.experimentalSetting.enableMultiSelect
+          ? store.getters.SELECTED_AUDIO_KEYS
+          : [store.getters.ACTIVE_AUDIO_KEY];
+        store.dispatch("COMMAND_MULTI_RESET_MORA_PITCH_AND_LENGTH", {
+          audioKeys,
         });
       }
     },
@@ -182,7 +186,7 @@ const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
       if (
         !uiLocked.value &&
         store.getters.ACTIVE_AUDIO_KEY &&
-        store.getters.AUDIO_PLAY_START_POINT !== undefined
+        store.getters.AUDIO_PLAY_START_POINT != undefined
       ) {
         store.dispatch("COMMAND_RESET_SELECTED_MORA_PITCH_AND_LENGTH", {
           audioKey: store.getters.ACTIVE_AUDIO_KEY,
@@ -295,7 +299,7 @@ const accentPhraseComponents = ref<InstanceType<typeof AccentPhrase>[]>([]);
 
 const scrollToActivePoint = () => {
   if (
-    activePoint.value === undefined ||
+    activePoint.value == undefined ||
     !audioDetail.value ||
     accentPhraseComponents.value.length === 0
   )
@@ -342,7 +346,7 @@ watch(nowPlaying, async (newState) => {
     // それに合わせてフォーカスするアクセント句を変えていく
     const focusAccentPhrase = () => {
       const currentTime = store.getters.ACTIVE_AUDIO_ELEM_CURRENT_TIME;
-      if (currentTime === undefined) {
+      if (currentTime == undefined) {
         throw new Error("currentTime === undefined)");
       }
       const playingAccentPhraseIndex =
@@ -365,33 +369,18 @@ watch(nowPlaying, async (newState) => {
       requestId = window.requestAnimationFrame(focusAccentPhrase);
     };
     requestId = window.requestAnimationFrame(focusAccentPhrase);
-  } else if (requestId !== undefined) {
+  } else if (requestId != undefined) {
     window.cancelAnimationFrame(requestId);
     requestId = undefined;
     // startPointがundefinedの場合、一旦最初のアクセント句までスクロール、その後activePointの選択を解除(undefinedに)する
     activePoint.value = startPoint.value ?? 0;
     scrollToActivePoint();
-    if (startPoint.value === undefined) activePoint.value = startPoint.value;
+    if (startPoint.value == undefined) activePoint.value = startPoint.value;
   }
 });
 
-const shiftKeyFlag = ref(false);
-const altKeyFlag = ref(false);
-
-const keyEventListter = (event: KeyboardEvent) => {
-  shiftKeyFlag.value = event.shiftKey;
-  altKeyFlag.value = event.altKey;
-};
-
-onMounted(() => {
-  window.addEventListener("keyup", keyEventListter);
-  document.addEventListener("keydown", keyEventListter);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keyup", keyEventListter);
-  document.removeEventListener("keydown", keyEventListter);
-});
+const isShiftKeyDown = useShiftKey();
+const isAltKeyDown = useAltKey();
 </script>
 
 <style scoped lang="scss">
