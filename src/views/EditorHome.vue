@@ -2,8 +2,7 @@
   <menu-bar v-if="$q.platform.is.desktop" />
 
   <q-layout reveal elevated container class="layout-container">
-    <header-bar v-if="$q.platform.is.desktop" />
-    <mobile-header-bar v-else />
+    <header-bar />
 
     <q-page-container>
       <q-page class="main-row-panes">

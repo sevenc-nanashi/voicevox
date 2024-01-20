@@ -1,5 +1,8 @@
 <template>
-  <q-header class="q-py-sm">
+  <q-toolbar v-if="isMobile" class="bg-primary text-white">
+    <mobile-menu v-if="isMobile" />
+  </q-toolbar>
+  <q-header v-else class="q-py-sm">
     <q-toolbar>
       <template v-for="button in headerButtons" :key="button.text">
         <q-space v-if="button.text === null" />
@@ -20,6 +23,8 @@
 
 <script setup lang="ts">
 import { computed, ComputedRef } from "vue";
+import { useQuasar } from "quasar";
+import MobileMenu from "./MobileMenu.vue";
 import {
   generateAndConnectAndSaveAudioWithDialog,
   multiGenerateAndSaveAudioWithDialog,
@@ -33,6 +38,9 @@ import {
   ToolbarButtonTagType,
 } from "@/type/preload";
 import { getToolbarButtonName } from "@/store/utility";
+
+const $q = useQuasar();
+const isMobile = computed(() => !$q.platform.is.desktop);
 
 type ButtonContent = {
   text: string;
