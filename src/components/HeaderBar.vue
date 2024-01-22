@@ -1,6 +1,19 @@
 <template>
   <q-toolbar v-if="isMobile" class="bg-primary text-white">
     <mobile-menu v-if="isMobile" />
+    <template v-for="button in headerButtons" :key="button.text">
+      <q-space v-if="button.text === null" />
+      <q-btn
+        v-else
+        unelevated
+        color="toolbar-button"
+        text-color="toolbar-button-display"
+        class="text-no-wrap text-bold q-mr-sm"
+        :disable="button.disable.value"
+        :icon="buttonIcons[button.tag]"
+        @click="button.click"
+      />
+    </template>
   </q-toolbar>
   <q-header v-else class="q-py-sm">
     <q-toolbar>
@@ -46,10 +59,12 @@ type ButtonContent = {
   text: string;
   click(): void;
   disable: ComputedRef<boolean>;
+  tag: ToolbarButtonTagType;
 };
 
 type SpacerContent = {
   text: null;
+  tag: null;
 };
 
 const store = useStore();
@@ -174,7 +189,7 @@ const importTextFile = () => {
 
 const usableButtons: Record<
   ToolbarButtonTagType,
-  Omit<ButtonContent, "text"> | null
+  Omit<ButtonContent, "text" | "tag"> | null
 > = {
   PLAY_CONTINUOUSLY: {
     click: playContinuously,
@@ -222,12 +237,27 @@ const headerButtons = computed(() =>
       return {
         ...buttonContent,
         text: getToolbarButtonName(tag),
+        tag,
       };
     } else {
       return {
         text: null,
+        tag: null,
       };
     }
   })
 );
+
+const buttonIcons: Record<ToolbarButtonTagType, string> = {
+  PLAY_CONTINUOUSLY: "play_arrow",
+  STOP: "stop",
+  EXPORT_AUDIO_SELECTED: "svguse:toolbarIcons.svg#saveVoice",
+  EXPORT_AUDIO_ALL: "save",
+  EXPORT_AUDIO_CONNECT_ALL: "save_alt",
+  SAVE_PROJECT: "save",
+  UNDO: "undo",
+  REDO: "redo",
+  IMPORT_TEXT: "import_export",
+  EMPTY: "",
+};
 </script>
