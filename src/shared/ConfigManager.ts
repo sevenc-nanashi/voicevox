@@ -7,7 +7,8 @@ import {
   configSchema,
   DefaultStyleId,
   defaultHotkeySettings,
-  HotkeySetting,
+  HotkeySettingType,
+  ExperimentalSettingType,
 } from "@/type/preload";
 
 const lockKey = "save";
@@ -65,6 +66,27 @@ const migrations: [string, (store: Record<string, unknown>) => unknown][] = [
       delete config.useGpu;
 
       return config;
+    },
+  ],
+  [
+    ">=0.14.9",
+    (config) => {
+      // マルチエンジン機能を実験的機能から通常機能に
+      const experimentalSetting =
+        config.experimentalSetting as ExperimentalSettingType; // FIXME: parseするかasをやめる
+      if (
+        Object.prototype.hasOwnProperty.call(
+          experimentalSetting,
+          "enableMultiEngine"
+        )
+      ) {
+        const enableMultiEngine: boolean =
+          // @ts-expect-error 削除されたパラメータ。
+          config.experimentalSetting.enableMultiEngine;
+        config.enableMultiEngine = enableMultiEngine;
+        // @ts-expect-error 削除されたパラメータ。
+        delete config.experimentalSetting.enableMultiEngine;
+      }
     },
   ],
   [
@@ -129,6 +151,11 @@ export abstract class BaseConfigManager {
 
   protected abstract getAppVersion(): string;
 
+  public reset() {
+    this.config = this.getDefaultConfig();
+    this._save();
+  }
+
   public async initialize(): Promise<this> {
     if (await this.exists()) {
       const data = await this.load();
@@ -139,10 +166,10 @@ export abstract class BaseConfigManager {
         }
       }
       this.config = this.migrateHotkeySettings(configSchema.parse(data));
+      this._save();
     } else {
-      this.config = this.getDefaultConfig();
+      this.reset();
     }
-    this._save();
     await this.ensureSaved();
 
     return this;
@@ -202,7 +229,7 @@ export abstract class BaseConfigManager {
         const loadedHotkey = loadedHotkeys.find(
           (loadedHotkey) => loadedHotkey.action === defaultHotkey.action
         );
-        const hotkeyWithoutCombination: HotkeySetting = {
+        const hotkeyWithoutCombination: HotkeySettingType = {
           action: defaultHotkey.action,
           combination: COMBINATION_IS_NONE,
         };
@@ -219,7 +246,7 @@ export abstract class BaseConfigManager {
           (hotkey) => hotkey.combination === newHotkey.combination
         );
         if (combinationExists) {
-          const emptyHotkey: HotkeySetting = {
+          const emptyHotkey: HotkeySettingType = {
             action: newHotkey.action,
             combination: "",
           };

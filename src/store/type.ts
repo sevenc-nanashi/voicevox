@@ -21,26 +21,23 @@ import {
   DefaultStyleId,
   AcceptRetrieveTelemetryStatus,
   AcceptTermsStatus,
-  HotkeySetting,
+  HotkeySettingType,
   MoraDataType,
   SavingSetting,
   ThemeConf,
   ThemeSetting,
-  ExperimentalSetting,
-  ToolbarSetting,
+  ExperimentalSettingType,
+  ToolbarSettingType,
   UpdateInfo,
   Preset,
   MorphingInfo,
   ActivePointScrollMode,
   EngineInfo,
-  SplitTextWhenPasteType,
-  SplitterPosition,
   ConfirmedTips,
   EngineDirValidationResult,
-  EditorFontType,
   EngineSettings,
   MorphableTargetInfoTable,
-  EngineSetting,
+  EngineSettingType,
   Voice,
   EngineId,
   VoiceId,
@@ -48,6 +45,7 @@ import {
   StyleId,
   AudioKey,
   PresetKey,
+  RootMiscSettingType,
 } from "@/type/preload";
 import { IEngineConnectorFactory } from "@/infrastructures/EngineConnector";
 import {
@@ -478,9 +476,9 @@ export type AudioCommandStoreTypes = {
     }): Promise<AudioKey>;
   };
 
-  COMMAND_REMOVE_AUDIO_ITEM: {
-    mutation: { audioKey: AudioKey };
-    action(payload: { audioKey: AudioKey }): void;
+  COMMAND_MULTI_REMOVE_AUDIO_ITEM: {
+    mutation: { audioKeys: AudioKey[] };
+    action(payload: { audioKeys: AudioKey[] }): void;
   };
 
   COMMAND_SET_AUDIO_KEYS: {
@@ -502,17 +500,23 @@ export type AudioCommandStoreTypes = {
   };
 
   COMMAND_MULTI_CHANGE_VOICE: {
-    mutation: { audioKeys: AudioKey[]; voice: Voice } & (
-      | { update: "RollbackStyleId" }
-      | {
-          update: "AccentPhrases";
-          accentPhrases: AccentPhrase[];
-        }
-      | {
-          update: "AudioQuery";
-          query: AudioQuery;
-        }
-    );
+    mutation: {
+      voice: Voice;
+      changes: Record<
+        AudioKey,
+        | {
+            update: "AccentPhrases";
+            accentPhrases: AccentPhrase[];
+          }
+        | {
+            update: "AudioQuery";
+            query: AudioQuery;
+          }
+        | {
+            update: "OnlyVoice";
+          }
+      >;
+    };
     action(payload: { audioKeys: AudioKey[]; voice: Voice }): void;
   };
 
@@ -549,8 +553,8 @@ export type AudioCommandStoreTypes = {
     }): void;
   };
 
-  COMMAND_RESET_MORA_PITCH_AND_LENGTH: {
-    action(payload: { audioKey: AudioKey }): void;
+  COMMAND_MULTI_RESET_MORA_PITCH_AND_LENGTH: {
+    action(payload: { audioKeys: AudioKey[] }): void;
   };
 
   COMMAND_RESET_SELECTED_MORA_PITCH_AND_LENGTH: {
@@ -1028,22 +1032,26 @@ export type ProjectStoreTypes = {
 
 export type SettingStoreState = {
   savingSetting: SavingSetting;
-  hotkeySettings: HotkeySetting[];
-  toolbarSetting: ToolbarSetting;
+  hotkeySettings: HotkeySettingType[];
+  toolbarSetting: ToolbarSettingType;
   engineIds: EngineId[];
   engineInfos: Record<EngineId, EngineInfo>;
   engineManifests: Record<EngineId, EngineManifest>;
   themeSetting: ThemeSetting;
-  editorFont: EditorFontType;
-  showTextLineNumber: boolean;
-  showAddAudioItemButton: boolean;
+  acceptTerms: AcceptTermsStatus;
   acceptRetrieveTelemetry: AcceptRetrieveTelemetryStatus;
-  experimentalSetting: ExperimentalSetting;
-  splitTextWhenPaste: SplitTextWhenPasteType;
-  splitterPosition: SplitterPosition;
+  experimentalSetting: ExperimentalSettingType;
   confirmedTips: ConfirmedTips;
   engineSettings: EngineSettings;
-};
+} & RootMiscSettingType;
+
+// keyとvalueの型を連動するようにしたPayloadを作る
+type KeyValuePayload<R, K extends keyof R = keyof R> = K extends keyof R
+  ? {
+      key: K;
+      value: R[K];
+    }
+  : never;
 
 export type SettingStoreTypes = {
   HYDRATE_SETTING_STORE: {
@@ -1056,33 +1064,23 @@ export type SettingStoreTypes = {
   };
 
   SET_HOTKEY_SETTINGS: {
-    mutation: { newHotkey: HotkeySetting };
-    action(payload: { data: HotkeySetting }): void;
+    mutation: { newHotkey: HotkeySettingType };
+    action(payload: { data: HotkeySettingType }): void;
   };
 
   SET_TOOLBAR_SETTING: {
-    mutation: { toolbarSetting: ToolbarSetting };
-    action(payload: { data: ToolbarSetting }): void;
+    mutation: { toolbarSetting: ToolbarSettingType };
+    action(payload: { data: ToolbarSettingType }): void;
+  };
+
+  SET_ROOT_MISC_SETTING: {
+    mutation: KeyValuePayload<RootMiscSettingType>;
+    action(payload: KeyValuePayload<RootMiscSettingType>): void;
   };
 
   SET_THEME_SETTING: {
     mutation: { currentTheme: string; themes?: ThemeConf[] };
     action(payload: { currentTheme: string }): void;
-  };
-
-  SET_EDITOR_FONT: {
-    mutation: { editorFont: EditorFontType };
-    action(payload: { editorFont: EditorFontType }): void;
-  };
-
-  SET_SHOW_TEXT_LINE_NUMBER: {
-    mutation: { showTextLineNumber: boolean };
-    action(payload: { showTextLineNumber: boolean }): void;
-  };
-
-  SET_SHOW_ADD_AUDIO_ITEM_BUTTON: {
-    mutation: { showAddAudioItemButton: boolean };
-    action(payload: { showAddAudioItemButton: boolean }): void;
   };
 
   SET_ACCEPT_RETRIEVE_TELEMETRY: {
@@ -1098,18 +1096,8 @@ export type SettingStoreTypes = {
   };
 
   SET_EXPERIMENTAL_SETTING: {
-    mutation: { experimentalSetting: ExperimentalSetting };
-    action(payload: { experimentalSetting: ExperimentalSetting }): void;
-  };
-
-  SET_SPLIT_TEXT_WHEN_PASTE: {
-    mutation: { splitTextWhenPaste: SplitTextWhenPasteType };
-    action(payload: { splitTextWhenPaste: SplitTextWhenPasteType }): void;
-  };
-
-  SET_SPLITTER_POSITION: {
-    mutation: { splitterPosition: SplitterPosition };
-    action(payload: { splitterPosition: SplitterPosition }): void;
+    mutation: { experimentalSetting: ExperimentalSettingType };
+    action(payload: { experimentalSetting: ExperimentalSettingType }): void;
   };
 
   SET_CONFIRMED_TIPS: {
@@ -1126,9 +1114,9 @@ export type SettingStoreTypes = {
   };
 
   SET_ENGINE_SETTING: {
-    mutation: { engineSetting: EngineSetting; engineId: EngineId };
+    mutation: { engineSetting: EngineSettingType; engineId: EngineId };
     action(payload: {
-      engineSetting: EngineSetting;
+      engineSetting: EngineSettingType;
       engineId: EngineId;
     }): Promise<void>;
   };

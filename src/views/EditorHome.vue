@@ -98,6 +98,7 @@
                         dragEventCounter = 0;
                         loadDraggedFile($event);
                       "
+                      @click="onAudioCellPaneClick"
                     >
                       <draggable
                         ref="cellsRef"
@@ -180,9 +181,11 @@
   />
   <accept-terms-dialog v-model="isAcceptTermsDialogOpenComputed" />
   <update-notification-dialog
+    v-if="newUpdateResult.status == 'updateAvailable'"
     v-model="isUpdateNotificationDialogOpenComputed"
-    :latest-version="latestVersion"
-    :new-update-infos="newUpdateInfos"
+    :latest-version="newUpdateResult.latestVersion"
+    :new-update-infos="newUpdateResult.newUpdateInfos"
+    @skip-this-version-click="handleSkipThisVersionClick"
   />
 </template>
 
@@ -193,6 +196,7 @@ import draggable from "vuedraggable";
 import { QResizeObserver, useQuasar } from "quasar";
 import cloneDeep from "clone-deep";
 import Mousetrap from "mousetrap";
+import semver from "semver";
 import { useStore } from "@/store";
 import HeaderBar from "@/components/HeaderBar.vue";
 import AudioCell from "@/components/AudioCell.vue";
@@ -217,10 +221,10 @@ import { AudioItem, EngineState } from "@/store/type";
 import {
   AudioKey,
   EngineId,
-  HotkeyAction,
+  HotkeyActionType,
   HotkeyReturnType,
   PresetKey,
-  SplitterPosition,
+  SplitterPositionType,
   Voice,
 } from "@/type/preload";
 import { isOnCommandOrCtrlKeyDown } from "@/store/utility";
@@ -244,7 +248,7 @@ const reloadingLocked = computed(() => store.state.reloadingLock);
 const isMultipleEngine = computed(() => store.state.engineIds.length > 1);
 
 // hotkeys handled by Mousetrap
-const hotkeyMap = new Map<HotkeyAction, () => HotkeyReturnType>([
+const hotkeyMap = new Map<HotkeyActionType, () => HotkeyReturnType>([
   [
     "テキスト欄にフォーカスを戻す",
     () => {
@@ -352,20 +356,21 @@ const changeAudioDetailPaneMaxHeight = (height: number) => {
   }
 };
 
-const splitterPosition = computed<SplitterPosition>(
+const splitterPosition = computed<SplitterPositionType>(
   () => store.state.splitterPosition
 );
 
 const updateSplitterPosition = async (
-  propertyName: keyof SplitterPosition,
+  propertyName: keyof SplitterPositionType,
   newValue: number
 ) => {
   const newSplitterPosition = {
     ...splitterPosition.value,
     [propertyName]: newValue,
   };
-  store.dispatch("SET_SPLITTER_POSITION", {
-    splitterPosition: newSplitterPosition,
+  await store.dispatch("SET_ROOT_MISC_SETTING", {
+    key: "splitterPosition",
+    value: newSplitterPosition,
   });
 };
 
@@ -563,11 +568,21 @@ watch(userOrderedCharacterInfos, (userOrderedCharacterInfos) => {
 });
 
 // エディタのアップデート確認
-const { isCheckingFinished, latestVersion, newUpdateInfos } =
-  useFetchNewUpdateInfos();
-const isUpdateAvailable = computed(() => {
-  return isCheckingFinished.value && latestVersion.value !== "";
-});
+if (!import.meta.env.VITE_LATEST_UPDATE_INFOS_URL) {
+  throw new Error(
+    "環境変数VITE_LATEST_UPDATE_INFOS_URLが設定されていません。.envに記載してください。"
+  );
+}
+const newUpdateResult = useFetchNewUpdateInfos(
+  () => window.electron.getAppInfos().then((obj) => obj.version), // アプリのバージョン
+  import.meta.env.VITE_LATEST_UPDATE_INFOS_URL
+);
+const handleSkipThisVersionClick = (version: string) => {
+  store.dispatch("SET_ROOT_MISC_SETTING", {
+    key: "skipUpdateVersion",
+    value: version,
+  });
+};
 
 // ソフトウェアを初期化
 const isCompletedInitialStartup = ref(false);
@@ -644,6 +659,17 @@ onMounted(async () => {
     document.addEventListener("keyup", item);
   });
 
+  // 設定の読み込みを待機する
+  // FIXME: 設定が必要な処理はINIT_VUEXを実行しているApp.vueで行うべき
+  let vuexReadyTimeout = 0;
+  while (!store.state.isVuexReady) {
+    if (vuexReadyTimeout >= 15000) {
+      throw new Error("Vuexが準備できませんでした");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    vuexReadyTimeout += 300;
+  }
+
   isAcceptRetrieveTelemetryDialogOpenComputed.value =
     store.state.acceptRetrieveTelemetry === "Unconfirmed";
 
@@ -651,7 +677,21 @@ onMounted(async () => {
     import.meta.env.MODE !== "development" &&
     store.state.acceptTerms !== "Accepted";
 
-  isUpdateNotificationDialogOpenComputed.value = isUpdateAvailable.value;
+  // アップデート通知ダイアログ
+  if (newUpdateResult.value.status === "updateAvailable") {
+    const skipUpdateVersion = store.state.skipUpdateVersion ?? "0.0.0";
+    if (semver.valid(skipUpdateVersion) == undefined) {
+      // 処理を止めるほどではないので警告だけ
+      store.dispatch(
+        "LOG_WARN",
+        `skipUpdateVersionが不正です: ${skipUpdateVersion}`
+      );
+    } else if (
+      semver.gt(newUpdateResult.value.latestVersion, skipUpdateVersion)
+    ) {
+      isUpdateNotificationDialogOpenComputed.value = true;
+    }
+  }
 
   isCompletedInitialStartup.value = true;
 });
@@ -666,7 +706,7 @@ const allEngineState = computed(() => {
   // 登録されているすべてのエンジンについて状態を確認する
   for (const engineId of store.state.engineIds) {
     const engineState: EngineState | undefined = engineStates[engineId];
-    if (engineState === undefined)
+    if (engineState == undefined)
       throw new Error(`No such engineState set: engineId == ${engineId}`);
 
     // FIXME: 1つでも接続テストに成功していないエンジンがあれば、暫定的に起動中とする
@@ -683,7 +723,7 @@ const allEngineState = computed(() => {
 const isEngineWaitingLong = ref<boolean>(false);
 let engineTimer: number | undefined = undefined;
 watch(allEngineState, (newEngineState) => {
-  if (engineTimer !== undefined) {
+  if (engineTimer != undefined) {
     clearTimeout(engineTimer);
     engineTimer = undefined;
   }
@@ -830,7 +870,12 @@ const isAcceptRetrieveTelemetryDialogOpenComputed = computed({
 
 // アップデート通知
 const isUpdateNotificationDialogOpenComputed = computed({
-  get: () => store.state.isUpdateNotificationDialogOpen,
+  get: () =>
+    !store.state.isAcceptTermsDialogOpen &&
+    !store.state.isCharacterOrderDialogOpen &&
+    !store.state.isDefaultStyleSelectDialogOpen &&
+    !store.state.isAcceptRetrieveTelemetryDialogOpen &&
+    store.state.isUpdateNotificationDialogOpen,
   set: (val) =>
     store.dispatch("SET_DIALOG_OPEN", {
       isUpdateNotificationDialogOpen: val,
@@ -883,6 +928,17 @@ watch(activeAudioKey, (audioKey) => {
 const showAddAudioItemButton = computed(() => {
   return store.state.showAddAudioItemButton;
 });
+
+const onAudioCellPaneClick = () => {
+  if (
+    store.state.experimentalSetting.enableMultiSelect &&
+    activeAudioKey.value
+  ) {
+    store.dispatch("SET_SELECTED_AUDIO_KEYS", {
+      audioKeys: [activeAudioKey.value],
+    });
+  }
+};
 </script>
 
 <style scoped lang="scss">
