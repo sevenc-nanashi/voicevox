@@ -165,6 +165,10 @@ const dictProvider: ApiProvider = ({ corePlugin }) => {
       return;
     },
     async importUserDictWordsImportUserDictPost(req) {
+      if (!req.requestBody) {
+        // 型によるとnullableらしいので、nullチェックを入れる
+        throw new Error("assert: requestBody is not null");
+      }
       const dict = await getUserDictWords();
       for (const [uuid, word] of Object.entries(req.requestBody)) {
         if (dict[uuid] && !req.override) {

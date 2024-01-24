@@ -277,6 +277,56 @@
                 </q-btn-toggle>
               </q-card-actions>
               <q-card-actions class="q-px-md q-py-sm bg-surface">
+                <div>メモ機能</div>
+                <div
+                  aria-label="ONの場合、テキストを [] で囲むことで、テキスト中にメモを書けます。"
+                >
+                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
+                    <q-tooltip
+                      :delay="500"
+                      anchor="center right"
+                      self="center left"
+                      transition-show="jump-right"
+                      transition-hide="jump-left"
+                    >
+                      ONの場合、テキストを []
+                      で囲むことで、テキスト中にメモを書けます。
+                    </q-tooltip>
+                  </q-icon>
+                </div>
+                <q-space />
+                <q-toggle
+                  :model-value="enableMemoNotation"
+                  @update:model-value="changeEnableMemoNotation($event)"
+                >
+                </q-toggle>
+              </q-card-actions>
+              <q-card-actions class="q-px-md q-py-sm bg-surface">
+                <div>ルビ機能</div>
+                <div
+                  aria-label="ONの場合、テキストに {ルビ対象|よみかた} と書くことで、テキストの読み方を変えられます。"
+                >
+                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
+                    <q-tooltip
+                      :delay="500"
+                      anchor="center right"
+                      self="center left"
+                      transition-show="jump-right"
+                      transition-hide="jump-left"
+                    >
+                      ONの場合、テキストに {ルビ対象|よみかた}
+                      と書くことで、テキストの読み方を変えられます。
+                    </q-tooltip>
+                  </q-icon>
+                </div>
+                <q-space />
+                <q-toggle
+                  :model-value="enableRubyNotation"
+                  @update:model-value="changeEnableRubyNotation($event)"
+                >
+                </q-toggle>
+              </q-card-actions>
+              <q-card-actions class="q-px-md q-py-sm bg-surface">
                 <div>非表示にしたヒントを全て再表示</div>
                 <div
                   aria-label="過去に非表示にしたヒントを全て再表示できます。"
@@ -651,10 +701,32 @@
               </q-card-actions>
             </q-card>
 
-            <!-- Experimental Card -->
+            <!-- Advanced Card -->
             <q-card flat class="setting-card">
               <q-card-actions>
                 <h5 class="text-h5">高度な設定</h5>
+              </q-card-actions>
+              <q-card-actions class="q-px-md q-py-none bg-surface">
+                <div>マルチエンジン機能</div>
+                <div>
+                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
+                    <q-tooltip
+                      :delay="500"
+                      anchor="center left"
+                      self="center right"
+                      transition-show="jump-left"
+                      transition-hide="jump-right"
+                    >
+                      複数のVOICEVOX準拠エンジンを利用可能にする
+                    </q-tooltip>
+                  </q-icon>
+                </div>
+                <q-space />
+                <q-toggle
+                  :model-value="enableMultiEngine"
+                  @update:model-value="setEnableMultiEngine($event)"
+                >
+                </q-toggle>
               </q-card-actions>
               <q-card-actions class="q-px-md q-py-none bg-surface">
                 <div>音声をステレオ化</div>
@@ -715,6 +787,8 @@
                 </q-select>
               </q-card-actions>
             </q-card>
+
+            <!-- Experimental Card -->
             <q-card flat class="setting-card">
               <q-card-actions>
                 <div class="text-h5">実験的機能</div>
@@ -832,35 +906,6 @@
                 </q-toggle>
               </q-card-actions>
               <q-card-actions class="q-px-md q-py-none bg-surface">
-                <div>マルチエンジン機能</div>
-                <div
-                  aria-label="マルチエンジン機能を有効にします。複数のVOICEVOX準拠エンジンが利用可能になります。"
-                >
-                  <q-icon name="help_outline" size="sm" class="help-hover-icon">
-                    <q-tooltip
-                      :delay="500"
-                      anchor="center right"
-                      self="center left"
-                      transition-show="jump-right"
-                      transition-hide="jump-left"
-                    >
-                      マルチエンジン機能を有効にします。複数のVOICEVOX準拠エンジンが利用可能になります。
-                    </q-tooltip>
-                  </q-icon>
-                </div>
-                <q-space />
-                <q-toggle
-                  :model-value="experimentalSetting.enableMultiEngine"
-                  @update:model-value="
-                    changeExperimentalSetting('enableMultiEngine', $event)
-                  "
-                >
-                </q-toggle>
-              </q-card-actions>
-              <q-card-actions
-                v-if="!isProduction"
-                class="q-px-md q-py-none bg-surface"
-              >
                 <div>複数選択</div>
                 <div aria-label="複数のテキスト欄を選択できるようにします。">
                   <q-icon name="help_outline" size="sm" class="help-hover-icon">
@@ -952,17 +997,27 @@ import { computed, ref } from "vue";
 import FileNamePatternDialog from "./FileNamePatternDialog.vue";
 import { useStore } from "@/store";
 import {
-  isProduction,
   SavingSetting,
-  EngineSetting,
-  ExperimentalSetting,
+  EngineSettingType,
+  ExperimentalSettingType,
   ActivePointScrollMode,
   SplitTextWhenPasteType,
-  EditorFontType,
+  RootMiscSettingType,
   EngineId,
 } from "@/type/preload";
 
-type SamplingRateOption = EngineSetting["outputSamplingRate"];
+type SamplingRateOption = EngineSettingType["outputSamplingRate"];
+
+// ルート直下にある雑多な設定値を簡単に扱えるようにする
+const useRootMiscSetting = <T extends keyof RootMiscSettingType>(key: T) => {
+  const state = computed(() => store.state[key]);
+  const setter = (value: RootMiscSettingType[T]) => {
+    // Vuexの型処理でUnionが解かれてしまうのを迂回している
+    // FIXME: このワークアラウンドをなくす
+    store.dispatch("SET_ROOT_MISC_SETTING", { key: key as never, value });
+  };
+  return [state, setter] as const;
+};
 
 const props =
   defineProps<{
@@ -1045,17 +1100,13 @@ const availableThemeNameComputed = computed(() => {
     });
 });
 
-const editorFont = computed(() => store.state.editorFont);
-const changeEditorFont = (editorFont: EditorFontType) => {
-  store.dispatch("SET_EDITOR_FONT", { editorFont });
-};
+const [editorFont, changeEditorFont] = useRootMiscSetting("editorFont");
 
-const showTextLineNumber = computed(() => store.state.showTextLineNumber);
-const changeShowTextLineNumber = (showTextLineNumber: boolean) => {
-  store.dispatch("SET_SHOW_TEXT_LINE_NUMBER", {
-    showTextLineNumber,
-  });
-};
+const [enableMultiEngine, setEnableMultiEngine] =
+  useRootMiscSetting("enableMultiEngine");
+
+const [showTextLineNumber, changeShowTextLineNumber] =
+  useRootMiscSetting("showTextLineNumber");
 
 // エディタの＋ボタン表示設定
 const showAddAudioItemButton = computed(
@@ -1064,8 +1115,9 @@ const showAddAudioItemButton = computed(
 const changeShowAddAudioItemButton = async (
   showAddAudioItemButton: boolean
 ) => {
-  store.dispatch("SET_SHOW_ADD_AUDIO_ITEM_BUTTON", {
-    showAddAudioItemButton,
+  store.dispatch("SET_ROOT_MISC_SETTING", {
+    key: "showAddAudioItemButton",
+    value: showAddAudioItemButton,
   });
 
   // 設定をオフにする場合はヒントを表示
@@ -1077,12 +1129,19 @@ const changeShowAddAudioItemButton = async (
     });
     if (result === "CANCEL") {
       // キャンセルしたら設定を元に戻す
-      store.dispatch("SET_SHOW_ADD_AUDIO_ITEM_BUTTON", {
-        showAddAudioItemButton: true,
+      store.dispatch("SET_ROOT_MISC_SETTING", {
+        key: "showAddAudioItemButton",
+        value: true,
       });
     }
   }
 };
+
+const [enableMemoNotation, changeEnableMemoNotation] =
+  useRootMiscSetting("enableMemoNotation");
+
+const [enableRubyNotation, changeEnableRubyNotation] =
+  useRootMiscSetting("enableRubyNotation");
 
 const canSetAudioOutputDevice = computed(() => {
   return !!HTMLAudioElement.prototype.setSinkId;
@@ -1183,7 +1242,7 @@ const changeEnablePreset = (value: boolean) => {
 };
 
 const changeExperimentalSetting = async (
-  key: keyof ExperimentalSetting,
+  key: keyof ExperimentalSettingType,
   data: boolean
 ) => {
   store.dispatch("SET_EXPERIMENTAL_SETTING", {
@@ -1269,12 +1328,8 @@ const openFileExplore = async () => {
   }
 };
 
-const splitTextWhenPaste = computed(() => store.state.splitTextWhenPaste);
-const changeSplitTextWhenPaste = (
-  splitTextWhenPaste: SplitTextWhenPasteType
-) => {
-  store.dispatch("SET_SPLIT_TEXT_WHEN_PASTE", { splitTextWhenPaste });
-};
+const [splitTextWhenPaste, changeSplitTextWhenPaste] =
+  useRootMiscSetting("splitTextWhenPaste");
 
 const showsFilePatternEditDialog = ref(false);
 
