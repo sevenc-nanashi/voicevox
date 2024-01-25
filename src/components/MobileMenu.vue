@@ -12,6 +12,7 @@
       </q-list>
     </q-menu>
   </q-btn>
+  <q-separator vertical spaced inset color="background" />
 </template>
 
 <script setup lang="ts">

@@ -5,14 +5,15 @@
       <q-space v-if="button.text === null" />
       <q-btn
         v-else
-        unelevated
-        color="toolbar-button"
-        text-color="toolbar-button-display"
-        class="text-no-wrap text-bold q-mr-sm"
+        flat
+        round
+        dense
         :disable="button.disable.value"
         :icon="buttonIcons[button.tag]"
         @click="button.click"
-      />
+      >
+        <q-tooltip>{{ button.text }}</q-tooltip>
+      </q-btn>
     </template>
   </q-toolbar>
   <q-header v-else class="q-py-sm">
@@ -249,15 +250,15 @@ const headerButtons = computed(() =>
 );
 
 const buttonIcons: Record<ToolbarButtonTagType, string> = {
-  PLAY_CONTINUOUSLY: "play_arrow",
+  PLAY_CONTINUOUSLY: "playlist_play",
   STOP: "stop",
-  EXPORT_AUDIO_SELECTED: "svguse:toolbarIcons.svg#saveVoice",
-  EXPORT_AUDIO_ALL: "save",
-  EXPORT_AUDIO_CONNECT_ALL: "save_alt",
-  SAVE_PROJECT: "save",
+  EXPORT_AUDIO_SELECTED: "svguse:toolbarIcons.svg#exportSelected",
+  EXPORT_AUDIO_ALL: "svguse:toolbarIcons.svg#exportAll",
+  EXPORT_AUDIO_CONNECT_ALL: "svguse:toolbarIcons.svg#exportConnectAll",
   UNDO: "undo",
   REDO: "redo",
-  IMPORT_TEXT: "import_export",
+  IMPORT_TEXT: "svguse:toolbarIcons.svg#importText",
+  SAVE_PROJECT: "save",
   EMPTY: "",
 };
 </script>

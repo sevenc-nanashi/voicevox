@@ -2,8 +2,7 @@
   <menu-bar v-if="$q.platform.is.desktop" />
 
   <q-layout reveal elevated container class="layout-container">
-    <header-bar />
-
+    <header-bar v-if="$q.platform.is.desktop" />
     <q-page-container>
       <q-page class="main-row-panes">
         <progress-dialog />
@@ -151,6 +150,7 @@
             />
           </template>
         </q-splitter>
+        <header-bar v-if="!$q.platform.is.desktop" />
 
         <q-resize-observer
           ref="resizeObserverRef"
@@ -228,7 +228,6 @@ import {
 } from "@/type/preload";
 import { isOnCommandOrCtrlKeyDown } from "@/store/utility";
 import { parseCombo, setHotkeyFunctions } from "@/store/setting";
-import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 
 const props =
   defineProps<{
@@ -984,6 +983,9 @@ const onAudioCellPaneClick = () => {
   flex-basis: 0;
 
   display: flex;
+  flex-direction: column;
+
+  border-top: 2px solid colors.$splitter;
 
   .q-splitter--horizontal {
     height: calc(100vh - #{vars.$top-bar-height});

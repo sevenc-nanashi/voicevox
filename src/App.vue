@@ -8,11 +8,17 @@
 import { watch, computed } from "vue";
 import { useGtm } from "@gtm-support/vue-gtm";
 import { useRoute } from "vue-router";
+import { useQuasar, Notify } from "quasar";
 import ErrorBoundary from "@/components/ErrorBoundary.vue";
 import { useStore } from "@/store";
 
 const store = useStore();
 store.dispatch("INIT_VUEX");
+
+const $q = useQuasar();
+Notify.setDefaults({
+  position: $q.platform.is.desktop ? "bottom" : "top",
+});
 
 // URLパラメータに従ってマルチエンジンをオフにする
 const route = useRoute();
