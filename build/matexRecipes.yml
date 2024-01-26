@@ -1,6 +1,6 @@
 toolbarIcons.svg:
-  playAll: play_arrow + notes
-  exportSelected: upload + volume_up
-  exportConnectAll: upload + fast_forward
-  exportAll: upload + notes
-  importText: file_download + notes
+  playAll: filled:play_arrow + notes
+  exportSelected: filled:save + volume_up
+  exportConnectAll: filled:save + link
+  exportAll: filled:save + notes
+  importText: filled:upload + outlined:import_contacts
