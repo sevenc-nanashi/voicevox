@@ -150,6 +150,7 @@
             />
           </template>
         </q-splitter>
+        <!-- TODO: Headerではないので、いい感じの名前にする -->
         <header-bar v-if="!$q.platform.is.desktop" />
 
         <q-resize-observer
