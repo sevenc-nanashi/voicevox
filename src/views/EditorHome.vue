@@ -986,7 +986,9 @@ const onAudioCellPaneClick = () => {
   display: flex;
   flex-direction: column;
 
-  border-top: 2px solid colors.$splitter;
+  :not(.desktop) & {
+    border-top: 2px solid colors.$splitter;
+  }
 
   .q-splitter--horizontal {
     height: calc(100vh - #{vars.$top-bar-height});
