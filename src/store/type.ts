@@ -769,6 +769,7 @@ export type SingingStoreState = {
   // NOTE: UIの状態などは分割・統合した方がよさそうだが、ボイス側と混在させないためいったん局所化する
   isShowSinger: boolean;
   showTrackDrawer: boolean;
+  selectedTrackIndex: number;
   sequencerZoomX: number;
   sequencerZoomY: number;
   sequencerSnapType: number;
@@ -883,6 +884,16 @@ export type SingingStoreTypes = {
 
   SET_START_TIME_TO_PHRASE: {
     mutation: { phraseKey: string; startTime: number };
+  };
+
+  SELECT_TRACK: {
+    mutation: { index: number };
+    action(payload: { index: number }): void;
+  };
+
+  CREATE_NEW_TRACK: {
+    mutation: { singer: Singer };
+    action(payload: { singer: Singer }): void;
   };
 
   SELECTED_TRACK: {

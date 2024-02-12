@@ -115,9 +115,6 @@ const phraseDataMap = new Map<string, PhraseData>();
 const phraseAudioBlobCache = new Map<string, Blob>();
 const animationTimer = new AnimationTimer();
 
-// TODO: マルチトラックに対応する
-const selectedTrackIndex = 0;
-
 export const singingStoreState: SingingStoreState = {
   tpqn: DEFAULT_TPQN,
   tempos: [
@@ -143,6 +140,7 @@ export const singingStoreState: SingingStoreState = {
   // NOTE: UIの状態は試行のためsinging.tsに局所化する+Hydrateが必要
   isShowSinger: true,
   showTrackDrawer: false,
+  selectedTrackIndex: 0,
   sequencerZoomX: 0.5,
   sequencerZoomY: 0.75,
   sequencerSnapType: 16,
@@ -184,7 +182,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
 
   SET_SINGER: {
     mutation(state, { singer }: { singer?: Singer }) {
-      state.tracks[selectedTrackIndex].singer = singer;
+      state.tracks[state.selectedTrackIndex].singer = singer;
     },
     async action(
       { state, getters, dispatch, commit },
@@ -235,7 +233,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
       state.tpqn = score.tpqn;
       state.tempos = score.tempos;
       state.timeSignatures = score.timeSignatures;
-      state.tracks[selectedTrackIndex].notes = score.notes;
+      state.tracks[state.selectedTrackIndex].notes = score.notes;
       overlappingNotesDetector.addNotes(score.notes);
       state.overlappingNoteIds =
         overlappingNotesDetector.getOverlappingNoteIds();
@@ -402,7 +400,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
 
   NOTE_IDS: {
     getter(state) {
-      const selectedTrack = state.tracks[selectedTrackIndex];
+      const selectedTrack = state.tracks[state.selectedTrackIndex];
       const noteIds = selectedTrack.notes.map((value) => value.id);
       return new Set(noteIds);
     },
@@ -410,7 +408,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
 
   ADD_NOTES: {
     mutation(state, { notes }: { notes: Note[] }) {
-      const selectedTrack = state.tracks[selectedTrackIndex];
+      const selectedTrack = state.tracks[state.selectedTrackIndex];
       const newNotes = [...selectedTrack.notes, ...notes];
       newNotes.sort((a, b) => a.position - b.position);
       selectedTrack.notes = newNotes;
@@ -438,7 +436,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
       for (const note of notes) {
         notesMap.set(note.id, note);
       }
-      const selectedTrack = state.tracks[selectedTrackIndex];
+      const selectedTrack = state.tracks[state.selectedTrackIndex];
       selectedTrack.notes = selectedTrack.notes
         .map((value) => notesMap.get(value.id) ?? value)
         .sort((a, b) => a.position - b.position);
@@ -463,7 +461,7 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
   REMOVE_NOTES: {
     mutation(state, { noteIds }: { noteIds: string[] }) {
       const noteIdsSet = new Set(noteIds);
-      const selectedTrack = state.tracks[selectedTrackIndex];
+      const selectedTrack = state.tracks[state.selectedTrackIndex];
       const notes = selectedTrack.notes.filter((value) => {
         return noteIdsSet.has(value.id);
       });
@@ -612,9 +610,30 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
     },
   },
 
+  SELECT_TRACK: {
+    mutation(state, { index }: { index: number }) {
+      state.selectedTrackIndex = index;
+    },
+    async action({ commit }, { index }) {
+      commit("SELECT_TRACK", { index });
+    },
+  },
+
+  CREATE_NEW_TRACK: {
+    mutation(state, { singer }: { singer: Singer }) {
+      state.tracks.push({
+        singer,
+        notes: [],
+      });
+    },
+    async action({ commit }, { singer }: { singer: Singer }) {
+      commit("CREATE_NEW_TRACK", { singer });
+    },
+  },
+
   SELECTED_TRACK: {
     getter(state) {
-      return state.tracks[selectedTrackIndex];
+      return state.tracks[state.selectedTrackIndex];
     },
   },
 
