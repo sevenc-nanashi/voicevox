@@ -2,30 +2,7 @@
   <q-toolbar class="sing-toolbar">
     <!-- configs for entire song -->
     <div class="sing-configs">
-      <character-menu-button class="q-mr-sm">
-        <div class="character-menu-toggle">
-          <q-avatar
-            v-if="selectedStyleIconPath"
-            class="character-avatar"
-            size="48px"
-          >
-            <img :src="selectedStyleIconPath" class="character-avatar-icon" />
-          </q-avatar>
-          <div class="character-info">
-            <div class="character-name">
-              {{ selectedCharacterName }}
-            </div>
-            <div class="character-style">
-              {{ selectedCharacterStyleDescription }}
-            </div>
-          </div>
-          <q-icon
-            name="arrow_drop_down"
-            size="sm"
-            class="character-menu-dropdown-icon"
-          />
-        </div>
-      </character-menu-button>
+      <q-btn round flat icon="menu" @click="toggleDrawer" />
       <q-input
         type="number"
         :model-value="bpmInputBuffer"
@@ -126,42 +103,14 @@ import {
   isValidBeats,
   isValidBpm,
 } from "@/sing/domain";
-import CharacterMenuButton from "@/components/Sing/CharacterMenuButton.vue";
-import { getStyleDescription } from "@/sing/viewHelper";
 
 const store = useStore();
 
-const userOrderedCharacterInfos = computed(() =>
-  store.getters.USER_ORDERED_CHARACTER_INFOS("singerLike")
-);
-const selectedCharacterInfo = computed(() => {
-  const singer = store.getters.SELECTED_TRACK.singer;
-  if (!userOrderedCharacterInfos.value || !singer) {
-    return undefined;
-  }
-  return store.getters.CHARACTER_INFO(singer.engineId, singer.styleId);
-});
-const selectedCharacterName = computed(() => {
-  return selectedCharacterInfo.value?.metas.speakerName;
-});
-const selectedCharacterStyleDescription = computed(() => {
-  const style = selectedCharacterInfo.value?.metas.styles.find((style) => {
-    const singer = store.getters.SELECTED_TRACK.singer;
-    return (
-      style.styleId === singer?.styleId && style.engineId === singer?.engineId
-    );
+const toggleDrawer = () => {
+  store.dispatch("SET_SHOW_TRACK_DRAWER", {
+    showTrackDrawer: !store.state.showTrackDrawer,
   });
-  return style != undefined ? getStyleDescription(style) : "";
-});
-const selectedStyleIconPath = computed(() => {
-  const styles = selectedCharacterInfo.value?.metas.styles;
-  const singer = store.getters.SELECTED_TRACK.singer;
-  return styles?.find((style) => {
-    return (
-      style.styleId === singer?.styleId && style.engineId === singer?.engineId
-    );
-  })?.iconPath;
-});
+};
 
 const bpmInputBuffer = ref(0);
 const beatsInputBuffer = ref(0);
@@ -345,46 +294,6 @@ onUnmounted(() => {
   }
 }
 
-.character-menu-toggle {
-  align-items: center;
-  display: flex;
-  padding: 4px 8px 8px 8px;
-  position: relative;
-}
-.character-avatar-icon {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-.character-info {
-  align-items: start;
-  display: flex;
-  flex-direction: column;
-  margin-left: 0.5rem;
-  text-align: left;
-  justify-content: center;
-  white-space: nowrap;
-}
-.character-name {
-  font-size: 0.875rem;
-  font-weight: bold;
-  line-height: 1rem;
-  padding-top: 4px;
-}
-
-.character-style {
-  color: rgba(colors.$display-rgb, 0.73);
-  font-size: 11px;
-  line-height: 1rem;
-  vertical-align: text-bottom;
-}
-
-.character-menu-dropdown-icon {
-  color: rgba(colors.$display-rgb, 0.73);
-  margin-left: 0.25rem;
-}
 .sing-toolbar {
   background: colors.$sing-toolbar;
   align-items: center;
@@ -399,6 +308,7 @@ onUnmounted(() => {
   align-items: center;
   display: flex;
   flex: 1;
+  padding-left: 8px;
 }
 
 .sing-player {

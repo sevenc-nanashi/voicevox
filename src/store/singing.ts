@@ -142,6 +142,7 @@ export const singingStoreState: SingingStoreState = {
   phrases: new Map(),
   // NOTE: UIの状態は試行のためsinging.tsに局所化する+Hydrateが必要
   isShowSinger: true,
+  showTrackDrawer: false,
   sequencerZoomX: 0.5,
   sequencerZoomY: 0.75,
   sequencerSnapType: 16,
@@ -166,6 +167,17 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
     async action({ commit }, { isShowSinger }) {
       commit("SET_SHOW_SINGER", {
         isShowSinger,
+      });
+    },
+  },
+
+  SET_SHOW_TRACK_DRAWER: {
+    mutation(state, { showTrackDrawer }: { showTrackDrawer: boolean }) {
+      state.showTrackDrawer = showTrackDrawer;
+    },
+    async action({ commit }, { showTrackDrawer }) {
+      commit("SET_SHOW_TRACK_DRAWER", {
+        showTrackDrawer,
       });
     },
   },

@@ -173,6 +173,7 @@ describe("store/vuex.js test", () => {
         ],
         phrases: new Map(),
         isShowSinger: true,
+        showTrackDrawer: false,
         sequencerZoomX: 1,
         sequencerZoomY: 1,
         sequencerSnapType: 16,

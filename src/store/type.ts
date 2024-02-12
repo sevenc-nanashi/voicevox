@@ -768,6 +768,7 @@ export type SingingStoreState = {
   phrases: Map<string, Phrase>;
   // NOTE: UIの状態などは分割・統合した方がよさそうだが、ボイス側と混在させないためいったん局所化する
   isShowSinger: boolean;
+  showTrackDrawer: boolean;
   sequencerZoomX: number;
   sequencerZoomY: number;
   sequencerSnapType: number;
@@ -789,6 +790,11 @@ export type SingingStoreTypes = {
   SET_SHOW_SINGER: {
     mutation: { isShowSinger: boolean };
     action(payload: { isShowSinger: boolean }): void;
+  };
+
+  SET_SHOW_TRACK_DRAWER: {
+    mutation: { showTrackDrawer: boolean };
+    action(payload: { showTrackDrawer: boolean }): void;
   };
 
   SET_SINGER: {

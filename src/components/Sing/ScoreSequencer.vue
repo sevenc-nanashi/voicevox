@@ -1,5 +1,11 @@
 <template>
-  <div class="score-sequencer">
+  <div
+    class="score-sequencer"
+    :class="{ 'with-track-drawer': showTrackDrawer }"
+  >
+    <!-- トラック選択 -->
+    <track-drawer v-if="showTrackDrawer" class="sequencer-drawer" />
+
     <!-- 左上の角 -->
     <div class="sequencer-corner"></div>
     <!-- ルーラー -->
@@ -217,6 +223,7 @@ import SequencerKeys from "@/components/Sing/SequencerKeys.vue";
 import SequencerNote from "@/components/Sing/SequencerNote.vue";
 import SequencerPhraseIndicator from "@/components/Sing/SequencerPhraseIndicator.vue";
 import CharacterPortrait from "@/components/Sing/CharacterPortrait.vue";
+import TrackDrawer from "@/components/Sing/TrackDrawer.vue";
 
 type PreviewMode = "ADD" | "MOVE" | "RESIZE_RIGHT" | "RESIZE_LEFT";
 
@@ -243,6 +250,7 @@ const selectedNotes = computed(() => {
   const selectedNoteIds = state.selectedNoteIds;
   return notes.value.filter((value) => selectedNoteIds.has(value.id));
 });
+
 // ズーム状態
 const zoomX = computed(() => state.sequencerZoomX);
 const zoomY = computed(() => state.sequencerZoomY);
@@ -250,6 +258,9 @@ const zoomY = computed(() => state.sequencerZoomY);
 const snapTicks = computed(() => {
   return getNoteDuration(state.sequencerSnapType, tpqn.value);
 });
+
+const showTrackDrawer = computed(() => store.state.showTrackDrawer);
+
 // シーケンサグリッド
 const gridCellTicks = snapTicks; // ひとまずスナップ幅＝グリッドセル幅
 const gridCellWidth = computed(() => {
@@ -1034,12 +1045,17 @@ onDeactivated(() => {
   backface-visibility: hidden;
   display: grid;
   grid-template-rows: 30px 1fr;
-  grid-template-columns: 48px 1fr;
+  grid-template-columns: auto 48px 1fr;
+}
+
+.sequencer-drawer {
+  grid-row: 1 / 3;
+  grid-column: 1;
 }
 
 .sequencer-corner {
   grid-row: 1;
-  grid-column: 1;
+  grid-column: 2;
   background: colors.$background;
   border-top: 1px solid colors.$sequencer-sub-divider;
   border-bottom: 1px solid colors.$sequencer-sub-divider;
@@ -1047,17 +1063,17 @@ onDeactivated(() => {
 
 .sequencer-ruler {
   grid-row: 1;
-  grid-column: 2;
+  grid-column: 3;
 }
 
 .sequencer-keys {
   grid-row: 2;
-  grid-column: 1;
+  grid-column: 2;
 }
 
 .sequencer-body {
   grid-row: 2;
-  grid-column: 2;
+  grid-column: 3;
   backface-visibility: hidden;
   overflow: auto;
   position: relative;
@@ -1112,7 +1128,7 @@ onDeactivated(() => {
 
 .sequencer-overlay {
   grid-row: 2;
-  grid-column: 2;
+  grid-column: 3;
   position: relative;
   overflow: hidden;
   pointer-events: none;
