@@ -1,25 +1,21 @@
-import {
-  createRouter,
-  createWebHashHistory,
-  createWebHistory,
-  RouteRecordRaw,
-} from "vue-router";
-import EditorHome from "@/views/EditorHome.vue";
-import { isBrowser } from "@/type/preload";
+import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
+import SingEditor from "@/components/Sing/SingEditor.vue";
+import TalkEditor from "@/components/Talk/TalkEditor.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/home",
-    component: EditorHome,
-    props: (route) => ({ projectFilePath: route.query["projectFilePath"] }),
+    path: "/talk",
+    component: TalkEditor,
     alias: "/",
+  },
+  {
+    path: "/song",
+    component: SingEditor,
   },
 ];
 
 const router = createRouter({
-  history: isBrowser
-    ? createWebHistory(import.meta.env.BASE_URL)
-    : createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
 

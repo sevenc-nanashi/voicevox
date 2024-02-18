@@ -1,7 +1,14 @@
 import path from "path";
 import { Platform } from "quasar";
 import { diffArrays } from "diff";
-import { ToolbarButtonTagType, isMac } from "@/type/preload";
+import sha256 from "crypto-js/sha256";
+import {
+  CharacterInfo,
+  StyleInfo,
+  StyleType,
+  ToolbarButtonTagType,
+  isMac,
+} from "@/type/preload";
 import { AccentPhrase, Mora } from "@/openapi";
 
 export const DEFAULT_STYLE_NAME = "ノーマル";
@@ -145,7 +152,7 @@ function replaceTag(
 ): string {
   const result = template.replace(/\$(.+?)\$/g, (match, p1) => {
     const replaceTagId = replaceTagStringToTagId[p1];
-    if (replaceTagId === undefined) {
+    if (replaceTagId == undefined) {
       return match;
     }
     return replacer[replaceTagId] ?? "";
@@ -398,6 +405,17 @@ export function buildAudioFileNameFromRawData(
   });
 }
 
+/**
+ * オブジェクトごとに一意なキーを作る。
+ * 一時的な利用のみを想定しているため、保存に利用すべきではない。
+ */
+export async function generateTempUniqueId(serializable: unknown) {
+  // Capacitorのサーバー接続モードでは、Insecure contextとして扱われるためcrypto.subtleが使えない。
+  // そのため、crypto-jsでハッシュ化処理を行う。
+  const digest = sha256(JSON.stringify(serializable)).toString();
+  return digest;
+}
+
 export const getToolbarButtonName = (tag: ToolbarButtonTagType): string => {
   const tag2NameObj: Record<ToolbarButtonTagType, string> = {
     PLAY_CONTINUOUSLY: "連続再生",
@@ -478,3 +496,47 @@ export const isOnCommandOrCtrlKeyDown = (event: {
   metaKey: boolean;
   ctrlKey: boolean;
 }) => (isMac && event.metaKey) || (!isMac && event.ctrlKey);
+
+/**
+ * スタイルがシングエディタで利用可能なスタイルかどうかを判定します。
+ */
+export const isSingingStyle = (styleInfo: StyleInfo) => {
+  return (
+    styleInfo.styleType === "frame_decode" ||
+    styleInfo.styleType === "sing" ||
+    styleInfo.styleType === "singing_teacher"
+  );
+};
+
+/**
+ * CharacterInfoの配列を、指定されたスタイルタイプでフィルタリングします。
+ * singerLikeはソング系スタイルのみを残します。
+ * talkはソング系スタイルをすべて除外します。
+ * FIXME: 上記以外のフィルタリング機能はテストでしか使っていないので、しばらくそのままなら削除する
+ */
+export const filterCharacterInfosByStyleType = (
+  characterInfos: CharacterInfo[],
+  styleType: StyleType | "singerLike"
+): CharacterInfo[] => {
+  const withStylesFiltered: CharacterInfo[] = characterInfos.map(
+    (characterInfo) => {
+      const styles = characterInfo.metas.styles.filter((styleInfo) => {
+        if (styleType === "singerLike") {
+          return isSingingStyle(styleInfo);
+        }
+        // 過去のエンジンにはstyleTypeが存在しないので、「singerLike以外」をtalkとして扱っている。
+        if (styleType === "talk") {
+          return !isSingingStyle(styleInfo);
+        }
+        return styleInfo.styleType === styleType;
+      });
+      return { ...characterInfo, metas: { ...characterInfo.metas, styles } };
+    }
+  );
+
+  const withoutEmptyStyles = withStylesFiltered.filter(
+    (characterInfo) => characterInfo.metas.styles.length > 0
+  );
+
+  return withoutEmptyStyles;
+};

@@ -18,7 +18,7 @@ import {
   showLoadingScreen,
   showNotifyAndNotShowAgainButton,
   showWarningDialog,
-} from "@/components/Dialog";
+} from "@/components/Dialog/Dialog";
 
 export function createUILockAction<S, A extends ActionsBase, K extends keyof A>(
   action: (
@@ -269,6 +269,22 @@ export const uiStore = createPartialStore<UiStoreTypes>({
     },
   },
 
+  // Vuexが準備できるまで待つ
+  WAIT_VUEX_READY: {
+    async action({ state }, { timeout }) {
+      if (state.isVuexReady) return;
+
+      let vuexReadyTimeout = 0;
+      while (!state.isVuexReady) {
+        if (vuexReadyTimeout >= timeout) {
+          throw new Error("Vuexが準備できませんでした");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        vuexReadyTimeout += 300;
+      }
+    },
+  },
+
   SET_INHERIT_AUDIOINFO: {
     mutation(state, { inheritAudioInfo }: { inheritAudioInfo: boolean }) {
       state.inheritAudioInfo = inheritAudioInfo;
@@ -377,12 +393,16 @@ export const uiStore = createPartialStore<UiStoreTypes>({
      * 保存がキャンセルされた場合は何もしない。
      */
     async action({ dispatch, getters }, obj) {
+      await dispatch("SING_STOP_AUDIO"); // FIXME: ON_BEFORE_QUITTINGなどを作成して移動すべき
+
       if (getters.IS_EDITED) {
         const result = await dispatch("SAVE_OR_DISCARD_PROJECT_FILE", {});
         if (result == "canceled") {
           return;
         }
       }
+
+      await dispatch("STOP_RENDERING"); // FIXME: FINISH_VUEXなどを作成して移動すべき
 
       if (obj.closeOrReload == "close") {
         window.electron.closeWindow();

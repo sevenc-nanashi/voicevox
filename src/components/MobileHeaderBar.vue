@@ -30,8 +30,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { MenuItemData } from "./MenuBar.vue";
-import MenuItem from "./MenuItem.vue";
+import { MenuItemData } from "./Menu/type";
+import MenuItem from "./Menu/MenuItem.vue";
 import { useStore } from "@/store";
 const store = useStore();
 

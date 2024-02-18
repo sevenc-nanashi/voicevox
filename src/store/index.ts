@@ -18,6 +18,7 @@ import {
   getCharacterInfo,
 } from "./audio";
 import { audioPlayerStoreState, audioPlayerStore } from "./audioPlayer";
+import { singingStoreState, singingStore } from "./singing";
 import { projectStoreState, projectStore } from "./project";
 import { uiStoreState, uiStore } from "./ui";
 import { settingStoreState, settingStore } from "./setting";
@@ -194,7 +195,7 @@ export const indexStore = createPartialStore<IndexStoreTypes>({
           const defaultStyleId = defaultStyleIds.find(
             (styleId) => styleId.speakerUuid == speakerUuid
           );
-          if (defaultStyleId === undefined) {
+          if (defaultStyleId == undefined) {
             return true;
           }
 
@@ -244,7 +245,7 @@ export const indexStore = createPartialStore<IndexStoreTypes>({
             audioItem.voice.styleId
           );
 
-          if (characterInfo === undefined)
+          if (characterInfo == undefined)
             throw new Error("assert characterInfo !== undefined");
 
           const speakerUuid = characterInfo.metas.speakerUuid;
@@ -351,6 +352,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...uiStoreState,
     ...audioStoreState,
     ...audioPlayerStoreState,
+    ...singingStoreState,
     ...commandStoreState,
     ...engineStoreState,
     ...projectStoreState,
@@ -360,6 +362,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...presetStoreState,
     ...dictionaryStoreState,
     ...proxyStoreState,
+    ...singingStoreState,
   },
 
   getters: {
@@ -375,6 +378,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...audioCommandStore.getters,
     ...indexStore.getters,
     ...proxyStore.getters,
+    ...singingStore.getters,
   },
 
   mutations: {
@@ -390,6 +394,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...dictionaryStore.mutations,
     ...indexStore.mutations,
     ...proxyStore.mutations,
+    ...singingStore.mutations,
   },
 
   actions: {
@@ -405,6 +410,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...dictionaryStore.actions,
     ...indexStore.actions,
     ...proxyStore.actions,
+    ...singingStore.actions,
   },
   strict: process.env.NODE_ENV !== "production",
 });

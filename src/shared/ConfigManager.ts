@@ -92,6 +92,7 @@ const migrations: [string, (store: Record<string, unknown>) => unknown][] = [
   [
     ">=0.15",
     (config) => {
+      // 一つだけ書き出し → 選択音声を書き出し
       const hotkeySettings =
         config.hotkeySettings as ConfigType["hotkeySettings"];
       const newHotkeySettings: ConfigType["hotkeySettings"] =
@@ -187,8 +188,8 @@ export abstract class BaseConfigManager {
   }
 
   private _save() {
-    this.lock.acquire(lockKey, () => {
-      this.save({
+    this.lock.acquire(lockKey, async () => {
+      await this.save({
         ...configSchema.parse({
           ...this.config,
         }),

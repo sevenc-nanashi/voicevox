@@ -27,6 +27,10 @@ function checkIsMac(): boolean {
 }
 export const isMac = checkIsMac();
 
+const urlStringSchema = z.string().url().brand("URL");
+export type UrlString = z.infer<typeof urlStringSchema>;
+export const UrlString = (url: string): UrlString => urlStringSchema.parse(url);
+
 export const engineIdSchema = z.string().brand<"EngineId">();
 export type EngineId = z.infer<typeof engineIdSchema>;
 export const EngineId = (id: string): EngineId => engineIdSchema.parse(id);
@@ -195,7 +199,11 @@ export interface Sandbox {
     cancelId?: number;
     defaultId?: number;
   }): Promise<number>;
-  showImportFileDialog(obj: { title: string }): Promise<string | undefined>;
+  showImportFileDialog(obj: {
+    title: string;
+    name?: string;
+    extensions?: string[];
+  }): Promise<string | undefined>;
   writeFile(obj: {
     filePath: string;
     buffer: ArrayBuffer;
@@ -245,9 +253,12 @@ export type AppInfos = {
   version: string;
 };
 
+export type StyleType = "talk" | "singing_teacher" | "frame_decode" | "sing";
+
 export type StyleInfo = {
   styleName?: string;
   styleId: StyleId;
+  styleType?: StyleType;
   iconPath: string;
   portraitPath: string | undefined;
   engineId: EngineId;

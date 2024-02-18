@@ -7,11 +7,7 @@ import {
 
 const queryProvider: ApiProvider = ({ corePlugin }) => {
   return {
-    async audioQueryAudioQueryPost({ text, speaker, styleId }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
+    async audioQueryAudioQueryPost({ text, speaker: speakerId }) {
       const rawQuery = await corePlugin
         .audioQuery({ text, speakerId })
         .then((res) => JSON.parse(res.value));
@@ -29,11 +25,7 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
       });
     },
 
-    async accentPhrasesAccentPhrasesPost({ speaker, text, styleId }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
+    async accentPhrasesAccentPhrasesPost({ text, speaker: speakerId }) {
       const rawAccentPhrases = await corePlugin
         .accentPhrases({ text, speakerId })
         .then((res) => JSON.parse(res.value));
@@ -42,13 +34,8 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async moraLengthMoraLengthPost({
       accentPhrase: accentPhrases,
-      speaker,
-      styleId,
+      speaker: speakerId,
     }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
       const rawMoraLength = await corePlugin
         .phonemeLength({
           accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
@@ -60,13 +47,8 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async moraPitchMoraPitchPost({
       accentPhrase: accentPhrases,
-      speaker,
-      styleId,
+      speaker: speakerId,
     }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
       const rawMoraPitch = await corePlugin
         .moraPitch({
           accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
@@ -78,13 +60,8 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async moraDataMoraDataPost({
       accentPhrase: accentPhrases,
-      speaker,
-      styleId,
+      speaker: speakerId,
     }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
       const rawMoraData = await corePlugin
         .moraData({
           accentPhrases: JSON.stringify(accentPhrases.map(AccentPhraseToJSON)),
@@ -96,14 +73,9 @@ const queryProvider: ApiProvider = ({ corePlugin }) => {
 
     async synthesisSynthesisPost({
       audioQuery,
-      speaker,
-      styleId,
+      speaker: speakerId,
       enableInterrogativeUpspeak,
     }) {
-      const speakerId = speaker ?? styleId;
-      if (!speakerId) {
-        throw new Error("speakerIdが指定されていません");
-      }
       const b64Audio = await corePlugin
         .synthesis({
           audioQuery: JSON.stringify({
