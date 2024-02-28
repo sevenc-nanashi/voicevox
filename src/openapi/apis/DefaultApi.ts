@@ -20,11 +20,13 @@ import type {
   CorsPolicyMode,
   DownloadableLibraryInfo,
   EngineManifest,
+  FrameAudioQuery,
   HTTPValidationError,
   InstalledLibraryInfo,
   MorphableTargetInfo,
   ParseKanaBadRequest,
   Preset,
+  Score,
   Speaker,
   SpeakerInfo,
   SupportedDevicesInfo,
@@ -42,6 +44,8 @@ import {
     DownloadableLibraryInfoToJSON,
     EngineManifestFromJSON,
     EngineManifestToJSON,
+    FrameAudioQueryFromJSON,
+    FrameAudioQueryToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     InstalledLibraryInfoFromJSON,
@@ -52,6 +56,8 @@ import {
     ParseKanaBadRequestToJSON,
     PresetFromJSON,
     PresetToJSON,
+    ScoreFromJSON,
+    ScoreToJSON,
     SpeakerFromJSON,
     SpeakerToJSON,
     SpeakerInfoFromJSON,
@@ -66,8 +72,7 @@ import {
 
 export interface AccentPhrasesAccentPhrasesPostRequest {
     text: string;
-    styleId?: number;
-    speaker?: number;
+    speaker: number;
     isKana?: boolean;
     coreVersion?: string;
 }
@@ -86,8 +91,7 @@ export interface AddUserDictWordUserDictWordPostRequest {
 
 export interface AudioQueryAudioQueryPostRequest {
     text: string;
-    styleId?: number;
-    speaker?: number;
+    speaker: number;
     coreVersion?: string;
 }
 
@@ -98,9 +102,8 @@ export interface AudioQueryFromPresetAudioQueryFromPresetPostRequest {
 }
 
 export interface CancellableSynthesisCancellableSynthesisPostRequest {
+    speaker: number;
     audioQuery: AudioQuery;
-    styleId?: number;
-    speaker?: number;
     coreVersion?: string;
 }
 
@@ -116,6 +119,12 @@ export interface DeleteUserDictWordUserDictWordWordUuidDeleteRequest {
     wordUuid: string;
 }
 
+export interface FrameSynthesisFrameSynthesisPostRequest {
+    speaker: number;
+    frameAudioQuery: FrameAudioQuery;
+    coreVersion?: string;
+}
+
 export interface ImportUserDictWordsImportUserDictPostRequest {
     override: boolean;
     requestBody: { [key: string]: UserDictWord; } | null;
@@ -123,12 +132,6 @@ export interface ImportUserDictWordsImportUserDictPostRequest {
 
 export interface InitializeSpeakerInitializeSpeakerPostRequest {
     speaker: number;
-    skipReinit?: boolean;
-    coreVersion?: string;
-}
-
-export interface InitializeStyleIdInitializeStyleIdPostRequest {
-    styleId: number;
     skipReinit?: boolean;
     coreVersion?: string;
 }
@@ -142,29 +145,21 @@ export interface IsInitializedSpeakerIsInitializedSpeakerGetRequest {
     coreVersion?: string;
 }
 
-export interface IsInitializedStyleIdIsInitializedStyleIdGetRequest {
-    styleId: number;
-    coreVersion?: string;
-}
-
 export interface MoraDataMoraDataPostRequest {
+    speaker: number;
     accentPhrase: Array<AccentPhrase>;
-    styleId?: number;
-    speaker?: number;
     coreVersion?: string;
 }
 
 export interface MoraLengthMoraLengthPostRequest {
+    speaker: number;
     accentPhrase: Array<AccentPhrase>;
-    styleId?: number;
-    speaker?: number;
     coreVersion?: string;
 }
 
 export interface MoraPitchMoraPitchPostRequest {
+    speaker: number;
     accentPhrase: Array<AccentPhrase>;
-    styleId?: number;
-    speaker?: number;
     coreVersion?: string;
 }
 
@@ -174,9 +169,8 @@ export interface MorphableTargetsMorphableTargetsPostRequest {
 }
 
 export interface MultiSynthesisMultiSynthesisPostRequest {
+    speaker: number;
     audioQuery: Array<AudioQuery>;
-    styleId?: number;
-    speaker?: number;
     coreVersion?: string;
 }
 
@@ -194,6 +188,21 @@ export interface SettingPostSettingPostRequest {
     allowOrigin?: string;
 }
 
+export interface SingFrameAudioQuerySingFrameAudioQueryPostRequest {
+    speaker: number;
+    score: Score;
+    coreVersion?: string;
+}
+
+export interface SingerInfoSingerInfoGetRequest {
+    speakerUuid: string;
+    coreVersion?: string;
+}
+
+export interface SingersSingersGetRequest {
+    coreVersion?: string;
+}
+
 export interface SpeakerInfoSpeakerInfoGetRequest {
     speakerUuid: string;
     coreVersion?: string;
@@ -208,19 +217,16 @@ export interface SupportedDevicesSupportedDevicesGetRequest {
 }
 
 export interface SynthesisMorphingSynthesisMorphingPostRequest {
+    baseSpeaker: number;
+    targetSpeaker: number;
     morphRate: number;
     audioQuery: AudioQuery;
-    baseStyleId?: number;
-    baseSpeaker?: number;
-    targetStyleId?: number;
-    targetSpeaker?: number;
     coreVersion?: string;
 }
 
 export interface SynthesisSynthesisPostRequest {
+    speaker: number;
     audioQuery: AudioQuery;
-    styleId?: number;
-    speaker?: number;
     enableInterrogativeUpspeak?: boolean;
     coreVersion?: string;
 }
@@ -248,8 +254,7 @@ export interface DefaultApiInterface {
      * テキストからアクセント句を得ます。 is_kanaが`true`のとき、テキストは次のAquesTalk 風記法で解釈されます。デフォルトは`false`です。 * 全てのカナはカタカナで記述される * アクセント句は`/`または`、`で区切る。`、`で区切った場合に限り無音区間が挿入される。 * カナの手前に`_`を入れるとそのカナは無声化される * アクセント位置を`\'`で指定する。全てのアクセント句にはアクセント位置を1つ指定する必要がある。 * アクセント句末に`？`(全角)を入れることにより疑問文の発音ができる。
      * @summary テキストからアクセント句を得る
      * @param {string} text 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
+     * @param {number} speaker 
      * @param {boolean} [isKana] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
@@ -304,8 +309,7 @@ export interface DefaultApiInterface {
      * 音声合成用のクエリの初期値を得ます。ここで得られたクエリはそのまま音声合成に利用できます。各値の意味は`Schemas`を参照してください。
      * @summary 音声合成用のクエリを作成する
      * @param {string} text 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
+     * @param {number} speaker 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -340,9 +344,8 @@ export interface DefaultApiInterface {
     /**
      * 
      * @summary 音声合成する（キャンセル可能）
+     * @param {number} speaker 
      * @param {AudioQuery} audioQuery 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -447,6 +450,24 @@ export interface DefaultApiInterface {
     engineManifestEngineManifestGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EngineManifest>;
 
     /**
+     * 歌唱音声合成を行います。
+     * @summary Frame Synthesis
+     * @param {number} speaker 
+     * @param {FrameAudioQuery} frameAudioQuery 
+     * @param {string} [coreVersion] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApiInterface
+     */
+    frameSynthesisFrameSynthesisPostRaw(requestParameters: FrameSynthesisFrameSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>>;
+
+    /**
+     * 歌唱音声合成を行います。
+     * Frame Synthesis
+     */
+    frameSynthesisFrameSynthesisPost(requestParameters: FrameSynthesisFrameSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob>;
+
+    /**
      * エンジンが保持しているプリセットの設定を返します  Returns ------- presets: list[Preset]     プリセットのリスト
      * @summary Get Presets
      * @param {*} [options] Override http request option.
@@ -494,42 +515,22 @@ export interface DefaultApiInterface {
     importUserDictWordsImportUserDictPost(requestParameters: ImportUserDictWordsImportUserDictPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
-     * こちらのAPIは非推奨です。`initialize_style_id`を利用してください。
+     * 指定されたスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
      * @summary Initialize Speaker
      * @param {number} speaker 
-     * @param {boolean} [skipReinit] 既に初期化済みの話者の再初期化をスキップするかどうか
-     * @param {string} [coreVersion] 
-     * @param {*} [options] Override http request option.
-     * @deprecated
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    initializeSpeakerInitializeSpeakerPostRaw(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
-
-    /**
-     * こちらのAPIは非推奨です。`initialize_style_id`を利用してください。
-     * Initialize Speaker
-     * @deprecated
-     */
-    initializeSpeakerInitializeSpeakerPost(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
-
-    /**
-     * 指定されたstyle_idのスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
-     * @summary Initialize Style Id
-     * @param {number} styleId 
      * @param {boolean} [skipReinit] 既に初期化済みのスタイルの再初期化をスキップするかどうか
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApiInterface
      */
-    initializeStyleIdInitializeStyleIdPostRaw(requestParameters: InitializeStyleIdInitializeStyleIdPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
+    initializeSpeakerInitializeSpeakerPostRaw(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>>;
 
     /**
-     * 指定されたstyle_idのスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
-     * Initialize Style Id
+     * 指定されたスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
+     * Initialize Speaker
      */
-    initializeStyleIdInitializeStyleIdPost(requestParameters: InitializeStyleIdInitializeStyleIdPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
+    initializeSpeakerInitializeSpeakerPost(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
      * 音声ライブラリをインストールします。 音声ライブラリのZIPファイルをリクエストボディとして送信してください。  Parameters ---------- library_uuid: str     音声ライブラリのID
@@ -563,47 +564,27 @@ export interface DefaultApiInterface {
     installedLibrariesInstalledLibrariesGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: InstalledLibraryInfo; }>;
 
     /**
-     * こちらのAPIは非推奨です。`is_initialize_style_id`を利用してください。
+     * 指定されたスタイルが初期化されているかどうかを返します。
      * @summary Is Initialized Speaker
      * @param {number} speaker 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
-     * @deprecated
      * @throws {RequiredError}
      * @memberof DefaultApiInterface
      */
     isInitializedSpeakerIsInitializedSpeakerGetRaw(requestParameters: IsInitializedSpeakerIsInitializedSpeakerGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>>;
 
     /**
-     * こちらのAPIは非推奨です。`is_initialize_style_id`を利用してください。
+     * 指定されたスタイルが初期化されているかどうかを返します。
      * Is Initialized Speaker
-     * @deprecated
      */
     isInitializedSpeakerIsInitializedSpeakerGet(requestParameters: IsInitializedSpeakerIsInitializedSpeakerGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean>;
 
     /**
-     * 指定されたstyle_idのスタイルが初期化されているかどうかを返します。
-     * @summary Is Initialized Style Id
-     * @param {number} styleId 
-     * @param {string} [coreVersion] 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApiInterface
-     */
-    isInitializedStyleIdIsInitializedStyleIdGetRaw(requestParameters: IsInitializedStyleIdIsInitializedStyleIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>>;
-
-    /**
-     * 指定されたstyle_idのスタイルが初期化されているかどうかを返します。
-     * Is Initialized Style Id
-     */
-    isInitializedStyleIdIsInitializedStyleIdGet(requestParameters: IsInitializedStyleIdIsInitializedStyleIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean>;
-
-    /**
      * 
      * @summary アクセント句から音高・音素長を得る
+     * @param {number} speaker 
      * @param {Array<AccentPhrase>} accentPhrase 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -619,9 +600,8 @@ export interface DefaultApiInterface {
     /**
      * 
      * @summary アクセント句から音素長を得る
+     * @param {number} speaker 
      * @param {Array<AccentPhrase>} accentPhrase 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -637,9 +617,8 @@ export interface DefaultApiInterface {
     /**
      * 
      * @summary アクセント句から音高を得る
+     * @param {number} speaker 
      * @param {Array<AccentPhrase>} accentPhrase 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -672,9 +651,8 @@ export interface DefaultApiInterface {
     /**
      * 
      * @summary 複数まとめて音声合成する
+     * @param {number} speaker 
      * @param {Array<AudioQuery>} audioQuery 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -741,7 +719,57 @@ export interface DefaultApiInterface {
     settingPostSettingPost(requestParameters: SettingPostSettingPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void>;
 
     /**
-     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。  Returns ------- ret_data: SpeakerInfo
+     * 歌唱音声合成用のクエリの初期値を得ます。ここで得られたクエリはそのまま歌唱音声合成に利用できます。各値の意味は`Schemas`を参照してください。
+     * @summary 歌唱音声合成用のクエリを作成する
+     * @param {number} speaker 
+     * @param {Score} score 
+     * @param {string} [coreVersion] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApiInterface
+     */
+    singFrameAudioQuerySingFrameAudioQueryPostRaw(requestParameters: SingFrameAudioQuerySingFrameAudioQueryPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FrameAudioQuery>>;
+
+    /**
+     * 歌唱音声合成用のクエリの初期値を得ます。ここで得られたクエリはそのまま歌唱音声合成に利用できます。各値の意味は`Schemas`を参照してください。
+     * 歌唱音声合成用のクエリを作成する
+     */
+    singFrameAudioQuerySingFrameAudioQueryPost(requestParameters: SingFrameAudioQuerySingFrameAudioQueryPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FrameAudioQuery>;
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
+     * @summary Singer Info
+     * @param {string} speakerUuid 
+     * @param {string} [coreVersion] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApiInterface
+     */
+    singerInfoSingerInfoGetRaw(requestParameters: SingerInfoSingerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpeakerInfo>>;
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
+     * Singer Info
+     */
+    singerInfoSingerInfoGet(requestParameters: SingerInfoSingerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpeakerInfo>;
+
+    /**
+     * 
+     * @summary Singers
+     * @param {string} [coreVersion] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApiInterface
+     */
+    singersSingersGetRaw(requestParameters: SingersSingersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Speaker>>>;
+
+    /**
+     * Singers
+     */
+    singersSingersGet(requestParameters: SingersSingersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Speaker>>;
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
      * @summary Speaker Info
      * @param {string} speakerUuid 
      * @param {string} [coreVersion] 
@@ -752,7 +780,7 @@ export interface DefaultApiInterface {
     speakerInfoSpeakerInfoGetRaw(requestParameters: SpeakerInfoSpeakerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpeakerInfo>>;
 
     /**
-     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。  Returns ------- ret_data: SpeakerInfo
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
      * Speaker Info
      */
     speakerInfoSpeakerInfoGet(requestParameters: SpeakerInfoSpeakerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpeakerInfo>;
@@ -790,12 +818,10 @@ export interface DefaultApiInterface {
     /**
      * 指定された2種類のスタイルで音声を合成、指定した割合でモーフィングした音声を得ます。 モーフィングの割合は`morph_rate`で指定でき、0.0でベースのスタイル、1.0でターゲットのスタイルに近づきます。
      * @summary 2種類のスタイルでモーフィングした音声を合成する
+     * @param {number} baseSpeaker 
+     * @param {number} targetSpeaker 
      * @param {number} morphRate 
      * @param {AudioQuery} audioQuery 
-     * @param {number} [baseStyleId] 
-     * @param {number} [baseSpeaker] 
-     * @param {number} [targetStyleId] 
-     * @param {number} [targetSpeaker] 
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -812,9 +838,8 @@ export interface DefaultApiInterface {
     /**
      * 
      * @summary 音声合成する
+     * @param {number} speaker 
      * @param {AudioQuery} audioQuery 
-     * @param {number} [styleId] 
-     * @param {number} [speaker] 
      * @param {boolean} [enableInterrogativeUpspeak] 疑問系のテキストが与えられたら語尾を自動調整する
      * @param {string} [coreVersion] 
      * @param {*} [options] Override http request option.
@@ -906,14 +931,14 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
             throw new runtime.RequiredError('text','Required parameter requestParameters.text was null or undefined when calling accentPhrasesAccentPhrasesPost.');
         }
 
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling accentPhrasesAccentPhrasesPost.');
+        }
+
         const queryParameters: any = {};
 
         if (requestParameters.text !== undefined) {
             queryParameters['text'] = requestParameters.text;
-        }
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
         }
 
         if (requestParameters.speaker !== undefined) {
@@ -1061,14 +1086,14 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
             throw new runtime.RequiredError('text','Required parameter requestParameters.text was null or undefined when calling audioQueryAudioQueryPost.');
         }
 
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling audioQueryAudioQueryPost.');
+        }
+
         const queryParameters: any = {};
 
         if (requestParameters.text !== undefined) {
             queryParameters['text'] = requestParameters.text;
-        }
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
         }
 
         if (requestParameters.speaker !== undefined) {
@@ -1152,15 +1177,15 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * 音声合成する（キャンセル可能）
      */
     async cancellableSynthesisCancellableSynthesisPostRaw(requestParameters: CancellableSynthesisCancellableSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling cancellableSynthesisCancellableSynthesisPost.');
+        }
+
         if (requestParameters.audioQuery === null || requestParameters.audioQuery === undefined) {
             throw new runtime.RequiredError('audioQuery','Required parameter requestParameters.audioQuery was null or undefined when calling cancellableSynthesisCancellableSynthesisPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
@@ -1375,6 +1400,53 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
+     * 歌唱音声合成を行います。
+     * Frame Synthesis
+     */
+    async frameSynthesisFrameSynthesisPostRaw(requestParameters: FrameSynthesisFrameSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling frameSynthesisFrameSynthesisPost.');
+        }
+
+        if (requestParameters.frameAudioQuery === null || requestParameters.frameAudioQuery === undefined) {
+            throw new runtime.RequiredError('frameAudioQuery','Required parameter requestParameters.frameAudioQuery was null or undefined when calling frameSynthesisFrameSynthesisPost.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.speaker !== undefined) {
+            queryParameters['speaker'] = requestParameters.speaker;
+        }
+
+        if (requestParameters.coreVersion !== undefined) {
+            queryParameters['core_version'] = requestParameters.coreVersion;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/frame_synthesis`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FrameAudioQueryToJSON(requestParameters.frameAudioQuery),
+        }, initOverrides);
+
+        return new runtime.BlobApiResponse(response);
+    }
+
+    /**
+     * 歌唱音声合成を行います。
+     * Frame Synthesis
+     */
+    async frameSynthesisFrameSynthesisPost(requestParameters: FrameSynthesisFrameSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.frameSynthesisFrameSynthesisPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * エンジンが保持しているプリセットの設定を返します  Returns ------- presets: list[Preset]     プリセットのリスト
      * Get Presets
      */
@@ -1473,9 +1545,8 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * こちらのAPIは非推奨です。`initialize_style_id`を利用してください。
+     * 指定されたスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
      * Initialize Speaker
-     * @deprecated
      */
     async initializeSpeakerInitializeSpeakerPostRaw(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
@@ -1509,55 +1580,11 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * こちらのAPIは非推奨です。`initialize_style_id`を利用してください。
+     * 指定されたスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
      * Initialize Speaker
-     * @deprecated
      */
     async initializeSpeakerInitializeSpeakerPost(requestParameters: InitializeSpeakerInitializeSpeakerPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.initializeSpeakerInitializeSpeakerPostRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * 指定されたstyle_idのスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
-     * Initialize Style Id
-     */
-    async initializeStyleIdInitializeStyleIdPostRaw(requestParameters: InitializeStyleIdInitializeStyleIdPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.styleId === null || requestParameters.styleId === undefined) {
-            throw new runtime.RequiredError('styleId','Required parameter requestParameters.styleId was null or undefined when calling initializeStyleIdInitializeStyleIdPost.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
-
-        if (requestParameters.skipReinit !== undefined) {
-            queryParameters['skip_reinit'] = requestParameters.skipReinit;
-        }
-
-        if (requestParameters.coreVersion !== undefined) {
-            queryParameters['core_version'] = requestParameters.coreVersion;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/initialize_style_id`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * 指定されたstyle_idのスタイルを初期化します。 実行しなくても他のAPIは使用できますが、初回実行時に時間がかかることがあります。
-     * Initialize Style Id
-     */
-    async initializeStyleIdInitializeStyleIdPost(requestParameters: InitializeStyleIdInitializeStyleIdPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.initializeStyleIdInitializeStyleIdPostRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -1620,9 +1647,8 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * こちらのAPIは非推奨です。`is_initialize_style_id`を利用してください。
+     * 指定されたスタイルが初期化されているかどうかを返します。
      * Is Initialized Speaker
-     * @deprecated
      */
     async isInitializedSpeakerIsInitializedSpeakerGetRaw(requestParameters: IsInitializedSpeakerIsInitializedSpeakerGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
         if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
@@ -1656,9 +1682,8 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * こちらのAPIは非推奨です。`is_initialize_style_id`を利用してください。
+     * 指定されたスタイルが初期化されているかどうかを返します。
      * Is Initialized Speaker
-     * @deprecated
      */
     async isInitializedSpeakerIsInitializedSpeakerGet(requestParameters: IsInitializedSpeakerIsInitializedSpeakerGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
         const response = await this.isInitializedSpeakerIsInitializedSpeakerGetRaw(requestParameters, initOverrides);
@@ -1666,62 +1691,18 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * 指定されたstyle_idのスタイルが初期化されているかどうかを返します。
-     * Is Initialized Style Id
-     */
-    async isInitializedStyleIdIsInitializedStyleIdGetRaw(requestParameters: IsInitializedStyleIdIsInitializedStyleIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
-        if (requestParameters.styleId === null || requestParameters.styleId === undefined) {
-            throw new runtime.RequiredError('styleId','Required parameter requestParameters.styleId was null or undefined when calling isInitializedStyleIdIsInitializedStyleIdGet.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
-
-        if (requestParameters.coreVersion !== undefined) {
-            queryParameters['core_version'] = requestParameters.coreVersion;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/is_initialized_style_id`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<boolean>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
-    }
-
-    /**
-     * 指定されたstyle_idのスタイルが初期化されているかどうかを返します。
-     * Is Initialized Style Id
-     */
-    async isInitializedStyleIdIsInitializedStyleIdGet(requestParameters: IsInitializedStyleIdIsInitializedStyleIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.isInitializedStyleIdIsInitializedStyleIdGetRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * アクセント句から音高・音素長を得る
      */
     async moraDataMoraDataPostRaw(requestParameters: MoraDataMoraDataPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AccentPhrase>>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling moraDataMoraDataPost.');
+        }
+
         if (requestParameters.accentPhrase === null || requestParameters.accentPhrase === undefined) {
             throw new runtime.RequiredError('accentPhrase','Required parameter requestParameters.accentPhrase was null or undefined when calling moraDataMoraDataPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
@@ -1758,15 +1739,15 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * アクセント句から音素長を得る
      */
     async moraLengthMoraLengthPostRaw(requestParameters: MoraLengthMoraLengthPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AccentPhrase>>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling moraLengthMoraLengthPost.');
+        }
+
         if (requestParameters.accentPhrase === null || requestParameters.accentPhrase === undefined) {
             throw new runtime.RequiredError('accentPhrase','Required parameter requestParameters.accentPhrase was null or undefined when calling moraLengthMoraLengthPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
@@ -1803,15 +1784,15 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * アクセント句から音高を得る
      */
     async moraPitchMoraPitchPostRaw(requestParameters: MoraPitchMoraPitchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AccentPhrase>>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling moraPitchMoraPitchPost.');
+        }
+
         if (requestParameters.accentPhrase === null || requestParameters.accentPhrase === undefined) {
             throw new runtime.RequiredError('accentPhrase','Required parameter requestParameters.accentPhrase was null or undefined when calling moraPitchMoraPitchPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
@@ -1887,15 +1868,15 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * 複数まとめて音声合成する
      */
     async multiSynthesisMultiSynthesisPostRaw(requestParameters: MultiSynthesisMultiSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling multiSynthesisMultiSynthesisPost.');
+        }
+
         if (requestParameters.audioQuery === null || requestParameters.audioQuery === undefined) {
             throw new runtime.RequiredError('audioQuery','Required parameter requestParameters.audioQuery was null or undefined when calling multiSynthesisMultiSynthesisPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
@@ -2073,7 +2054,124 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。  Returns ------- ret_data: SpeakerInfo
+     * 歌唱音声合成用のクエリの初期値を得ます。ここで得られたクエリはそのまま歌唱音声合成に利用できます。各値の意味は`Schemas`を参照してください。
+     * 歌唱音声合成用のクエリを作成する
+     */
+    async singFrameAudioQuerySingFrameAudioQueryPostRaw(requestParameters: SingFrameAudioQuerySingFrameAudioQueryPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FrameAudioQuery>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling singFrameAudioQuerySingFrameAudioQueryPost.');
+        }
+
+        if (requestParameters.score === null || requestParameters.score === undefined) {
+            throw new runtime.RequiredError('score','Required parameter requestParameters.score was null or undefined when calling singFrameAudioQuerySingFrameAudioQueryPost.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.speaker !== undefined) {
+            queryParameters['speaker'] = requestParameters.speaker;
+        }
+
+        if (requestParameters.coreVersion !== undefined) {
+            queryParameters['core_version'] = requestParameters.coreVersion;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/sing_frame_audio_query`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ScoreToJSON(requestParameters.score),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FrameAudioQueryFromJSON(jsonValue));
+    }
+
+    /**
+     * 歌唱音声合成用のクエリの初期値を得ます。ここで得られたクエリはそのまま歌唱音声合成に利用できます。各値の意味は`Schemas`を参照してください。
+     * 歌唱音声合成用のクエリを作成する
+     */
+    async singFrameAudioQuerySingFrameAudioQueryPost(requestParameters: SingFrameAudioQuerySingFrameAudioQueryPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FrameAudioQuery> {
+        const response = await this.singFrameAudioQuerySingFrameAudioQueryPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
+     * Singer Info
+     */
+    async singerInfoSingerInfoGetRaw(requestParameters: SingerInfoSingerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpeakerInfo>> {
+        if (requestParameters.speakerUuid === null || requestParameters.speakerUuid === undefined) {
+            throw new runtime.RequiredError('speakerUuid','Required parameter requestParameters.speakerUuid was null or undefined when calling singerInfoSingerInfoGet.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.speakerUuid !== undefined) {
+            queryParameters['speaker_uuid'] = requestParameters.speakerUuid;
+        }
+
+        if (requestParameters.coreVersion !== undefined) {
+            queryParameters['core_version'] = requestParameters.coreVersion;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/singer_info`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SpeakerInfoFromJSON(jsonValue));
+    }
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
+     * Singer Info
+     */
+    async singerInfoSingerInfoGet(requestParameters: SingerInfoSingerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpeakerInfo> {
+        const response = await this.singerInfoSingerInfoGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Singers
+     */
+    async singersSingersGetRaw(requestParameters: SingersSingersGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Speaker>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters.coreVersion !== undefined) {
+            queryParameters['core_version'] = requestParameters.coreVersion;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/singers`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SpeakerFromJSON));
+    }
+
+    /**
+     * Singers
+     */
+    async singersSingersGet(requestParameters: SingersSingersGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Speaker>> {
+        const response = await this.singersSingersGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
      * Speaker Info
      */
     async speakerInfoSpeakerInfoGetRaw(requestParameters: SpeakerInfoSpeakerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SpeakerInfo>> {
@@ -2104,7 +2202,7 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
     }
 
     /**
-     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。  Returns ------- ret_data: SpeakerInfo
+     * 指定されたspeaker_uuidに関する情報をjson形式で返します。 画像や音声はbase64エンコードされたものが返されます。
      * Speaker Info
      */
     async speakerInfoSpeakerInfoGet(requestParameters: SpeakerInfoSpeakerInfoGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SpeakerInfo> {
@@ -2177,6 +2275,14 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * 2種類のスタイルでモーフィングした音声を合成する
      */
     async synthesisMorphingSynthesisMorphingPostRaw(requestParameters: SynthesisMorphingSynthesisMorphingPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters.baseSpeaker === null || requestParameters.baseSpeaker === undefined) {
+            throw new runtime.RequiredError('baseSpeaker','Required parameter requestParameters.baseSpeaker was null or undefined when calling synthesisMorphingSynthesisMorphingPost.');
+        }
+
+        if (requestParameters.targetSpeaker === null || requestParameters.targetSpeaker === undefined) {
+            throw new runtime.RequiredError('targetSpeaker','Required parameter requestParameters.targetSpeaker was null or undefined when calling synthesisMorphingSynthesisMorphingPost.');
+        }
+
         if (requestParameters.morphRate === null || requestParameters.morphRate === undefined) {
             throw new runtime.RequiredError('morphRate','Required parameter requestParameters.morphRate was null or undefined when calling synthesisMorphingSynthesisMorphingPost.');
         }
@@ -2187,16 +2293,8 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
 
         const queryParameters: any = {};
 
-        if (requestParameters.baseStyleId !== undefined) {
-            queryParameters['base_style_id'] = requestParameters.baseStyleId;
-        }
-
         if (requestParameters.baseSpeaker !== undefined) {
             queryParameters['base_speaker'] = requestParameters.baseSpeaker;
-        }
-
-        if (requestParameters.targetStyleId !== undefined) {
-            queryParameters['target_style_id'] = requestParameters.targetStyleId;
         }
 
         if (requestParameters.targetSpeaker !== undefined) {
@@ -2239,15 +2337,15 @@ export class DefaultApi extends runtime.BaseAPI implements DefaultApiInterface {
      * 音声合成する
      */
     async synthesisSynthesisPostRaw(requestParameters: SynthesisSynthesisPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters.speaker === null || requestParameters.speaker === undefined) {
+            throw new runtime.RequiredError('speaker','Required parameter requestParameters.speaker was null or undefined when calling synthesisSynthesisPost.');
+        }
+
         if (requestParameters.audioQuery === null || requestParameters.audioQuery === undefined) {
             throw new runtime.RequiredError('audioQuery','Required parameter requestParameters.audioQuery was null or undefined when calling synthesisSynthesisPost.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.styleId !== undefined) {
-            queryParameters['style_id'] = requestParameters.styleId;
-        }
 
         if (requestParameters.speaker !== undefined) {
             queryParameters['speaker'] = requestParameters.speaker;
