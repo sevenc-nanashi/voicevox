@@ -3,7 +3,7 @@ export * from "immer/src/types/globals";
 // showDirectoryPicker などのAPIをブラウザで使用するためにimportしている
 import "@types/wicg-file-system-access";
 import { SandboxKey } from "./preload";
-import { VoicevoxCorePlugin } from "@/mobile/plugin";
+import { VoicevoxCorePlugin } from "@/backend/mobile/plugin";
 
 declare global {
   interface HTMLAudioElement {

@@ -79,6 +79,11 @@ export type IpcIHData = {
     return?: string;
   };
 
+  SHOW_SAVE_DIRECTORY_DIALOG: {
+    args: [obj: { title: string }];
+    return?: string;
+  };
+
   SHOW_VVPP_OPEN_DIALOG: {
     args: [obj: { title: string; defaultPath?: string }];
     return?: string;
@@ -90,7 +95,7 @@ export type IpcIHData = {
   };
 
   SHOW_IMPORT_FILE_DIALOG: {
-    args: [obj: { title: string }];
+    args: [obj: { title: string; name?: string; extensions?: string[] }];
     return?: string;
   };
 

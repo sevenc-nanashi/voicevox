@@ -28,10 +28,10 @@ switch (process.platform) {
   }
 }
 const sevenZip = path.resolve(__dirname, "vendored", "7z", sevenZipCommand);
-type Release = {
-  tag_name: string;
-  assets: { name: string; browser_download_url: string }[];
-};
+// type Release = {
+//   tag_name: string;
+//   assets: { name: string; browser_download_url: string }[];
+// };
 
 const downloadAndCompressModel = async () => {
   const modelZipPath = path.resolve(
@@ -46,11 +46,16 @@ const downloadAndCompressModel = async () => {
     return;
   }
   console.log("Downloading model...");
-  const releases = await fetch(
-    "https://api.github.com/repos/voicevox/voicevox_core/releases"
-  );
-  const releasesJson = (await releases.json()) as Release[];
-  const latestRelease = releasesJson[0];
+  // 今の最新（0.15.0）にはモデルのzipが入ってないので、0.15.0-preview.16を使っている。
+  // TODO: 次のプレリリースが出たら直す。
+  // const releases = await fetch(
+  //   "https://api.github.com/repos/voicevox/voicevox_core/releases"
+  // );
+  // const releasesJson = (await releases.json()) as Release[];
+  // const latestRelease = releasesJson[0];
+  const latestRelease = await fetch(
+    "https://api.github.com/repos/voicevox/voicevox_core/releases/132287182"
+  ).then((r) => r.json());
   const modelUrl = latestRelease.assets.find((asset) =>
     asset.name.startsWith("model-")
   )?.browser_download_url;
