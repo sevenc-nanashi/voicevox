@@ -1,4 +1,4 @@
-import { coreBasedApi } from "@/mobile";
+import { coreBasedApi } from "@/backend/mobile";
 import { Configuration, DefaultApi, DefaultApiInterface } from "@/openapi";
 
 export interface IEngineConnectorFactory {

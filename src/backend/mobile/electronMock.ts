@@ -87,6 +87,9 @@ const loadMock = () => {
     async showImportFileDialog(obj) {
       throw new Error(`Not implemented: showImportFileDialog ${obj}`);
     },
+    showSaveDirectoryDialog(obj) {
+      throw new Error(`Not implemented: showSaveDirectoryDialog ${obj}`);
+    },
     async writeFile(obj) {
       throw new Error(`Not implemented: writeFile ${obj}`);
     },

@@ -36,7 +36,7 @@ const loadApi = () => {
         if (!api) throw new Error("assert: api != null");
         if (!isCoreInitialized) throw new Error("Core is not initialized");
         if (key in base) {
-          window.electron.logInfo(`Call coreBasedApi.${String(key)}`);
+          window.backend.logInfo(`Call coreBasedApi.${String(key)}`);
           return base[key];
         } else if (key in api) {
           throw new Error(`Not implemented: ${String(key)}`);

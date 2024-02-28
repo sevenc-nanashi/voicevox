@@ -1,21 +1,21 @@
 <!-- TODO: PC版ヘッダーと統合する -->
 <template>
-  <q-toolbar class="bg-primary text-white">
-    <q-btn flat round dense>
-      <q-icon name="menu" />
-      <q-menu transition-show="none" transition-hide="none">
-        <q-list dense>
-          <menu-item
+  <QToolbar class="bg-primary text-white">
+    <QBtn flat round dense>
+      <QIcon name="menu" />
+      <QMenu transition-show="none" transition-hide="none">
+        <QList dense>
+          <MenuItem
             v-for="(item, index) in menudata"
             :key="item.label"
             v-model:selected="subMenuOpenFlags[index]"
             :menudata="item"
           />
-        </q-list>
-      </q-menu>
-    </q-btn>
-    <q-space />
-    <q-btn
+        </QList>
+      </QMenu>
+    </QBtn>
+    <QSpace />
+    <QBtn
       v-for="button in headerButtons"
       :key="button.icon"
       :disable="button.disable"
@@ -25,7 +25,7 @@
       :icon="button.icon"
       @click="button.onClick"
     />
-  </q-toolbar>
+  </QToolbar>
 </template>
 
 <script setup lang="ts">
