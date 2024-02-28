@@ -3,7 +3,6 @@
 
   <QLayout reveal elevated container class="layout-container">
     <ToolBar v-if="$q.platform.is.desktop" />
-    <MobileHeaderBar v-else />
 
     <QPageContainer>
       <QPage class="main-row-panes">
@@ -118,6 +117,8 @@
           </template>
         </QSplitter>
 
+        <ToolBar v-if="!$q.platform.is.desktop" />
+
         <QResizeObserver
           ref="resizeObserverRef"
           @resize="({ height }) => changeAudioDetailPaneMaxHeight(height)"
@@ -149,7 +150,6 @@ import {
   SplitterPositionType,
   Voice,
 } from "@/type/preload";
-import MobileHeaderBar from "@/components/MobileHeaderBar.vue";
 import { useHotkeyManager } from "@/plugins/hotkeyPlugin";
 import onetimeWatch from "@/helpers/onetimeWatch";
 
