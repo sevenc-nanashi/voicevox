@@ -1,21 +1,23 @@
 <template>
-  <QToolbar v-if="isMobile" class="bg-primary text-white">
-    <MobileMenuButton />
-    <template v-for="button in buttons" :key="button.text">
-      <QSpace v-if="button.text === null" />
-      <QBtn
-        v-else
-        flat
-        round
-        dense
-        :disable="button.disable.value"
-        :icon="buttonIcons[button.tag]"
-        @click="button.click"
-      >
-        <QTooltip>{{ button.text }}</QTooltip>
-      </QBtn>
-    </template>
-  </QToolbar>
+  <QFooter v-if="isMobile" class="bg-primary text-white">
+    <QToolbar>
+      <MobileMenuButton />
+      <template v-for="button in buttons" :key="button.text">
+        <QSpace v-if="button.text === null" />
+        <QBtn
+          v-else
+          flat
+          round
+          dense
+          :disable="button.disable.value"
+          :icon="buttonIcons[button.tag]"
+          @click="button.click"
+        >
+          <QTooltip>{{ button.text }}</QTooltip>
+        </QBtn>
+      </template>
+    </QToolbar>
+  </QFooter>
   <QHeader v-else class="q-py-sm">
     <QToolbar>
       <template v-for="button in buttons" :key="button.text">
@@ -37,7 +39,7 @@
 
 <script setup lang="ts">
 import { computed, ComputedRef } from "vue";
-import { useQuasar } from "quasar";
+import { QFooter, useQuasar } from "quasar";
 import MobileMenuButton from "./MobileMenuButton.vue";
 import {
   generateAndConnectAndSaveAudioWithDialog,
