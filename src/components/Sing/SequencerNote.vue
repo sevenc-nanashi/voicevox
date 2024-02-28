@@ -4,6 +4,7 @@
     :class="{
       selected: noteState === 'SELECTED',
       overlapping: noteState === 'OVERLAPPING',
+      'below-pitch': showPitch,
     }"
     :style="{
       width: `${width}px`,
@@ -14,9 +15,14 @@
     <div class="note-bar" @mousedown="onBarMouseDown">
       <div class="note-left-edge" @mousedown="onLeftEdgeMouseDown"></div>
       <div class="note-right-edge" @mousedown="onRightEdgeMouseDown"></div>
-      <context-menu ref="contextMenu" :menudata="contextMenuData" />
+      <ContextMenu ref="contextMenu" :menudata="contextMenuData" />
     </div>
-    <div class="note-lyric" @mousedown="onLyricMouseDown">
+    <!-- TODO: ピッチの上に歌詞入力のinputが表示されるようにする -->
+    <div
+      class="note-lyric"
+      data-testid="note-lyric"
+      @mousedown="onLyricMouseDown"
+    >
       {{ lyric }}
     </div>
     <input
@@ -110,11 +116,14 @@ const lyric = computed({
       return;
     }
     const note: Note = { ...props.note, lyric: value };
-    store.dispatch("UPDATE_NOTES", { notes: [note] });
+    store.dispatch("COMMAND_UPDATE_NOTES", { notes: [note] });
   },
 });
 const showLyricInput = computed(() => {
   return state.editingLyricNoteId === props.note.id;
+});
+const showPitch = computed(() => {
+  return state.experimentalSetting.showPitchInSongEditor;
 });
 const contextMenu = ref<InstanceType<typeof ContextMenu>>();
 const contextMenuData = ref<[MenuItemButton]>([
@@ -123,7 +132,7 @@ const contextMenuData = ref<[MenuItemButton]>([
     label: "削除",
     onClick: async () => {
       contextMenu.value?.hide();
-      store.dispatch("REMOVE_SELECTED_NOTES");
+      store.dispatch("COMMAND_REMOVE_SELECTED_NOTES");
     },
     disableWhenUiLocked: true,
   },
@@ -190,10 +199,23 @@ const onLyricInputBlur = () => {
   top: 0;
   left: 0;
 
+  &.below-pitch {
+    .note-bar {
+      background-color: rgba(colors.$primary-rgb, 0.18);
+      border-color: hsl(130, 35%, 78%);
+    }
+  }
+
   &.selected {
     // 色は仮
     .note-bar {
       background-color: hsl(33, 100%, 50%);
+    }
+
+    &.below-pitch {
+      .note-bar {
+        background-color: rgba(hsl(33, 100%, 50%), 0.18);
+      }
     }
   }
 

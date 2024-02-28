@@ -1,11 +1,11 @@
 <template>
-  <q-bar class="bg-background q-pa-none relative-position">
+  <QBar class="bg-background q-pa-none relative-position">
     <div
       v-if="$q.platform.is.mac && !isFullscreen"
       class="mac-traffic-light-space"
     ></div>
     <img v-else src="/icon.png" class="window-logo" alt="application logo" />
-    <menu-button
+    <MenuButton
       v-for="(root, index) of menudata"
       :key="index"
       v-model:selected="subMenuOpenFlags[index]"
@@ -16,14 +16,14 @@
         root.type === 'button' ? (subMenuOpenFlags[index] = false) : undefined
       "
     />
-    <q-space />
+    <QSpace />
     <div class="window-title" :class="{ 'text-warning': isMultiEngineOffMode }">
       {{ titleText }}
     </div>
-    <q-space />
-    <title-bar-editor-switcher />
-    <title-bar-buttons />
-  </q-bar>
+    <QSpace />
+    <TitleBarEditorSwitcher />
+    <TitleBarButtons />
+  </QBar>
 </template>
 
 <script setup lang="ts">
@@ -34,16 +34,18 @@ import TitleBarButtons from "./TitleBarButtons.vue";
 import TitleBarEditorSwitcher from "./TitleBarEditorSwitcher.vue";
 import { useStore } from "@/store";
 import { base64ImageToUri } from "@/helpers/imageHelper";
-import { HotkeyActionType, HotkeyReturnType } from "@/type/preload";
-import { setHotkeyFunctions } from "@/store/setting";
+import { useHotkeyManager } from "@/plugins/hotkeyPlugin";
 
 const props =
   defineProps<{
     /** 「ファイル」メニューのサブメニュー */
     fileSubMenuData: MenuItemData[];
+    /** エディタの種類 */
+    editor: "talk" | "song";
   }>();
 
 const store = useStore();
+const { registerHotkeyWithCleanup } = useHotkeyManager();
 const currentVersion = ref("");
 
 // デフォルトエンジンの代替先ポート
@@ -64,7 +66,7 @@ const defaultEngineAltPortTo = computed<number | undefined>(() => {
   }
 });
 
-window.electron.getAppInfos().then((obj) => {
+window.backend.getAppInfos().then((obj) => {
   currentVersion.value = obj.version;
 });
 const isMultiEngineOffMode = computed(() => store.state.isMultiEngineOffMode);
@@ -439,14 +441,26 @@ watch(uiLocked, () => {
   }
 });
 
-const hotkeyMap = new Map<HotkeyActionType, () => HotkeyReturnType>([
-  ["新規プロジェクト", createNewProject],
-  ["プロジェクトを上書き保存", saveProject],
-  ["プロジェクトを名前を付けて保存", saveProjectAs],
-  ["プロジェクト読み込み", importProject],
-]);
-
-setHotkeyFunctions(hotkeyMap);
+registerHotkeyWithCleanup({
+  editor: props.editor,
+  callback: createNewProject,
+  name: "新規プロジェクト",
+});
+registerHotkeyWithCleanup({
+  editor: props.editor,
+  callback: saveProject,
+  name: "プロジェクトを上書き保存",
+});
+registerHotkeyWithCleanup({
+  editor: props.editor,
+  callback: saveProjectAs,
+  name: "プロジェクトを名前を付けて保存",
+});
+registerHotkeyWithCleanup({
+  editor: props.editor,
+  callback: importProject,
+  name: "プロジェクト読み込み",
+});
 </script>
 
 <style lang="scss">

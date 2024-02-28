@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { rmSync, readdirSync, readFileSync } from "fs";
+import { rm, readdir, readFile } from "fs/promises";
 import treeKill from "tree-kill";
 
 import electron from "vite-plugin-electron";
@@ -11,12 +11,10 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { BuildOptions, defineConfig, loadEnv, Plugin } from "vite";
 import { quasar } from "@quasar/vite-plugin";
 
-rmSync(path.resolve(__dirname, "dist"), { recursive: true, force: true });
-
 const isElectron = process.env.VITE_TARGET === "electron";
 const isBrowser = process.env.VITE_TARGET === "browser";
 
-export default defineConfig((options) => {
+export default defineConfig(async (options) => {
   const packageName = process.env.npm_package_name;
   const env = loadEnv(options.mode, __dirname);
   if (!packageName?.startsWith(env.VITE_APP_NAME)) {
@@ -38,15 +36,18 @@ export default defineConfig((options) => {
   const sourcemap: BuildOptions["sourcemap"] = shouldEmitSourcemap
     ? "inline"
     : false;
-  const themes = readdirSync(path.resolve(__dirname, "public/themes")).map(
-    (themeFile: string) => {
-      return JSON.parse(
-        readFileSync(
-          path.resolve(__dirname, "public/themes", themeFile),
-          "utf-8"
-        )
-      );
-    }
+  const themes = await readdir(path.resolve(__dirname, "public/themes")).then(
+    (files) =>
+      Promise.all(
+        files.map(async (themeFile: string) => {
+          return JSON.parse(
+            await readFile(
+              path.resolve(__dirname, "public/themes", themeFile),
+              "utf-8"
+            )
+          );
+        })
+      )
   );
   return {
     root: path.resolve(__dirname, "src"),
@@ -77,7 +78,7 @@ export default defineConfig((options) => {
       environmentMatchGlobs: [
         [
           path
-            .resolve(__dirname, "tests/unit/background/**/*.spec.ts")
+            .resolve(__dirname, "tests/unit/backend/electron/**/*.spec.ts")
             .replace(/\\/g, "/"),
           "node",
         ],
@@ -86,15 +87,11 @@ export default defineConfig((options) => {
     },
     define: {
       __availableThemes: JSON.stringify(themes),
-      [`process.env`]: {
-        APP_NAME: process.env.npm_package_name,
-        APP_VERSION: process.env.npm_package_version,
-      },
     },
 
     plugins: [
       vue(),
-      quasar(),
+      quasar({ autoImportComponentCase: "pascal" }),
       nodePolyfills(),
       options.mode !== "test" &&
         checker({
@@ -104,9 +101,13 @@ export default defineConfig((options) => {
           },
           vueTsc: true,
         }),
-      isElectron &&
+      isElectron && [
+        cleanDistPlugin(),
         electron({
-          entry: ["./src/background.ts", "./src/electron/preload.ts"],
+          entry: [
+            "./src/backend/electron/main.ts",
+            "./src/backend/electron/preload.ts",
+          ],
           // ref: https://github.com/electron-vite/vite-plugin-electron/pull/122
           onstart: ({ startup }) => {
             // @ts-expect-error vite-electron-pluginはprocess.electronAppにelectronのプロセスを格納している。
@@ -127,10 +128,24 @@ export default defineConfig((options) => {
             },
           },
         }),
+      ],
       isBrowser && injectBrowserPreloadPlugin(),
     ],
   };
 });
+const cleanDistPlugin = (): Plugin => {
+  return {
+    name: "clean-dist",
+    apply: "build",
+    enforce: "pre",
+    async buildStart() {
+      await rm(path.resolve(__dirname, "dist"), {
+        recursive: true,
+        force: true,
+      });
+    },
+  };
+};
 
 const injectBrowserPreloadPlugin = (): Plugin => {
   return {
@@ -140,7 +155,7 @@ const injectBrowserPreloadPlugin = (): Plugin => {
       transform: (html: string) =>
         html.replace(
           "<!-- %BROWSER_PRELOAD% -->",
-          `<script type="module" src="./browser/preload.ts"></script>`
+          `<script type="module" src="./backend/browser/preload.ts"></script>`
         ),
     },
   };

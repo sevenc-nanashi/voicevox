@@ -5,7 +5,7 @@
 <template>
   <!-- FIXME: 画面サイズが小さくなると表示が崩れるのを直す -->
   <!-- NOTE: デザインしづらいからQBtnかdivの方が良い -->
-  <q-btn-toggle
+  <QBtnToggle
     :model-value="nowEditor"
     unelevated
     :disable="uiLocked"
@@ -23,21 +23,22 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "@/store";
+import { EditorType } from "@/type/preload";
 
 const store = useStore();
 const router = useRouter();
 
 const uiLocked = computed(() => store.getters.UI_LOCKED);
 
-const nowEditor = computed<"talk" | "song">(() => {
+const nowEditor = computed<EditorType>(() => {
   const path = router.currentRoute.value.path;
   if (path === "/talk") return "talk";
   if (path === "/song") return "song";
-  window.electron.logWarn(`unknown path: ${path}`);
+  window.backend.logWarn(`unknown path: ${path}`);
   return "talk";
 });
 
-const gotoLink = (editor: "talk" | "song") => {
+const gotoLink = (editor: EditorType) => {
   router.push("/" + editor);
 };
 </script>

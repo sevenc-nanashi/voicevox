@@ -1,27 +1,28 @@
 <template>
-  <error-boundary>
+  <ErrorBoundary>
     <!-- TODO: メニューバーをEditorHomeから移動する -->
-    <router-view v-slot="{ Component }">
-      <keep-alive>
-        <component
+    <RouterView v-slot="{ Component }">
+      <KeepAlive>
+        <Component
           :is="Component"
           :is-engines-ready="isEnginesReady"
-          :project-file-path="projectFilePath"
+          :is-project-file-loaded="isProjectFileLoaded"
         />
-      </keep-alive>
-    </router-view>
-  </error-boundary>
+      </KeepAlive>
+    </RouterView>
+    <AllDialog :is-engines-ready="isEnginesReady" />
+  </ErrorBoundary>
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted, ref, computed } from "vue";
+import { watch, onMounted, ref, computed, toRaw } from "vue";
 import { useGtm } from "@gtm-support/vue-gtm";
 import { useRoute } from "vue-router";
-import Mousetrap from "mousetrap";
 import { EngineId } from "@/type/preload";
 import ErrorBoundary from "@/components/ErrorBoundary.vue";
 import { useStore } from "@/store";
-import { isOnCommandOrCtrlKeyDown } from "@/store/utility";
+import { useHotkeyManager } from "@/plugins/hotkeyPlugin";
+import AllDialog from "@/components/Dialog/AllDialog.vue";
 
 const store = useStore();
 const route = useRoute();
@@ -48,40 +49,33 @@ watch(
   { immediate: true }
 );
 
+// エディタの切り替えを監視する
+watch(
+  () => route.path,
+  async (unknownPath) => {
+    let path: "talk" | "song";
+    if (["/talk", "/song"].includes(unknownPath)) {
+      path = unknownPath.slice(1) as "talk" | "song";
+    } else {
+      // 不明なパスの場合はトークエディタにする
+      path = "talk";
+      window.backend.logWarn(`unknown path: ${unknownPath}`);
+    }
+
+    hotkeyManager.onEditorChange(path);
+  }
+);
+
 // ソフトウェアを初期化
+const { hotkeyManager } = useHotkeyManager();
 const isEnginesReady = ref(false);
+const isProjectFileLoaded = ref<boolean | "waiting">("waiting");
 onMounted(async () => {
   await store.dispatch("INIT_VUEX");
 
-  // Electronのデフォルトのundo/redoを無効化
-  const disableDefaultUndoRedo = (event: KeyboardEvent) => {
-    // ctrl+z, ctrl+shift+z, ctrl+y
-    if (
-      isOnCommandOrCtrlKeyDown(event) &&
-      (event.key == "z" || (!event.shiftKey && event.key == "y"))
-    ) {
-      event.preventDefault();
-    }
-  };
-  document.addEventListener("keydown", disableDefaultUndoRedo);
+  const hotkeySettings = store.state.hotkeySettings;
 
-  // ショートカットキー操作を止める条件の設定
-  // 止めるなら`true`を返す
-  Mousetrap.prototype.stopCallback = (
-    e: Mousetrap.ExtendedKeyboardEvent, // 未使用
-    element: Element,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    combo: string // 未使用
-  ) => {
-    return (
-      element.tagName === "INPUT" ||
-      element.tagName === "SELECT" ||
-      element.tagName === "TEXTAREA" ||
-      (element instanceof HTMLElement && element.contentEditable === "true") ||
-      // メニュー項目ではショートカットキーを無効化
-      element.classList.contains("q-item")
-    );
-  };
+  hotkeyManager.load(structuredClone(toRaw(hotkeySettings)));
 
   // エンジンの初期化開始
 
@@ -114,9 +108,26 @@ onMounted(async () => {
   await store.dispatch("SYNC_ALL_USER_DICT");
 
   isEnginesReady.value = true;
+
+  // エンジン起動後にダイアログを開く
+  store.dispatch("SET_DIALOG_OPEN", {
+    isAcceptRetrieveTelemetryDialogOpen:
+      store.state.acceptRetrieveTelemetry === "Unconfirmed",
+    isAcceptTermsDialogOpen:
+      import.meta.env.MODE !== "development" &&
+      store.state.acceptTerms !== "Accepted",
+  });
+
+  // プロジェクトファイルが指定されていればロード
+  if (
+    typeof projectFilePath.value === "string" &&
+    projectFilePath.value !== ""
+  ) {
+    isProjectFileLoaded.value = await store.dispatch("LOAD_PROJECT_FILE", {
+      filePath: projectFilePath.value,
+    });
+  } else {
+    isProjectFileLoaded.value = false;
+  }
 });
-
-// TODO: ダイアログ周りをEditorHomeから移動する
-
-// TODO: エンジン起動状態周りの処理と表示をEditorHomeから移動する
 </script>

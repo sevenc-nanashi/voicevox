@@ -1,6 +1,6 @@
 <template>
-  <q-separator v-if="menudata.type === 'separator'" class="bg-surface" />
-  <q-item
+  <QSeparator v-if="menudata.type === 'separator'" class="bg-surface" />
+  <QItem
     v-else-if="menudata.type === 'root'"
     class="bg-background"
     clickable
@@ -9,39 +9,39 @@
     :class="selected && 'active-menu'"
     @click="menudata.onClick"
   >
-    <q-item-section v-if="menudata.icon" side class="q-py-2">
+    <QItemSection v-if="menudata.icon" side class="q-py-2">
       <img :src="menudata.icon" class="engine-icon" />
-    </q-item-section>
+    </QItemSection>
 
-    <q-item-section>{{ menudata.label }}</q-item-section>
-    <q-item-section
+    <QItemSection>{{ menudata.label }}</QItemSection>
+    <QItemSection
       v-if="menudata.label != undefined && getMenuBarHotkey(menudata.label)"
       side
     >
       {{ getMenuBarHotkey(menudata.label) }}
-    </q-item-section>
+    </QItemSection>
 
-    <q-item-section side>
-      <q-icon name="keyboard_arrow_right" />
-    </q-item-section>
+    <QItemSection side>
+      <QIcon name="keyboard_arrow_right" />
+    </QItemSection>
 
-    <q-menu
+    <QMenu
       v-model="selectedComputed"
       anchor="top end"
       transition-show="none"
       transition-hide="none"
       :target="!uiLocked"
     >
-      <menu-item
+      <MenuItem
         v-for="(menu, i) of menudata.subMenu"
         :key="i"
         v-model:selected="subMenuOpenFlags[i]"
         :menudata="menu"
         @mouseover="reassignSubMenuOpen(i)"
       />
-    </q-menu>
-  </q-item>
-  <q-item
+    </QMenu>
+  </QItem>
+  <QItem
     v-else
     v-ripple
     v-close-popup
@@ -51,30 +51,30 @@
     :disable="menudata.disabled"
     @click="menudata.onClick"
   >
-    <q-item-section
+    <QItemSection
       v-if="'icon' in menudata && menudata.icon != undefined"
       avatar
     >
-      <q-avatar>
+      <QAvatar>
         <img :src="menudata.icon" />
-      </q-avatar>
-    </q-item-section>
+      </QAvatar>
+    </QItemSection>
 
-    <q-item-section>{{ menudata.label }}</q-item-section>
-    <q-item-section
+    <QItemSection>{{ menudata.label }}</QItemSection>
+    <QItemSection
       v-if="menudata.label != undefined && getMenuBarHotkey(menudata.label)"
       side
     >
       {{ getMenuBarHotkey(menudata.label) }}
-    </q-item-section>
-  </q-item>
+    </QItemSection>
+  </QItem>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { MenuItemData } from "./type";
 import { useStore } from "@/store";
-import { hotkeyActionSchema } from "@/type/preload";
+import { hotkeyActionNameSchema } from "@/type/preload";
 const props = withDefaults(
   defineProps<{
     selected?: boolean;
@@ -96,7 +96,7 @@ const hotkeySettingsMap = computed(
     )
 );
 const getMenuBarHotkey = (rawLabel: string) => {
-  const label = hotkeyActionSchema.safeParse(rawLabel);
+  const label = hotkeyActionNameSchema.safeParse(rawLabel);
   if (!label.success) {
     return "";
   }
