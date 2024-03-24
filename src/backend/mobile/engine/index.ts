@@ -1,4 +1,4 @@
-import { VoicevoxCorePlugin } from "../plugin";
+import { VoicevoxCorePlugin, corePlugin } from "../plugin";
 import queryProvider from "./query";
 import infoProvider from "./info";
 import speakerProvider from "./speaker";
@@ -11,10 +11,8 @@ export type ApiProvider = (deps: {
   corePlugin: VoicevoxCorePlugin;
 }) => Partial<DefaultApiInterface>;
 
-const loadApi = () => {
+export const loadApi = () => {
   api = new DefaultApi();
-  const corePlugin = window.plugins?.voicevoxCore;
-  if (!corePlugin) throw new Error("assert: corePlugin != null");
   let isCoreInitialized = false;
   (async () => {
     await corePlugin.initialize();
@@ -47,5 +45,3 @@ const loadApi = () => {
     }
   ) as DefaultApiInterface;
 };
-
-export default loadApi;

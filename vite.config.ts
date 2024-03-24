@@ -13,6 +13,7 @@ import { quasar } from "@quasar/vite-plugin";
 
 const isElectron = process.env.VITE_TARGET === "electron";
 const isBrowser = process.env.VITE_TARGET === "browser";
+const isMobile = process.env.VITE_TARGET === "mobile";
 
 export default defineConfig(async (options) => {
   const packageName = process.env.npm_package_name;
@@ -129,7 +130,8 @@ export default defineConfig(async (options) => {
           },
         }),
       ],
-      isBrowser && injectBrowserPreloadPlugin(),
+      isBrowser && injectPreloadPlugin("browser"),
+      isMobile && injectPreloadPlugin("mobile"),
     ],
   };
 });
@@ -147,15 +149,15 @@ const cleanDistPlugin = (): Plugin => {
   };
 };
 
-const injectBrowserPreloadPlugin = (): Plugin => {
+const injectPreloadPlugin = (backend: string): Plugin => {
   return {
-    name: "inject-browser-preload",
+    name: "inject-preload",
     transformIndexHtml: {
       enforce: "pre" as const,
       transform: (html: string) =>
         html.replace(
-          "<!-- %BROWSER_PRELOAD% -->",
-          `<script type="module" src="./backend/browser/preload.ts"></script>`
+          "<!-- %PRELOAD% -->",
+          `<script type="module" src="./backend/${backend}/preload.ts"></script>`
         ),
     },
   };

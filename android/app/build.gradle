@@ -75,9 +75,9 @@ dependencies {
 
     // TODO: ちゃんと公開されたらそれに置き換える
     implementation urlZipFile(
-        "voicevoxcore-android_0.15.0-preview.15",
-        "jp/hiroshiba/voicevoxcore/voicevoxcore-android/0.15.0-preview.15/voicevoxcore-android-0.15.0-preview.15.aar",
-        "https://github.com/VOICEVOX/voicevox_core/releases/download/0.15.0-preview.15/java_packages.zip"
+        "voicevoxcore-android_0.15.0-preview.16",
+        "jp/hiroshiba/voicevoxcore/voicevoxcore-android/0.15.0-preview.16/voicevoxcore-android-0.15.0-preview.16.aar",
+        "https://github.com/VOICEVOX/voicevox_core/releases/download/0.15.0-preview.16/java_packages.zip"
     )
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
