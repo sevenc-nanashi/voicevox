@@ -101,7 +101,6 @@ export const api: Sandbox = {
     throw new Error("Not supported: showSaveDirectoryDialog");
   },
   showVvppOpenDialog(obj: { title: string; defaultPath?: string }) {
-    // NOTE: 今後接続先を変える手段としてVvppが使われるかもしれないので、そのタイミングで実装する
     throw new Error(
       `not implemented: showVvppOpenDialog, request: ${JSON.stringify(obj)}`
     );
@@ -115,7 +114,7 @@ export const api: Sandbox = {
         reject(
           // storeやvue componentからdefaultPathを設定していなかったらrejectされる
           new Error(
-            "ブラウザ版ではファイルの保存機能が一部サポートされていません。"
+            "スマホ版ではファイルの保存機能が一部サポートされていません。"
           )
         );
       } else {
@@ -125,7 +124,7 @@ export const api: Sandbox = {
   },
   showProjectLoadDialog(/* obj: { title: string } */) {
     throw new Error(
-      "ブラウザ版では現在ファイルの読み込みをサポートしていません"
+      "スマホ版では現在ファイルの読み込みをサポートしていません"
     );
   },
   showMessageDialog(obj: {
