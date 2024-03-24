@@ -153,7 +153,7 @@ export const api: Sandbox = {
   },
   showImportFileDialog(/* obj: { title: string } */) {
     throw new Error(
-      "ブラウザ版では現在ファイルの読み込みをサポートしていません"
+      "スマホ版では現在ファイルの読み込みをサポートしていません"
     );
   },
   writeFile(obj: { filePath: string; buffer: ArrayBuffer }) {
@@ -184,13 +184,13 @@ export const api: Sandbox = {
     });
   },
   closeWindow() {
-    throw new Error(`Not supported on Browser version: closeWindow`);
+    throw new Error(`Not supported: closeWindow`);
   },
   minimizeWindow() {
-    throw new Error(`Not supported on Browser version: minimizeWindow`);
+    throw new Error(`Not supported: minimizeWindow`);
   },
   maximizeWindow() {
-    throw new Error(`Not supported on Browser version: maximizeWindow`);
+    throw new Error(`Not supported: maximizeWindow`);
   },
   /* eslint-disable no-console */ // ログの吐き出し先は console ぐらいしかないので、ここでは特例で許可している
   logError(...params: unknown[]) {
@@ -206,17 +206,17 @@ export const api: Sandbox = {
     return;
   },
   openLogDirectory() {
-    throw new Error(`Not supported on Browser version: openLogDirectory`);
+    throw new Error(`Not supported: openLogDirectory`);
   },
   /* eslint-enable no-console */
   engineInfos() {
     return Promise.resolve([defaultEngine]);
   },
   restartEngine(/* engineId: EngineId */) {
-    throw new Error(`Not supported on Browser version: restartEngine`);
+    throw new Error(`Not supported: restartEngine`);
   },
   openEngineDirectory(/* engineId: EngineId */) {
-    throw new Error(`Not supported on Browser version: openEngineDirectory`);
+    throw new Error(`Not supported: openEngineDirectory`);
   },
   async hotkeySettings(newData?: HotkeySettingType) {
     type HotkeySettingType = ReturnType<
@@ -300,15 +300,15 @@ export const api: Sandbox = {
     return;
   },
   installVvppEngine(/* path: string */) {
-    throw new Error(`Not supported on Browser version: installVvppEngine`);
+    throw new Error(`Not supported: installVvppEngine`);
   },
   uninstallVvppEngine(/* engineId: EngineId */) {
-    throw new Error(`Not supported on Browser version: uninstallVvppEngine`);
+    throw new Error(`Not supported: uninstallVvppEngine`);
   },
   validateEngineDir(/* engineDir: string */) {
-    throw new Error(`Not supported on Browser version: validateEngineDir`);
+    throw new Error(`Not supported: validateEngineDir`);
   },
   reloadApp(/* obj: { isMultiEngineOffMode: boolean } */) {
-    throw new Error(`Not supported on Browser version: reloadApp`);
+    location.reload()
   },
 };
