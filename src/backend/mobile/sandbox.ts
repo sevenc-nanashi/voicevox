@@ -29,9 +29,9 @@ import {
 const toStaticPath = (fileName: string) => `/${fileName}`;
 
 /**
- * Browser版のSandBox実装
+ * スマホ版のSandBox実装
  * src/type/preload.tsのSandboxを変更した場合は、interfaceに追従した変更が必要
- * まだ開発中のため、Browser版の実装も同時に行えない場合は、メソッドを追加して throw new Error() する
+ * スマホ版では利用しない場合は、メソッドを追加して throw new Error() する
  */
 export const api: Sandbox = {
   getAppInfos() {
