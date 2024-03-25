@@ -123,9 +123,7 @@ export const api: Sandbox = {
     });
   },
   showProjectLoadDialog(/* obj: { title: string } */) {
-    throw new Error(
-      "スマホ版では現在ファイルの読み込みをサポートしていません"
-    );
+    throw new Error("スマホ版では現在ファイルの読み込みをサポートしていません");
   },
   showMessageDialog(obj: {
     type: "none" | "info" | "error" | "question" | "warning";
@@ -152,9 +150,7 @@ export const api: Sandbox = {
     );
   },
   showImportFileDialog(/* obj: { title: string } */) {
-    throw new Error(
-      "スマホ版では現在ファイルの読み込みをサポートしていません"
-    );
+    throw new Error("スマホ版では現在ファイルの読み込みをサポートしていません");
   },
   writeFile(obj: { filePath: string; buffer: ArrayBuffer }) {
     throw new Error(
@@ -308,7 +304,8 @@ export const api: Sandbox = {
   validateEngineDir(/* engineDir: string */) {
     throw new Error(`Not supported: validateEngineDir`);
   },
-  reloadApp(/* obj: { isMultiEngineOffMode: boolean } */) {
-    location.reload()
+  async reloadApp(obj: { isMultiEngineOffMode: boolean }) {
+    location.search = `?isMultiEngineOffMode=${obj.isMultiEngineOffMode}`;
+    location.reload();
   },
 };
