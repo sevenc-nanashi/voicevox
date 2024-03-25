@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { rm, readdir, readFile } from "fs/promises";
+import { rm } from "fs/promises";
 import treeKill from "tree-kill";
 
 import electron from "vite-plugin-electron";
@@ -37,19 +37,6 @@ export default defineConfig(async (options) => {
   const sourcemap: BuildOptions["sourcemap"] = shouldEmitSourcemap
     ? "inline"
     : false;
-  const themes = await readdir(path.resolve(__dirname, "public/themes")).then(
-    (files) =>
-      Promise.all(
-        files.map(async (themeFile: string) => {
-          return JSON.parse(
-            await readFile(
-              path.resolve(__dirname, "public/themes", themeFile),
-              "utf-8"
-            )
-          );
-        })
-      )
-  );
   return {
     root: path.resolve(__dirname, "src"),
     envDir: __dirname,
@@ -85,9 +72,6 @@ export default defineConfig(async (options) => {
         ],
       ],
       globals: true,
-    },
-    define: {
-      __availableThemes: JSON.stringify(themes),
     },
 
     plugins: [
