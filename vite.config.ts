@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { rm, readdir, readFile } from "fs/promises";
+import { rm } from "fs/promises";
 import treeKill from "tree-kill";
 
 import electron from "vite-plugin-electron";
@@ -13,6 +13,7 @@ import { quasar } from "@quasar/vite-plugin";
 
 const isElectron = process.env.VITE_TARGET === "electron";
 const isBrowser = process.env.VITE_TARGET === "browser";
+const isMobile = process.env.VITE_TARGET === "mobile";
 
 export default defineConfig(async (options) => {
   const packageName = process.env.npm_package_name;
@@ -36,19 +37,6 @@ export default defineConfig(async (options) => {
   const sourcemap: BuildOptions["sourcemap"] = shouldEmitSourcemap
     ? "inline"
     : false;
-  const themes = await readdir(path.resolve(__dirname, "public/themes")).then(
-    (files) =>
-      Promise.all(
-        files.map(async (themeFile: string) => {
-          return JSON.parse(
-            await readFile(
-              path.resolve(__dirname, "public/themes", themeFile),
-              "utf-8"
-            )
-          );
-        })
-      )
-  );
   return {
     root: path.resolve(__dirname, "src"),
     envDir: __dirname,
@@ -84,9 +72,6 @@ export default defineConfig(async (options) => {
         ],
       ],
       globals: true,
-    },
-    define: {
-      __availableThemes: JSON.stringify(themes),
     },
 
     plugins: [
@@ -129,7 +114,8 @@ export default defineConfig(async (options) => {
           },
         }),
       ],
-      isBrowser && injectBrowserPreloadPlugin(),
+      isBrowser && injectPreloadPlugin("browser"),
+      isMobile && injectPreloadPlugin("mobile"),
     ],
   };
 });
@@ -147,15 +133,15 @@ const cleanDistPlugin = (): Plugin => {
   };
 };
 
-const injectBrowserPreloadPlugin = (): Plugin => {
+const injectPreloadPlugin = (backend: string): Plugin => {
   return {
-    name: "inject-browser-preload",
+    name: "inject-preload",
     transformIndexHtml: {
       enforce: "pre" as const,
       transform: (html: string) =>
         html.replace(
-          "<!-- %BROWSER_PRELOAD% -->",
-          `<script type="module" src="./backend/browser/preload.ts"></script>`
+          "<!-- %PRELOAD% -->",
+          `<script type="module" src="./backend/${backend}/preload.ts"></script>`
         ),
     },
   };

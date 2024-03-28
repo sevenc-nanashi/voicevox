@@ -41,13 +41,4 @@ export type VoicevoxCorePlugin = {
   useUserDict: (obj: { wordsJson: string }) => Promise<void>;
 };
 
-const loadPlugin = () => {
-  const corePlugin = registerPlugin<VoicevoxCorePlugin>("VoicevoxCore");
-
-  // @ts-expect-error 定義時だけは無視する
-  window.plugins = {
-    voicevoxCore: corePlugin,
-  };
-};
-
-export default loadPlugin;
+export const corePlugin = registerPlugin<VoicevoxCorePlugin>("VoicevoxCore");
