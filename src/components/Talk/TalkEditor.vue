@@ -117,14 +117,13 @@
           </template>
         </QSplitter>
 
-        <ToolBar v-if="!$q.platform.is.desktop" />
-
         <QResizeObserver
           ref="resizeObserverRef"
           @resize="({ height }) => changeAudioDetailPaneMaxHeight(height)"
         />
       </QPage>
     </QPageContainer>
+    <ToolBar v-if="!$q.platform.is.desktop" />
   </QLayout>
 </template>
 
