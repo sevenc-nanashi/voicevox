@@ -89,7 +89,7 @@ class CorePlugin : Plugin() {
                 return
             }
             vvms.sortWith(compareBy {
-                it.name.split(".")[0].length
+                it.name.split(".")[0].toInt()
             })
             voiceModels = vvms.map {
                 VoiceModel(it.absolutePath)
@@ -102,6 +102,7 @@ class CorePlugin : Plugin() {
             tempDir.mkdirs()
             Os.setenv("TMPDIR", tempDir.absolutePath, true)
 
+            Log.i("CorePlugin", "Ready")
             call.resolve()
         } catch (e: Exception) {
             call.reject(e.message)
@@ -287,6 +288,10 @@ class CorePlugin : Plugin() {
 
         try {
             val words = gson.fromJson(wordsJson, Array<UserDict.Word>::class.java).asList()
+            if (words.isEmpty()) {
+                call.resolve()
+                return
+            }
             val userDict = UserDict()
             words.forEach { word ->
                 userDict.addWord(word)

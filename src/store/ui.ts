@@ -45,6 +45,7 @@ export function withProgress<T>(
 }
 
 export const uiStoreState: UiStoreState = {
+  openedEditor: undefined,
   uiLockCount: 0,
   dialogLockCount: 0,
   reloadingLock: false,
@@ -61,6 +62,7 @@ export const uiStoreState: UiStoreState = {
   isDictionaryManageDialogOpen: false,
   isEngineManageDialogOpen: false,
   isUpdateNotificationDialogOpen: false,
+  isImportMidiDialogOpen: false,
   isMaximized: false,
   isPinned: false,
   isFullscreen: false,
@@ -69,6 +71,15 @@ export const uiStoreState: UiStoreState = {
 };
 
 export const uiStore = createPartialStore<UiStoreTypes>({
+  SET_OPENED_EDITOR: {
+    mutation(state, { editor }) {
+      state.openedEditor = editor;
+    },
+    action({ commit }, { editor }) {
+      commit("SET_OPENED_EDITOR", { editor });
+    },
+  },
+
   UI_LOCKED: {
     getter(state) {
       return state.uiLockCount > 0;
@@ -171,6 +182,7 @@ export const uiStore = createPartialStore<UiStoreTypes>({
         isCharacterOrderDialogOpen?: boolean;
         isEngineManageDialogOpen?: boolean;
         isUpdateNotificationDialogOpen?: boolean;
+        isImportMidiDialogOpen?: boolean;
       }
     ) {
       for (const [key, value] of Object.entries(dialogState)) {
