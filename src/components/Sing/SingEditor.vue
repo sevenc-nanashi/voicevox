@@ -90,18 +90,18 @@ onetimeWatch(
         },
       });
 
-      await store.dispatch("SET_VOLUME", { volume: 0.6 });
-      await store.dispatch("SET_PLAYHEAD_POSITION", { position: 0 });
-      await store.dispatch("SET_LEFT_LOCATOR_POSITION", {
-        position: 0,
-      });
-      await store.dispatch("SET_RIGHT_LOCATOR_POSITION", {
-        position: 480 * 4 * 16,
-      });
+      // CI上のe2eテストのNemoエンジンには歌手がいないためエラーになるのでワークアラウンド
+      // FIXME: 歌手をいると見せかけるmock APIを作り、ここのtry catchを削除する
+      try {
+        await store.dispatch("SET_SINGER", {});
+      } catch (e) {
+        window.backend.logError(e);
+      }
     }
-    isCompletedInitialStartup.value = true;
 
-    await store.dispatch("SET_SINGER", {});
+    await store.dispatch("SET_VOLUME", { volume: 0.6 });
+    await store.dispatch("SET_PLAYHEAD_POSITION", { position: 0 });
+    isCompletedInitialStartup.value = true;
 
     return "unwatch";
   },

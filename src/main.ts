@@ -2,11 +2,8 @@ import { createApp } from "vue";
 import { createGtm } from "@gtm-support/vue-gtm";
 import { Quasar, Dialog, Loading, Notify } from "quasar";
 import iconSet from "quasar/icon-set/material-icons";
-import { Capacitor } from "@capacitor/core";
-import router from "./router";
 import { store, storeKey } from "./store";
 import { ipcMessageReceiver } from "./plugins/ipcMessageReceiverPlugin";
-import * as mobile from "./backend/mobile";
 import { hotkeyPlugin } from "./plugins/hotkeyPlugin";
 import App from "@/components/App.vue";
 import { markdownItPlugin } from "@/plugins/markdownItPlugin";
@@ -19,23 +16,13 @@ import "./styles/_index.scss";
 //       ため、それを防止するため自前でdataLayerをあらかじめ用意する
 window.dataLayer = [];
 
-if (Capacitor.isNativePlatform()) {
-  // eslint-disable-next-line no-console
-  console.log("Running in Capacitor");
-  mobile.loadMock();
-  mobile.loadPlugin();
-  mobile.loadCoreBasedApi();
-}
-
 document.body.setAttribute("data-target", import.meta.env.VITE_TARGET);
 
 createApp(App)
   .use(store, storeKey)
-  .use(router)
   .use(
     createGtm({
       id: import.meta.env.VITE_GTM_CONTAINER_ID ?? "GTM-DUMMY",
-      vueRouter: router,
       // NOTE: 最初はgtm.jsを読まず、プライバシーポリシーに同意後に読み込む
       enabled: false,
     })

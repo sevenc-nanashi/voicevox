@@ -57,14 +57,14 @@ const headerButtons = computed(() => [
   {
     icon: "undo",
     onClick: () => {
-      store.dispatch("UNDO");
+      store.dispatch("UNDO", { editor: "talk" });
     },
     disable: !canUndo.value,
   },
   {
     icon: "redo",
     onClick: () => {
-      store.dispatch("REDO");
+      store.dispatch("REDO", { editor: "talk" });
     },
     disable: !canRedo.value,
   },
