@@ -1,5 +1,5 @@
 {
-  "keystorePath": "./android/debug.keystore",
+  "keystorePath": "./debug.keystore",
   "keystorePassword": "android",
   "keystoreAlias": "androiddebugkey",
   "keystoreAliasPassword": "android"
