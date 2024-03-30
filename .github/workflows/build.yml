@@ -124,6 +124,14 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
+      - uses: easimon/maximize-build-space@v10
+        with:
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+
       - uses: actions/checkout@v3
 
       # NOTE: The default sed of macOS is BSD sed.
@@ -508,12 +516,18 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
-          java-version: '17'
-          cache: 'gradle'
+          distribution: "adopt"
+          java-version: "17"
+          cache: "gradle"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Add Android SDK to PATH
+        run: |
+          versions=($ANDROID_SDK_ROOT/build-tools/*)
+          latest_version=${versions[${#versions[@]}-1]}
+          echo "$latest_version" >> $GITHUB_PATH
 
       - name: Cache gradle
         uses: actions/cache@v3
@@ -605,4 +619,3 @@ jobs:
             /tmp/build_artifacts/VOICEVOX-${{ env.VOICEVOX_EDITOR_VERSION }}.apk
             /tmp/build_artifacts/VOICEVOX-${{ env.VOICEVOX_EDITOR_VERSION }}.aab
           target_commitish: ${{ github.sha }}
-
