@@ -576,6 +576,7 @@ jobs:
 
       - name: Build Android
         run: |
+          chmod +x ./android/gradlew
           npm run cap:build:android -- --androidreleasetype APK
           npm run cap:build:android -- --androidreleasetype AAB
 
