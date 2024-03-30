@@ -1,5 +1,6 @@
 /// <reference types="@capacitor/splash-screen" />
 import { networkInterfaces } from "os";
+import fs from "fs";
 import dotenv from "dotenv";
 import { CapacitorConfig } from "@capacitor/cli";
 
@@ -10,6 +11,14 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
+    },
+  },
+  android: {
+    buildOptions: {
+      signingType: "apksigner",
+      ...(fs.existsSync("./android/build-options.json")
+        ? JSON.parse(fs.readFileSync("./android/build-options.json", "utf-8"))
+        : {}),
     },
   },
 };
