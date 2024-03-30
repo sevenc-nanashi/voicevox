@@ -125,6 +125,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: easimon/maximize-build-space@v10
+        if: startsWith(matrix.os, 'ubuntu-')
         with:
           remove-dotnet: true
           remove-android: true
