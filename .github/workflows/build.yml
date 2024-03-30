@@ -56,7 +56,6 @@ jobs:
           - windows-cpu-prepackage
           - windows-directml-prepackage
           - macos-cpu-prepackage
-          - android-cpu-prepackage
         include:
           # Linux NVIDIA GPU
           - artifact_name: linux-nvidia-prepackage
@@ -555,10 +554,10 @@ jobs:
         run: |
           # GTM ID
           gtm_id=$(jq -er '.gtm_container_id' resource/editor/metas.json)
-          $sed -i 's/VITE_GTM_CONTAINER_ID=.*/VITE_GTM_CONTAINER_ID='"$gtm_id"'/' .env.production
+          sed -i 's/VITE_GTM_CONTAINER_ID=.*/VITE_GTM_CONTAINER_ID='"$gtm_id"'/' .env.production
 
           # Engine host
-          $sed -i 's|http://127.0.0.1:50021|local|g' .env.production
+          sed -i 's|http://127.0.0.1:50021|local|g' .env.production
 
       - name: Generate public/licenses.json
         run: npm run license:generate -- -o public/licenses.json
