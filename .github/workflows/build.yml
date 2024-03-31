@@ -549,7 +549,9 @@ jobs:
             ${{ env.cache-version }}-gradle-configuration-cache
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm run mobile:install
 
       - name: Checkout Product Version Resource
         uses: actions/checkout@v3
@@ -602,8 +604,8 @@ jobs:
       - name: Build Android
         run: |
           chmod +x ./android/gradlew
-          npm run cap:build:android -- --androidreleasetype APK
-          npm run cap:build:android -- --androidreleasetype AAB
+          npm run mobile:build:android -- --androidreleasetype APK --signing-type apksigner
+          npm run mobile:build:android -- --androidreleasetype AAB --signing-type jarsigner
 
       - name: Rename
         run: |

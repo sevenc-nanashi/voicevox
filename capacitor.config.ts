@@ -1,8 +1,23 @@
 /// <reference types="@capacitor/splash-screen" />
 import { networkInterfaces } from "os";
 import fs from "fs";
+import path from "path";
 import dotenv from "dotenv";
 import { CapacitorConfig } from "@capacitor/cli";
+
+let keystorePath = "";
+let keystorePassword = "";
+let keystoreAlias = "";
+let keystoreAliasPassword = "";
+if (fs.existsSync("./android/build-options.json")) {
+  const buildOptions = JSON.parse(
+    fs.readFileSync("./android/build-options.json", "utf-8")
+  );
+  keystorePath = path.resolve(buildOptions.keystorePath);
+  keystorePassword = buildOptions.keystorePassword;
+  keystoreAlias = buildOptions.keystoreAlias;
+  keystoreAliasPassword = buildOptions.keystoreAliasPassword;
+}
 
 const config: CapacitorConfig = {
   appId: "jp.hiroshiba.voicevox",
@@ -15,10 +30,10 @@ const config: CapacitorConfig = {
   },
   android: {
     buildOptions: {
-      signingType: "apksigner",
-      ...(fs.existsSync("./android/build-options.json")
-        ? JSON.parse(fs.readFileSync("./android/build-options.json", "utf-8"))
-        : {}),
+      keystorePath,
+      keystorePassword,
+      keystoreAlias,
+      keystoreAliasPassword,
     },
   },
 };
