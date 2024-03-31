@@ -524,7 +524,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Add Android SDK to PATH
+      - name: Add build-tools to PATH
         run: |
           versions=($ANDROID_SDK_ROOT/build-tools/*)
           latest_version=${versions[${#versions[@]}-1]}
