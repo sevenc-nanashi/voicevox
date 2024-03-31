@@ -59,13 +59,10 @@ TODO
 
 ```jsonc
 {
-  // keystore のパス。
+  // 相対パスはプロジェクトルートから解決されます。
   "keystorePath": "./android/debug.keystore",
-  // keystore のパスワード。
   "keystorePassword": "android",
-  // keystore のエイリアス。
   "keystoreAlias": "androiddebugkey",
-  // keystore のエイリアスのパスワード。
   "keystoreAliasPassword": "android"
 }
 ```
