@@ -616,7 +616,7 @@ jobs:
       - name: Rename
         run: |
           mkdir /tmp/build_artifacts
-          cp android/app/build/outputs/apk/release/app-release-signed.aab /tmp/build_artifacts/VOICEVOX-${{ env.VOICEVOX_EDITOR_VERSION }}.aab
+          cp android/app/build/outputs/bundle/release/app-release-signed.aab /tmp/build_artifacts/VOICEVOX-${{ env.VOICEVOX_EDITOR_VERSION }}.aab
           cp android/app/build/outputs/apk/release/app-release-signed.apk /tmp/build_artifacts/VOICEVOX-${{ env.VOICEVOX_EDITOR_VERSION }}.apk
 
       - name: Upload Android binary to Artifacts
