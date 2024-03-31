@@ -600,6 +600,9 @@ jobs:
       - name: Setup Credentials (Release)
         if: github.event.inputs.code_signing == 'true'
         run: |
+          # メモ：
+          # ANDROID_BUILD_OPTIONSはbuild-options.jsonを、
+          # ANDROID_KEYSTOREはkeystore.jksをbase64エンコードしたものを想定
           cat <<EOF > android/build-options.json
           ${{ secrets.ANDROID_BUILD_OPTIONS }}
           EOF
