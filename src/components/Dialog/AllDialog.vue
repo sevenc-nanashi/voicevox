@@ -22,7 +22,7 @@
   <UpdateNotificationDialogContainer
     :can-open-dialog="canOpenNotificationDialog"
   />
-  <ImportMidiDialog v-model="isImportMidiDialogOpenComputed" />
+  <ImportExternalDialog v-model="isImportMidiDialogOpenComputed" />
 </template>
 
 <script setup lang="ts">
@@ -38,7 +38,7 @@ import AcceptTermsDialog from "@/components/Dialog/AcceptTermsDialog.vue";
 import DictionaryManageDialog from "@/components/Dialog/DictionaryManageDialog.vue";
 import EngineManageDialog from "@/components/Dialog/EngineManageDialog.vue";
 import UpdateNotificationDialogContainer from "@/components/Dialog/UpdateNotificationDialog/Container.vue";
-import ImportMidiDialog from "@/components/Dialog/ImportMidiDialog.vue";
+import ImportExternalDialog from "@/components/Dialog/ImportExternalDialog.vue";
 import { useStore } from "@/store";
 import { filterCharacterInfosByStyleType } from "@/store/utility";
 

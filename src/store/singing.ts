@@ -25,7 +25,6 @@ import {
 } from "./type";
 import { sanitizeFileName } from "./utility";
 import { EngineId, NoteId, StyleId } from "@/type/preload";
-import { Midi } from "@/sing/midi";
 import { FrameAudioQuery, Note as NoteForRequestToEngine } from "@/openapi";
 import { ResultError, getValueOrThrow } from "@/type/result";
 import {
@@ -1678,12 +1677,9 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
     }),
   },
 
-  IMPORT_MIDI_FILE: {
+  IMPORT_EXTERNAL_FILE: {
     action: createUILockAction(
-      async (
-        { state, dispatch },
-        { filePath, trackIndex = 0 }: { filePath: string; trackIndex: number },
-      ) => {
+      async ({ state, dispatch }, { data, trackIndex }) => {
         const convertPosition = (
           position: number,
           sourceTpqn: number,
@@ -1752,41 +1748,36 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
           });
         };
 
-        // NOTE: トラック選択のために一度ファイルを読み込んでいるので、Midiを渡すなどでもよさそう
-        const midiData = getValueOrThrow(
-          await window.backend.readFile({ filePath }),
-        );
-        const midi = new Midi(midiData);
-        const midiTpqn = midi.ticksPerBeat;
-        const midiTempos = midi.tempos;
-        const midiTimeSignatures = midi.timeSignatures;
+        const ufTpqn = 480;
+        const ufTempos = data.project.tempos;
+        const ufTimeSignatures = data.project.timeSignatures;
 
-        const midiNotes = midi.tracks[trackIndex].notes;
+        const ufNotes = data.project.tracks[trackIndex].notes;
 
-        midiNotes.sort((a, b) => a.ticks - b.ticks);
+        ufNotes.sort((a, b) => a.tickOn - b.tickOn);
 
         const tpqn = DEFAULT_TPQN;
 
-        let notes = midiNotes.map((value): Note => {
+        let notes = ufNotes.map((value): Note => {
           return {
             id: NoteId(uuidv4()),
-            position: convertPosition(value.ticks, midiTpqn, tpqn),
+            position: convertPosition(value.tickOn, ufTpqn, tpqn),
             duration: convertDuration(
-              value.ticks,
-              value.ticks + value.duration,
-              midiTpqn,
+              value.tickOn,
+              value.tickOff,
+              ufTpqn,
               tpqn,
             ),
-            noteNumber: value.noteNumber,
-            lyric: value.lyric || getDoremiFromNoteNumber(value.noteNumber),
+            noteNumber: value.key,
+            lyric: value.lyric || getDoremiFromNoteNumber(value.key),
           };
         });
         // ノートの重なりを考慮して、一番音が高いノート（トップノート）のみインポートする
         notes = getTopNotes(notes);
 
-        let tempos = midiTempos.map((value): Tempo => {
+        let tempos = ufTempos.map((value): Tempo => {
           return {
-            position: convertPosition(value.ticks, midiTpqn, tpqn),
+            position: convertPosition(value.tickPosition, ufTpqn, tpqn),
             bpm: round(value.bpm, 2),
           };
         });
@@ -1796,14 +1787,15 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
         let timeSignatures: TimeSignature[] = [];
         let tsPosition = 0;
         let measureNumber = 1;
-        for (let i = 0; i < midiTimeSignatures.length; i++) {
-          const midiTs = midiTimeSignatures[i];
+        for (let i = 0; i < ufTimeSignatures.length; i++) {
+          const midiTs = ufTimeSignatures[i];
           const beats = midiTs.numerator;
           const beatType = midiTs.denominator;
           timeSignatures.push({ measureNumber, beats, beatType });
-          if (i < midiTimeSignatures.length - 1) {
-            const nextTsTicks = midiTimeSignatures[i + 1].ticks;
-            const nextTsPos = convertPosition(nextTsTicks, midiTpqn, tpqn);
+          if (i < ufTimeSignatures.length - 1) {
+            const nextTsTicks =
+              ufTimeSignatures[i + 1].measurePosition * ufTpqn;
+            const nextTsPos = convertPosition(nextTsTicks, ufTpqn, tpqn);
             const tsDuration = nextTsPos - tsPosition;
             const measureDuration = getMeasureDuration(beats, beatType, tpqn);
             tsPosition = nextTsPos;

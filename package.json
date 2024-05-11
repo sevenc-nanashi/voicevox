@@ -3,6 +3,7 @@
   "version": "999.999.999",
   "author": "Hiroshiba Kazuyuki",
   "private": true,
+  "type": "module",
   "main": "./dist/main.js",
   "engines": {
     "node": ">=20.12.2 <21",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@gtm-support/vue-gtm": "1.2.3",
     "@quasar/extras": "1.10.10",
+    "@sevenc-nanashi/utaformatix-ts": "npm:@jsr/sevenc-nanashi__utaformatix-ts@0.0.4",
     "async-lock": "1.4.0",
     "buffer": "6.0.3",
     "clone-deep": "4.0.1",
