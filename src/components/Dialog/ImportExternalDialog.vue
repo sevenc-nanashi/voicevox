@@ -17,7 +17,7 @@
           :error-message="externalFileError"
           :error="!!externalFileError"
           placeholder="ファイルを選択してください"
-          @input="handleMidiFileChange"
+          @input="handleExternalFileChange"
         />
         <QSelect
           v-if="external"
@@ -71,10 +71,10 @@ const { dialogRef, onDialogOK, onDialogCancel } = useDialogPluginComponent();
 
 const store = useStore();
 
-// MIDIファイル
+// 外部ファイル
 const externalFile = ref<File | null>(null);
 
-// MIDIファイルエラー
+// エラー
 const externalFileError = computed(() => {
   if (externalFile.value && !external.value) {
     return "外部ファイルの読み込みに失敗しました";
@@ -89,7 +89,7 @@ const externalFileError = computed(() => {
   }
   return undefined;
 });
-// MIDIデータ
+// 外部ファイルのデータ
 const external = ref<Project | null>(null);
 // トラック
 const tracks = computed(() => {
@@ -116,8 +116,8 @@ const initializeValues = () => {
   selectedTrack.value = null;
 };
 
-// MIDIファイル変更時
-const handleMidiFileChange = async (event: Event) => {
+// ファイル変更時
+const handleExternalFileChange = async (event: Event) => {
   if (!(event.target instanceof HTMLInputElement)) {
     throw new Error("Event target is not an HTMLInputElement");
   }
@@ -129,7 +129,7 @@ const handleMidiFileChange = async (event: Event) => {
     throw new Error("No file selected");
   }
 
-  // 既存のMIDIデータおよび選択中のトラックをクリア
+  // 既存のデータおよび選択中のトラックをクリア
   external.value = null;
   selectedTrack.value = null;
 

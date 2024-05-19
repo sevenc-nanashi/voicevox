@@ -22,7 +22,7 @@
   <UpdateNotificationDialogContainer
     :can-open-dialog="canOpenNotificationDialog"
   />
-  <ImportExternalDialog v-model="isImportMidiDialogOpenComputed" />
+  <ImportExternalDialog v-model="isImportExternalDialogOpenComputed" />
 </template>
 
 <script setup lang="ts">
@@ -160,12 +160,12 @@ const canOpenNotificationDialog = computed(() => {
   );
 });
 
-// MIDIインポート時の設定ダイアログ
-const isImportMidiDialogOpenComputed = computed({
-  get: () => store.state.isImportMidiDialogOpen,
+// 外部ファイルインポート時の設定ダイアログ
+const isImportExternalDialogOpenComputed = computed({
+  get: () => store.state.isImportExternalDialogOpen,
   set: (val) =>
     store.dispatch("SET_DIALOG_OPEN", {
-      isImportMidiDialogOpen: val,
+      isImportExternalDialogOpen: val,
     }),
 });
 </script>

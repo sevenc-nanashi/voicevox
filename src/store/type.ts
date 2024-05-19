@@ -1017,14 +1017,6 @@ export type SingingStoreTypes = {
     action(payload: { data: Project; trackIndex: number }): void;
   };
 
-  IMPORT_MUSICXML_FILE: {
-    action(payload: { filePath?: string }): void;
-  };
-
-  IMPORT_UST_FILE: {
-    action(payload: { filePath?: string }): void;
-  };
-
   EXPORT_WAVE_FILE: {
     action(payload: { filePath?: string }): SaveResultObject;
   };
@@ -1639,7 +1631,7 @@ export type UiStoreState = {
   isDictionaryManageDialogOpen: boolean;
   isEngineManageDialogOpen: boolean;
   isUpdateNotificationDialogOpen: boolean;
-  isImportMidiDialogOpen: boolean;
+  isImportExternalDialogOpen: boolean;
   isMaximized: boolean;
   isPinned: boolean;
   isFullscreen: boolean;
@@ -1711,7 +1703,7 @@ export type UiStoreTypes = {
       isCharacterOrderDialogOpen?: boolean;
       isEngineManageDialogOpen?: boolean;
       isUpdateNotificationDialogOpen?: boolean;
-      isImportMidiDialogOpen?: boolean;
+      isImportExternalDialogOpen?: boolean;
     };
     action(payload: {
       isDefaultStyleSelectDialogOpen?: boolean;
@@ -1725,7 +1717,7 @@ export type UiStoreTypes = {
       isCharacterOrderDialogOpen?: boolean;
       isEngineManageDialogOpen?: boolean;
       isUpdateNotificationDialogOpen?: boolean;
-      isImportMidiDialogOpen?: boolean;
+      isImportExternalDialogOpen?: boolean;
     }): void;
   };
 
