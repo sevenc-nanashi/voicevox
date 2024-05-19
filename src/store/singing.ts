@@ -1748,11 +1748,17 @@ export const singingStore = createPartialStore<SingingStoreTypes>({
           });
         };
 
-        const ufTpqn = 480;
-        const ufTempos = data.project.tempos;
-        const ufTimeSignatures = data.project.timeSignatures;
+        const processedData = data.convertJapaneseLyrics(
+          "auto",
+          "KanaCv",
+          true,
+        );
 
-        const ufNotes = data.project.tracks[trackIndex].notes;
+        const ufTpqn = 480;
+        const ufTempos = processedData.tempos;
+        const ufTimeSignatures = processedData.timeSignatures;
+
+        const ufNotes = processedData.tracks[trackIndex].notes;
 
         ufNotes.sort((a, b) => a.tickOn - b.tickOn);
 

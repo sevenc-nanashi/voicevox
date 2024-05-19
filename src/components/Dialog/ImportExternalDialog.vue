@@ -60,11 +60,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useDialogPluginComponent } from "quasar";
-import {
-  UfData,
-  parseAny,
-  parseFunctions,
-} from "@sevenc-nanashi/utaformatix-ts";
+import { Project, parseFunctions } from "@sevenc-nanashi/utaformatix-ts";
 import { useStore } from "@/store";
 
 const extensions = [...Object.keys(parseFunctions)]
@@ -83,10 +79,10 @@ const externalFileError = computed(() => {
   if (externalFile.value && !external.value) {
     return "外部ファイルの読み込みに失敗しました";
   } else if (externalFile.value && external.value) {
-    if (!external.value.project.tracks.length) {
+    if (!external.value.tracks.length) {
       return "トラックがありません";
     } else if (
-      external.value.project.tracks.every((track) => track.notes.length === 0)
+      external.value.tracks.every((track) => track.notes.length === 0)
     ) {
       return "ノートがありません";
     }
@@ -94,7 +90,7 @@ const externalFileError = computed(() => {
   return undefined;
 });
 // MIDIデータ
-const external = ref<UfData | null>(null);
+const external = ref<Project | null>(null);
 // トラック
 const tracks = computed(() => {
   if (!external.value) {
@@ -102,7 +98,7 @@ const tracks = computed(() => {
   }
   // トラックリストを生成
   // "トラックNo: トラック名 / ノート数" の形式で表示
-  return external.value.project.tracks.map((track, index) => ({
+  return external.value.tracks.map((track, index) => ({
     label: `${index + 1}: ${track.name || "（トラック名なし）"} / ノート数：${
       track.notes.length
     }`,
@@ -140,8 +136,8 @@ const handleMidiFileChange = async (event: Event) => {
   const file = input.files[0];
   try {
     // 外部ファイルをパース
-    external.value = await parseAny(file);
-    selectedTrack.value = external.value.project.tracks.findIndex(
+    external.value = await Project.fromAny(file);
+    selectedTrack.value = external.value.tracks.findIndex(
       (track) => track.notes.length > 0,
     );
     if (selectedTrack.value === -1) {
