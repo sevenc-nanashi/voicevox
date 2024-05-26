@@ -1,11 +1,11 @@
 import { EngineInfo, envEngineInfoSchema } from "@/type/preload";
 
-const baseEngineInfo = envEngineInfoSchema
+const baseEngineInfos = envEngineInfoSchema
   .array()
-  .parse(JSON.parse(import.meta.env.VITE_DEFAULT_ENGINE_INFOS))[0];
+  .parse(JSON.parse(import.meta.env.VITE_DEFAULT_ENGINE_INFOS));
 
-export const defaultEngine: EngineInfo = {
-  ...baseEngineInfo,
+export const defaultEngines: EngineInfo[] = baseEngineInfos.map((info) => ({
+  ...info,
   type: "default",
-};
+}));
 export const directoryHandleStoreKey = "directoryHandle";

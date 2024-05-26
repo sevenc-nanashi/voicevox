@@ -1,8 +1,8 @@
 import AsyncLock from "async-lock";
-import { defaultEngine, directoryHandleStoreKey } from "./contract";
+import { defaultEngines, directoryHandleStoreKey } from "./contract";
 
 import { BaseConfigManager, Metadata } from "@/backend/common/ConfigManager";
-import { ConfigType, EngineId, engineSettingSchema } from "@/type/preload";
+import { ConfigType, engineSettingSchema } from "@/type/preload";
 
 const dbName = `${import.meta.env.VITE_APP_NAME}-web`;
 const settingStoreKey = "config";
@@ -13,7 +13,6 @@ const entryKey = "value";
 let configManager: BrowserConfigManager | undefined;
 
 const configManagerLock = new AsyncLock();
-const defaultEngineId = EngineId(defaultEngine.uuid);
 
 export async function getConfigManager() {
   await configManagerLock.acquire("configManager", async () => {
@@ -116,9 +115,9 @@ class BrowserConfigManager extends BaseConfigManager {
 
   protected getDefaultConfig() {
     const baseConfig = super.getDefaultConfig();
-    baseConfig.engineSettings[defaultEngineId] ??= engineSettingSchema.parse(
-      {},
-    );
+    for (const engine of defaultEngines) {
+      baseConfig.engineSettings[engine.uuid] ??= engineSettingSchema.parse({});
+    }
     return baseConfig;
   }
 }
