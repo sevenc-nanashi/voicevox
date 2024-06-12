@@ -9,13 +9,14 @@ import {
   isMac,
 } from "@/type/preload";
 import { AccentPhrase, Mora } from "@/openapi";
+import { t } from "@/domain/i18n/t";
 
 export const DEFAULT_STYLE_NAME = "ノーマル";
 
 export const formatCharacterStyleName = (
   characterName: string,
   styleName = DEFAULT_STYLE_NAME,
-) => `${characterName}（${styleName}）`;
+) => t`${characterName}（${styleName}）`;
 
 export function sanitizeFileName(fileName: string): string {
   // \x00 - \x1f: ASCII 制御文字

@@ -1,3 +1,5 @@
-"エンジン起動中・・・": null
-"データ準備中・・・": null
-"{portFrom}番ポートが使用中であるため {engineName} は、{portTo}番ポートで起動しました": null
+"{characterName}（{styleName}）": "{characterName} ({styleName})"
+"エンジン起動中・・・": "Starting Engine..."
+"データ準備中・・・": "Preparing Data..."
+"{portFrom}番ポートが使用中であるため {engineName} は、{portTo}番ポートで起動しました": "{engineName} is started on port {portTo} because port {portFrom} is already in use"
+

@@ -7,6 +7,7 @@ import electron from "vite-plugin-electron";
 import tsconfigPaths from "vite-tsconfig-paths";
 import vue from "@vitejs/plugin-vue";
 import checker from "vite-plugin-checker";
+import yaml from "@rollup/plugin-yaml";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import { BuildOptions, defineConfig, loadEnv, Plugin } from "vite";
 import { quasar } from "@quasar/vite-plugin";
@@ -72,6 +73,7 @@ export default defineConfig((options) => {
       nodePolyfills({
         include: ["path"],
       }),
+      yaml(),
       options.mode !== "test" &&
         checker({
           overlay: false,

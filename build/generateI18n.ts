@@ -6,6 +6,7 @@ import {
   ESLintProgram,
 } from "vue-eslint-parser/ast";
 import { glob } from "glob";
+import yaml from "js-yaml";
 
 const textLabels: string[] = [];
 
@@ -47,6 +48,12 @@ const processToken = (
         if (declaration.init) {
           processToken(declaration.init, program);
         }
+      }
+      break;
+
+    case "ExportNamedDeclaration":
+      if (token.declaration) {
+        processToken(token.declaration, program);
       }
       break;
 
@@ -143,7 +150,7 @@ const processChild = (token: Node, program: ESLintProgram) => {
 
 (async () => {
   // const vues = await glob("./src/components/Talk/TalkEditor.vue", {});
-  const vues = await glob("./src/**/*.vue", {});
+  const vues = await glob("./src/**/*.{vue,ts}", {});
   for (const vue of vues) {
     const parsed = vueParse(await fs.promises.readFile(vue, "utf-8"), {
       sourceType: "module",
@@ -158,9 +165,12 @@ const processChild = (token: Node, program: ESLintProgram) => {
     }
   }
 
+  const existing = yaml.load(
+    await fs.promises.readFile("./src/domain/i18n/en.yml", "utf-8"),
+  ) as Record<string, string>;
   const translations = textLabels
     .map((text) => {
-      return `${JSON.stringify(text)}: null`;
+      return `${JSON.stringify(text)}: ${existing[text] ? JSON.stringify(existing[text]) : null}`;
     })
     .join("\n");
 
