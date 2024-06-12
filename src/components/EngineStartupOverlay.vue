@@ -15,8 +15,8 @@
       <div class="q-mt-xs">
         {{
           allEngineState === "STARTING"
-            ? "エンジン起動中・・・"
-            : "データ準備中・・・"
+            ? t`エンジン起動中・・・`
+            : t`データ準備中・・・`
         }}
       </div>
 
@@ -40,6 +40,7 @@
 import { computed, ref, watch } from "vue";
 import { useStore } from "@/store";
 import { EngineState } from "@/store/type";
+import { t } from "@/domain/i18n/t";
 
 const store = useStore();
 const props = defineProps<{

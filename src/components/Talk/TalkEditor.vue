@@ -141,6 +141,7 @@ import {
 } from "@/type/preload";
 import { useHotkeyManager } from "@/plugins/hotkeyPlugin";
 import onetimeWatch from "@/helpers/onetimeWatch";
+import { t } from "@/domain/i18n/t";
 
 const props = defineProps<{
   isEnginesReady: boolean;
@@ -558,7 +559,7 @@ watch(
       if (!altPort) return;
 
       store.dispatch("SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON", {
-        message: `${altPort.from}番ポートが使用中であるため ${engineName} は、${altPort.to}番ポートで起動しました`,
+        message: t`${/* portFrom */ altPort.from}番ポートが使用中であるため ${engineName} は、${/* portTo*/ altPort.to}番ポートで起動しました`,
         icon: "compare_arrows",
         tipName: "engineStartedOnAltPort",
       });
