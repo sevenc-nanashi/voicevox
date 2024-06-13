@@ -1,44 +1,50 @@
-"{characterName}（{styleName}）": "{characterName} ({styleName})"
-"エンジン起動中・・・": "Starting Engine..."
-"データ準備中・・・": "Preparing Data..."
-"有効なスタイルが選択されていません": "Invalid Style Selected"
-"選択可能なスタイルがありません": "No Styles Available"
-"選択解除": "Deselect"
-"音声書き出し": "Export Voice"
-"選択音声を書き出し": "Export Selected Voice"
-"音声を繋げて書き出し": "Export Voice Concatenated"
-"テキストを繋げて書き出し": "Export Text Concatenated"
-"テキスト読み込み": "Import Text"
-"{portFrom}番ポートが使用中であるため {engineName} は、{portTo}番ポートで起動しました": "{engineName} started on port {portTo} because port {portFrom} is already in use"
-"話速": "Speed"
-"音高": "Pitch"
-"抑揚": "Intonation"
-"音量": "Volume"
-"開始無音": "Pre Silence"
-"終了無音": "Post Silence"
-"ｱｸｾﾝﾄ": "ACC"
-"ｲﾝﾄﾈｰｼｮﾝ": "INT"
-"長さ": "LEN"
-"トーク": "Talk"
-"ソング": "Song"
-"エンジンの管理": "Manage Engine"
-"マルチエンジンをオンにして再読み込み": "Turn on Multi-Engine and Reload"
-"ファイル": "File"
-"新規プロジェクト": "New Project"
-"プロジェクトを上書き保存": "Save Project"
-"プロジェクトを名前を付けて保存": "Save Project As"
-"プロジェクトを読み込む": "Load Project"
-"最近使ったプロジェクト": "Recent Projects"
-"編集": "Edit"
-"元に戻す": "Undo"
-"やり直す": "Redo"
-"エンジン": "Engine"
-"設定": "Settings"
-"キー割り当て": "Key Bindings"
-"ツールバーのカスタマイズ": "Customize Toolbar"
-"キャラクター並び替え・試聴": "Character Order & Preview"
-"デフォルトスタイル": "Default Style"
-"読み方＆アクセント辞書": "Pronunciation & Accent Dictionary"
-"オプション": "Options"
-"ヘルプ": "Help"
-
+'{characterName}（{styleName}）': '{characterName} ({styleName})'
+エンジン起動中・・・: Starting Engine...
+データ準備中・・・: Preparing Data...
+有効なスタイルが選択されていません: Invalid Style Selected
+選択可能なスタイルがありません: No Styles Available
+選択解除: Deselect
+音声書き出し: Export Voice
+選択音声を書き出し: Export Selected Voice
+音声を繋げて書き出し: Export Voice Concatenated
+テキストを繋げて書き出し: Export Text Concatenated
+テキスト読み込み: Import Text
+'{portFrom}番ポートが使用中であるため {engineName} は、{portTo}番ポートで起動しました': >-
+  {engineName} started on port {portTo} because port {portFrom} is already in
+  use
+話速: Speed
+音高: Pitch
+抑揚: Intonation
+音量: Volume
+開始無音: Pre Silence
+終了無音: Post Silence
+ｱｸｾﾝﾄ: Accent
+ｲﾝﾄﾈｰｼｮﾝ: Intonation
+長さ: Length
+トーク: Talk
+ソング: Song
+最近使ったプロジェクトはありません: No Recent Projects
+再起動: Restart
+フォルダを開く: Open Folder
+全てのエンジンを再起動: Restart All Engines
+エンジンの管理: Manage Engine
+マルチエンジンをオンにして再読み込み: Turn on Multi-Engine and Reload
+ファイル: File
+新規プロジェクト: New Project
+プロジェクトを上書き保存: Save Project
+プロジェクトを名前を付けて保存: Save Project As
+プロジェクトを読み込む: Load Project
+最近使ったプロジェクト: Recent Projects
+編集: Edit
+元に戻す: Undo
+やり直す: Redo
+すべて選択: すべて選択
+エンジン: Engine
+設定: Settings
+キー割り当て: Key Bindings
+ツールバーのカスタマイズ: Customize Toolbar
+キャラクター並び替え・試聴: Character Order & Preview
+デフォルトスタイル: Default Style
+読み方＆アクセント辞書: Pronunciation & Accent Dictionary
+オプション: Options
+ヘルプ: Help

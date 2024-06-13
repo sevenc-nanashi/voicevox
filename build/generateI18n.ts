@@ -8,78 +8,41 @@ import {
 import { glob } from "glob";
 import yaml from "js-yaml";
 
-const textLabels: string[] = [];
+const textLabels: { text: string; filePath: string }[] = [];
 
 type Context = { program: ESLintProgram; filePath: string };
 
+const processedTokens = new WeakSet<Node | ESLintLegacySpreadProperty>();
+const isChild = (token: unknown): token is Node => {
+  return !!token && typeof token === "object" && "type" in token;
+};
 const processToken = (
   token: Node | ESLintLegacySpreadProperty,
   context: Context,
 ) => {
   // const depth = new Error().stack!.split("\n").length - 2;
   // console.log(`  `.repeat(depth) + token.type);
+  if (processedTokens.has(token)) {
+    return;
+  }
+  processedTokens.add(token);
 
   findTemplate(token, context);
-  switch (token.type) {
-    case "ArrowFunctionExpression":
-    case "FunctionDeclaration":
-      processToken(token.body, context);
-      break;
-    case "IfStatement":
-      processToken(token.consequent, context);
-      if (token.alternate) {
-        processToken(token.alternate, context);
-      }
-      break;
-    case "ConditionalExpression":
-      processToken(token.consequent, context);
-      processToken(token.alternate, context);
-      break;
-    case "ForStatement":
-    case "ForInStatement":
-    case "ForOfStatement":
-      processToken(token.body, context);
-      break;
-    case "BlockStatement":
-      for (const statement of token.body) {
-        processToken(statement, context);
-      }
-      break;
-    case "VariableDeclaration":
-      for (const declaration of token.declarations) {
-        if (declaration.init) {
-          processToken(declaration.init, context);
+  for (const key in token) {
+    const value = token[key];
+    // 属性のそれっぽいものを再帰的に探す
+    if (["parent"].includes(key)) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        if (isChild(child)) {
+          processToken(child, context);
         }
       }
-      break;
-
-    case "ExportNamedDeclaration":
-      if (token.declaration) {
-        processToken(token.declaration, context);
-      }
-      break;
-
-    case "ArrayExpression":
-      for (const element of token.elements) {
-        processToken(element, context);
-      }
-      break;
-    case "CallExpression":
-      for (const arg of token.arguments) {
-        processToken(arg, context);
-      }
-      break;
-    case "ObjectExpression":
-      for (const property of token.properties) {
-        processToken(property, context);
-      }
-      break;
-    case "Property":
-      processToken(token.value, context);
-      break;
-    case "ExpressionStatement":
-      processToken(token.expression, context);
-      break;
+    } else if (isChild(value)) {
+      processToken(value, context);
+    }
   }
 };
 
@@ -103,7 +66,7 @@ const findTemplate = (
   if (!comments) {
     return;
   }
-  const nodes: string = quasi.quasis
+  const text: string = quasi.quasis
     .flatMap((element, i) => {
       if (i === quasi.quasis.length - 1) {
         const strPart = element.value.cooked;
@@ -139,7 +102,7 @@ const findTemplate = (
     })
     .join("");
 
-  textLabels.push(nodes);
+  textLabels.push({ text, filePath: context.filePath });
 };
 
 const processChild = (token: Node, context: Context) => {
@@ -186,13 +149,21 @@ const processChild = (token: Node, context: Context) => {
   const existing = yaml.load(
     await fs.promises.readFile("./src/domain/i18n/en.yml", "utf-8"),
   ) as Record<string, string>;
-  const translations = textLabels
-    .map((text) => {
-      return `${JSON.stringify(text)}: ${existing[text] ? JSON.stringify(existing[text]) : null}`;
-    })
-    .join("\n");
+  const texts = [...new Set(textLabels.map((label) => label.text))];
+  const translations = texts.reduce(
+    (acc, text) => {
+      return {
+        ...acc,
+        [text]: existing[text] || null,
+      };
+    },
+    {} as Record<string, string | null>,
+  );
 
-  await fs.promises.writeFile("./src/domain/i18n/en.yml", translations);
+  await fs.promises.writeFile(
+    "./src/domain/i18n/en.yml",
+    yaml.dump(translations),
+  );
 
   console.log(`${textLabels.length} 個のテキストを抽出しました`);
 })();

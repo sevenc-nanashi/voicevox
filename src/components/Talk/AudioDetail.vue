@@ -4,11 +4,10 @@
       <div class="side">
         <div class="detail-selector">
           <QTabs v-model="selectedDetail" dense vertical class="text-display">
-            <QTab name="accent" :label="t`ｱｸｾﾝﾄ`" noCaps />
+            <QTab name="accent" :label="t`ｱｸｾﾝﾄ`" />
             <QTab
               name="pitch"
               :label="t`ｲﾝﾄﾈｰｼｮﾝ`"
-              noCaps
               :disable="
                 !(supportedFeatures && supportedFeatures.adjustMoraPitch)
               "
@@ -16,7 +15,6 @@
             <QTab
               name="length"
               :label="t`長さ`"
-              noCaps
               :disable="
                 !(supportedFeatures && supportedFeatures.adjustPhonemeLength)
               "
