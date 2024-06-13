@@ -12,8 +12,8 @@
     dense
     toggleColor="primary"
     :options="[
-      { label: 'トーク', value: 'talk' },
-      { label: 'ソング', value: 'song' },
+      { label: t`トーク`, value: 'talk' },
+      { label: t`ソング`, value: 'song' },
     ]"
     @update:modelValue="switchEditor"
   />
@@ -23,6 +23,7 @@
 import { computed } from "vue";
 import { useStore } from "@/store";
 import { EditorType } from "@/type/preload";
+import { t } from "@/domain/i18n/t";
 
 const store = useStore();
 

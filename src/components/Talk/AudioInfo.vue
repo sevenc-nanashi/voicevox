@@ -318,6 +318,7 @@ import { EngineManifest } from "@/openapi";
 import { useDefaultPreset } from "@/composables/useDefaultPreset";
 import { SLIDER_PARAMETERS } from "@/store/utility";
 import { createLogger } from "@/domain/frontend/log";
+import { t } from "@/domain/i18n/t";
 
 const props = defineProps<{
   activeAudioKey: AudioKey;
@@ -355,7 +356,7 @@ const selectedAudioKeys = computed(() =>
 );
 const parameters = computed<Parameter[]>(() => [
   {
-    label: "話速",
+    label: t`話速`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.speedScale ?? null,
       disable: () =>
@@ -375,7 +376,7 @@ const parameters = computed<Parameter[]>(() => [
     key: "speedScale",
   },
   {
-    label: "音高",
+    label: t`音高`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.pitchScale ?? null,
       disable: () =>
@@ -394,7 +395,7 @@ const parameters = computed<Parameter[]>(() => [
     key: "pitchScale",
   },
   {
-    label: "抑揚",
+    label: t`抑揚`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.intonationScale ?? null,
       disable: () =>
@@ -415,7 +416,7 @@ const parameters = computed<Parameter[]>(() => [
     key: "intonationScale",
   },
   {
-    label: "音量",
+    label: t`音量`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.volumeScale ?? null,
       disable: () =>
@@ -435,7 +436,7 @@ const parameters = computed<Parameter[]>(() => [
     key: "volumeScale",
   },
   {
-    label: "開始無音",
+    label: t`開始無音`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.prePhonemeLength ?? null,
       disable: () => uiLocked.value,
@@ -454,7 +455,7 @@ const parameters = computed<Parameter[]>(() => [
     key: "prePhonemeLength",
   },
   {
-    label: "終了無音",
+    label: t`終了無音`,
     slider: previewSliderHelper({
       modelValue: () => query.value?.postPhonemeLength ?? null,
       disable: () => uiLocked.value,

@@ -10,75 +10,82 @@ import yaml from "js-yaml";
 
 const textLabels: string[] = [];
 
+type Context = { program: ESLintProgram; filePath: string };
+
 const processToken = (
   token: Node | ESLintLegacySpreadProperty,
-  program: ESLintProgram,
+  context: Context,
 ) => {
   // const depth = new Error().stack!.split("\n").length - 2;
   // console.log(`  `.repeat(depth) + token.type);
 
-  findTemplate(token, program);
+  findTemplate(token, context);
   switch (token.type) {
     case "ArrowFunctionExpression":
     case "FunctionDeclaration":
-      processToken(token.body, program);
+      processToken(token.body, context);
       break;
     case "IfStatement":
-      processToken(token.consequent, program);
+      processToken(token.consequent, context);
       if (token.alternate) {
-        processToken(token.alternate, program);
+        processToken(token.alternate, context);
       }
       break;
     case "ConditionalExpression":
-      processToken(token.consequent, program);
-      processToken(token.alternate, program);
+      processToken(token.consequent, context);
+      processToken(token.alternate, context);
       break;
     case "ForStatement":
     case "ForInStatement":
     case "ForOfStatement":
-      processToken(token.body, program);
+      processToken(token.body, context);
       break;
     case "BlockStatement":
       for (const statement of token.body) {
-        processToken(statement, program);
+        processToken(statement, context);
       }
       break;
     case "VariableDeclaration":
       for (const declaration of token.declarations) {
         if (declaration.init) {
-          processToken(declaration.init, program);
+          processToken(declaration.init, context);
         }
       }
       break;
 
     case "ExportNamedDeclaration":
       if (token.declaration) {
-        processToken(token.declaration, program);
+        processToken(token.declaration, context);
       }
       break;
 
+    case "ArrayExpression":
+      for (const element of token.elements) {
+        processToken(element, context);
+      }
+      break;
     case "CallExpression":
       for (const arg of token.arguments) {
-        processToken(arg, program);
+        processToken(arg, context);
       }
       break;
     case "ObjectExpression":
       for (const property of token.properties) {
-        processToken(property, program);
+        processToken(property, context);
       }
       break;
     case "Property":
-      processToken(token.value, program);
+      processToken(token.value, context);
       break;
     case "ExpressionStatement":
-      processToken(token.expression, program);
+      processToken(token.expression, context);
       break;
   }
 };
 
 const findTemplate = (
   token: Node | ESLintLegacySpreadProperty,
-  program: ESLintProgram,
+  context: Context,
 ) => {
   if (token.type !== "TaggedTemplateExpression") {
     return;
@@ -92,7 +99,7 @@ const findTemplate = (
     return;
   }
 
-  const comments = program.comments;
+  const comments = context.program.comments;
   if (!comments) {
     return;
   }
@@ -135,15 +142,26 @@ const findTemplate = (
   textLabels.push(nodes);
 };
 
-const processChild = (token: Node, program: ESLintProgram) => {
+const processChild = (token: Node, context: Context) => {
   if ("children" in token) {
     for (const child of token.children) {
-      processChild(child, program);
+      processChild(child, context);
     }
   }
   if (token.type === "VExpressionContainer") {
     if (token.expression) {
-      processToken(token.expression, program);
+      processToken(token.expression, context);
+    }
+  }
+  if (token.type === "VElement") {
+    for (const attribute of token.startTag.attributes) {
+      if (
+        attribute.directive &&
+        attribute.value &&
+        attribute.value.expression
+      ) {
+        processToken(attribute.value.expression, context);
+      }
     }
   }
 };
@@ -158,10 +176,10 @@ const processChild = (token: Node, program: ESLintProgram) => {
     });
 
     for (const token of parsed.body) {
-      processToken(token, parsed);
+      processToken(token, { program: parsed, filePath: vue });
     }
     if (parsed.templateBody) {
-      processChild(parsed.templateBody, parsed);
+      processChild(parsed.templateBody, { program: parsed, filePath: vue });
     }
   }
 

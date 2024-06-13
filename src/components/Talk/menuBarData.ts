@@ -1,5 +1,6 @@
 import { computed } from "vue";
 import { MenuItemData } from "@/components/Menu/type";
+import { t } from "@/domain/i18n/t";
 
 import { useStore } from "@/store";
 
@@ -10,7 +11,7 @@ export const useMenuBarData = () => {
   const fileSubMenuData = computed<MenuItemData[]>(() => [
     {
       type: "button",
-      label: "音声書き出し",
+      label: t`音声書き出し`,
       onClick: () => {
         store.dispatch("SHOW_GENERATE_AND_SAVE_ALL_AUDIO_DIALOG");
       },
@@ -18,7 +19,7 @@ export const useMenuBarData = () => {
     },
     {
       type: "button",
-      label: "選択音声を書き出し",
+      label: t`選択音声を書き出し`,
       onClick: () => {
         store.dispatch("SHOW_GENERATE_AND_SAVE_SELECTED_AUDIO_DIALOG");
       },
@@ -26,7 +27,7 @@ export const useMenuBarData = () => {
     },
     {
       type: "button",
-      label: "音声を繋げて書き出し",
+      label: t`音声を繋げて書き出し`,
       onClick: () => {
         store.dispatch("SHOW_GENERATE_AND_CONNECT_ALL_AUDIO_DIALOG");
       },
@@ -35,7 +36,7 @@ export const useMenuBarData = () => {
     { type: "separator" },
     {
       type: "button",
-      label: "テキストを繋げて書き出し",
+      label: t`テキストを繋げて書き出し`,
       onClick: () => {
         store.dispatch("SHOW_CONNECT_AND_EXPORT_TEXT_DIALOG");
       },
@@ -43,7 +44,7 @@ export const useMenuBarData = () => {
     },
     {
       type: "button",
-      label: "テキスト読み込み",
+      label: t`テキスト読み込み`,
       onClick: () => {
         store.dispatch("COMMAND_IMPORT_FROM_FILE", {});
       },

@@ -35,16 +35,16 @@
           class="warning-item row no-wrap items-center"
         >
           <span class="text-warning vertical-middle"
-            >有効なスタイルが選択されていません</span
-          >
+            >{{ t`有効なスタイルが選択されていません` }}
+          </span>
         </QItem>
         <QItem
           v-if="characterInfos.length === 0"
           class="warning-item row no-wrap items-center"
         >
-          <span class="text-warning vertical-middle"
-            >選択可能なスタイルがありません</span
-          >
+          <span class="text-warning vertical-middle">{{
+            t`選択可能なスタイルがありません`
+          }}</span>
         </QItem>
         <QItem v-if="emptiable" class="to-unselect-item q-pa-none">
           <QBtn
@@ -55,7 +55,7 @@
             :class="selectedCharacter == undefined && 'selected-background'"
             @click="$emit('update:selectedVoice', undefined)"
           >
-            <span>選択解除</span>
+            <span>{{ t`選択解除` }}</span>
           </QBtn>
         </QItem>
         <QItem
@@ -201,6 +201,7 @@ import { CharacterInfo, SpeakerId, Voice } from "@/type/preload";
 import { formatCharacterStyleName } from "@/store/utility";
 import { getDefaultStyle } from "@/domain/talk";
 import { useEngineIcons } from "@/composables/useEngineIcons";
+import { t } from "@/domain/i18n/t";
 
 const props = withDefaults(
   defineProps<{
