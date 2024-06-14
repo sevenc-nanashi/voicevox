@@ -1,6 +1,6 @@
 import { computed } from "vue";
 import { MenuItemData } from "@/components/Menu/type";
-import { st, t } from "@/domain/i18n/t";
+import { t } from "@/domain/i18n/t";
 
 import { useStore } from "@/store";
 
@@ -19,7 +19,7 @@ export const useMenuBarData = () => {
     },
     {
       type: "button",
-      label: st("menu")`選択音声を書き出し`,
+      label: `選択音声を書き出し`,
       onClick: () => {
         store.dispatch("SHOW_GENERATE_AND_SAVE_SELECTED_AUDIO_DIALOG");
       },
