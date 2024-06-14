@@ -19,7 +19,7 @@ export const useMenuBarData = () => {
     },
     {
       type: "button",
-      label: `選択音声を書き出し`,
+      label: t`選択音声を書き出し`,
       onClick: () => {
         store.dispatch("SHOW_GENERATE_AND_SAVE_SELECTED_AUDIO_DIALOG");
       },
