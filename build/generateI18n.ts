@@ -4,11 +4,16 @@ import {
   Node,
   ESLintLegacySpreadProperty,
   ESLintProgram,
+  ESLintStringLiteral,
 } from "vue-eslint-parser/ast";
 import { glob } from "glob";
 import yaml from "js-yaml";
 
-const textLabels: { text: string; filePath: string }[] = [];
+const textLabels: {
+  scope: string | undefined;
+  text: string;
+  filePath: string;
+}[] = [];
 
 type Context = { program: ESLintProgram; filePath: string };
 
@@ -54,8 +59,20 @@ const findTemplate = (
     return;
   }
   const tag = token.tag;
-  if (tag.type !== "Identifier" || tag.name !== "t") {
+  const isSingleTranslate = tag.type === "Identifier" && tag.name === "t";
+  const isScopedTranslate =
+    tag.type === "CallExpression" &&
+    tag.callee.type === "Identifier" &&
+    tag.callee.name === "st" &&
+    tag.arguments.length === 1 &&
+    tag.arguments[0].type === "Literal";
+
+  if (!isSingleTranslate && !isScopedTranslate) {
     return;
+  }
+  let scope: string | undefined;
+  if (isScopedTranslate) {
+    scope = (tag.arguments[0] as ESLintStringLiteral).value;
   }
   const quasi = token.quasi;
   if (quasi.type !== "TemplateLiteral") {
@@ -102,7 +119,7 @@ const findTemplate = (
     })
     .join("");
 
-  textLabels.push({ text, filePath: context.filePath });
+  textLabels.push({ scope, text, filePath: context.filePath });
 };
 
 const processChild = (token: Node, context: Context) => {
@@ -149,12 +166,18 @@ const processChild = (token: Node, context: Context) => {
   const existing = yaml.load(
     await fs.promises.readFile("./src/domain/i18n/en.yml", "utf-8"),
   ) as Record<string, string>;
-  const texts = [...new Set(textLabels.map((label) => label.text))];
-  const translations = texts.reduce(
-    (acc, text) => {
+  const keys = [
+    ...new Set(
+      textLabels.map((label) =>
+        label.scope ? `${label.scope}:${label.text}` : label.text,
+      ),
+    ),
+  ];
+  const translations = keys.reduce(
+    (acc, key) => {
       return {
         ...acc,
-        [text]: existing[text] || null,
+        [key]: existing[key] || null,
       };
     },
     {} as Record<string, string | null>,

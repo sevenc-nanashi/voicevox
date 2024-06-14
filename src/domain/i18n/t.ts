@@ -34,10 +34,8 @@ export const t = (strings: TemplateStringsArray, ...values: unknown[]) => {
  */
 export const st =
   (scope: string) =>
-  (strings: TemplateStringsArray, ...values: unknown[]) => {
-    return translate({ scope, strings, values, translations: enTranslations });
-  };
-
+  (strings: TemplateStringsArray, ...values: unknown[]) =>
+    translate({ scope, strings, values, translations: enTranslations });
 /** @private テスト用にエクスポート。*/
 export const translate = ({
   scope,
@@ -71,6 +69,12 @@ export const translate = ({
     console.warn(`Translation not found for: ${keyPattern}`);
     return defaultTemplate(strings, values);
   }
+  const translation = translations[key];
+  if (!translation) {
+    console.warn(`Untranslated key: ${key}`);
+    return defaultTemplate(strings, values);
+  }
+
   const placeholders = key.match(keyPattern)?.slice(1);
   if (!placeholders) {
     throw new Error("Unexpected error");
@@ -78,7 +82,7 @@ export const translate = ({
 
   const mapped = placeholders.reduce((acc, placeholder, i) => {
     return acc.replaceAll(`{${placeholder}}`, String(values[i]));
-  }, translations[key]);
+  }, translation);
 
   return mapped;
 };

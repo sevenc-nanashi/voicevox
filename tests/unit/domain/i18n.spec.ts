@@ -6,6 +6,12 @@ const createTranslator =
   (strings: TemplateStringsArray, ...values: unknown[]) => {
     return translate({ scope: undefined, strings, values, translations });
   };
+const createScopedTranslator =
+  (translations: Record<string, string> | undefined) =>
+  (scope: string) =>
+  (strings: TemplateStringsArray, ...values: unknown[]) => {
+    return translate({ scope, strings, values, translations });
+  };
 
 test("翻訳できる", () => {
   const t = createTranslator({
@@ -43,4 +49,13 @@ test("変数の順序を変えられる", () => {
     "{1} {0}": "{0} {1}",
   });
   expect(t`${foo} ${bar}`).toBe("bar foo");
+});
+
+test("スコープを指定できる", () => {
+  const foo = "foo";
+  const bar = "bar";
+  const st = createScopedTranslator({
+    "scope:{1} {0}": "{0} {1}",
+  });
+  expect(st("scope")`${foo} ${bar}`).toBe("bar foo");
 });
