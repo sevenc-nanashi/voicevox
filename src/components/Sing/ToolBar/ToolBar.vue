@@ -6,27 +6,31 @@
       <QInput
         type="number"
         :modelValue="keyRangeAdjustmentInputBuffer"
-        label="音域調整"
+        :label="t`音域調整`"
         dense
         hideBottomSpace
         class="key-range-adjustment"
         @update:modelValue="setKeyRangeAdjustmentInputBuffer"
         @change="setKeyRangeAdjustment"
-      />
+      >
+        <QTooltip>{{ t`音域調整の説明` }}</QTooltip>
+      </QInput>
       <QInput
         type="number"
         :modelValue="volumeRangeAdjustmentInputBuffer"
-        label="声量調整"
+        :label="t`声量調整`"
         dense
         hideBottomSpace
         class="volume-range-adjustment"
         @update:modelValue="setVolumeRangeAdjustmentInputBuffer"
         @change="setVolumeRangeAdjustment"
-      />
+      >
+        <QTooltip>{{ t`声量調整の説明` }}</QTooltip>
+      </QInput>
       <QInput
         type="number"
         :modelValue="bpmInputBuffer"
-        label="テンポ"
+        :label="t`テンポ`"
         dense
         hideBottomSpace
         class="sing-tempo"
@@ -38,10 +42,11 @@
         </template>
       </QInput>
       <div class="sing-beats">
+        <p class="sing-beats-label">{{ t`拍子` }}</p>
         <QInput
           type="number"
           :modelValue="beatsInputBuffer"
-          label="拍子"
+          label=""
           dense
           hideBottomSpace
           class="sing-time-signature"
@@ -127,7 +132,7 @@
         textColor="display-on-primary"
         hideBottomSpace
         optionsDense
-        label="スナップ"
+        :label="t`スナップ`"
         transitionShow="none"
         transitionHide="none"
         class="sing-snap"
@@ -153,6 +158,7 @@ import {
 import CharacterMenuButton from "@/components/Sing/CharacterMenuButton/MenuButton.vue";
 import { useHotkeyManager } from "@/plugins/hotkeyPlugin";
 import { SequencerEditTarget } from "@/store/type";
+import { t } from "@/domain/i18n/t";
 
 const store = useStore();
 
@@ -500,10 +506,25 @@ onUnmounted(() => {
 }
 
 .sing-beats {
-  align-items: center;
   display: flex;
   margin-left: 8px;
   position: relative;
+  align-items: center;
+
+  &:focus-within {
+    .sing-beats-label {
+      color: colors.$primary;
+    }
+  }
+
+  .sing-beats-label {
+    position: absolute;
+    color: rgba(colors.$display-rgb, 0.6);
+    font-size: 10.5px;
+    margin: 0;
+    top: 4px;
+    z-index: 1;
+  }
 }
 
 .sing-time-signature {
