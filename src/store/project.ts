@@ -1,12 +1,16 @@
 import { getBaseName } from "./utility";
-import { createPartialStore, Dispatch } from "./vuex";
-import { createUILockAction } from "@/store/ui";
+import {
+  createDotNotationPartialStore as createPartialStore,
+  DotNotationDispatch,
+} from "./vuex";
+import { createDotNotationUILockAction as createUILockAction } from "@/store/ui";
 import {
   AllActions,
   AudioItem,
   ProjectStoreState,
   ProjectStoreTypes,
 } from "@/store/type";
+import { TrackId } from "@/type/preload";
 
 import { getValueOrThrow, ResultError } from "@/type/result";
 import { LatestProjectType } from "@/domain/project/schema";
@@ -17,18 +21,21 @@ import {
 import {
   createDefaultTempo,
   createDefaultTimeSignature,
+  createDefaultTrack,
   DEFAULT_TPQN,
 } from "@/sing/domain";
+import { EditorType } from "@/type/preload";
+import { IsEqual } from "@/type/utility";
 
 export const projectStoreState: ProjectStoreState = {
-  savedLastCommandUnixMillisec: null,
+  savedLastCommandIds: { talk: null, song: null },
 };
 
 const applyTalkProjectToStore = async (
-  dispatch: Dispatch<AllActions>,
+  actions: DotNotationDispatch<AllActions>,
   talkProject: LatestProjectType["talk"],
 ) => {
-  await dispatch("REMOVE_ALL_AUDIO_ITEM");
+  await actions.REMOVE_ALL_AUDIO_ITEM();
 
   const { audioItems, audioKeys } = talkProject;
 
@@ -39,7 +46,7 @@ const applyTalkProjectToStore = async (
     // valueがundefinedにならないことを検証したあとであれば、
     // このif文に引っかかることはないはずである
     if (audioItem == undefined) throw new Error("audioItem == undefined");
-    prevAudioKey = await dispatch("REGISTER_AUDIO_ITEM", {
+    prevAudioKey = await actions.REGISTER_AUDIO_ITEM({
       prevAudioKey,
       audioItem,
     });
@@ -47,36 +54,38 @@ const applyTalkProjectToStore = async (
 };
 
 const applySongProjectToStore = async (
-  dispatch: Dispatch<AllActions>,
+  actions: DotNotationDispatch<AllActions>,
   songProject: LatestProjectType["song"],
 ) => {
-  const { tpqn, tempos, timeSignatures, tracks } = songProject;
-  // TODO: マルチトラック対応
-  await dispatch("SET_SINGER", {
-    singer: tracks[0].singer,
-  });
-  await dispatch("SET_KEY_RANGE_ADJUSTMENT", {
-    keyRangeAdjustment: tracks[0].keyRangeAdjustment,
-  });
-  await dispatch("SET_VOLUME_RANGE_ADJUSTMENT", {
-    volumeRangeAdjustment: tracks[0].volumeRangeAdjustment,
-  });
-  await dispatch("SET_TPQN", { tpqn });
-  await dispatch("SET_TEMPOS", { tempos });
-  await dispatch("SET_TIME_SIGNATURES", { timeSignatures });
-  await dispatch("SET_NOTES", { notes: tracks[0].notes });
-  await dispatch("CLEAR_PITCH_EDIT_DATA"); // FIXME: SET_PITCH_EDIT_DATAがセッターになれば不要
-  await dispatch("SET_PITCH_EDIT_DATA", {
-    data: tracks[0].pitchEditData,
-    startFrame: 0,
+  const { tpqn, tempos, timeSignatures, tracks, trackOrder } = songProject;
+
+  await actions.SET_TPQN({ tpqn });
+  await actions.SET_TEMPOS({ tempos });
+  await actions.SET_TIME_SIGNATURES({ timeSignatures });
+  await actions.SET_TRACKS({
+    tracks: new Map(
+      trackOrder.map((trackId) => {
+        const track = tracks[trackId];
+        if (!track) throw new Error("track == undefined");
+        return [trackId, track];
+      }),
+    ),
   });
 };
 
 export const projectStore = createPartialStore<ProjectStoreTypes>({
-  PROJECT_NAME: {
+  PROJECT_NAME_WITH_EXT: {
     getter(state) {
       return state.projectFilePath
         ? getBaseName(state.projectFilePath)
+        : undefined;
+    },
+  },
+
+  PROJECT_NAME: {
+    getter(state) {
+      return state.projectFilePath
+        ? getBaseName(state.projectFilePath).replace(".vvproj", "")
         : undefined;
     },
   },
@@ -91,43 +100,65 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
     action: createUILockAction(
       async (context, { confirm }: { confirm?: boolean }) => {
         if (confirm !== false && context.getters.IS_EDITED) {
-          const result = await context.dispatch(
-            "SAVE_OR_DISCARD_PROJECT_FILE",
-            {},
-          );
+          const result = await context.actions.SAVE_OR_DISCARD_PROJECT_FILE({});
           if (result == "canceled") {
             return;
           }
         }
 
         // トークプロジェクトの初期化
-        await context.dispatch("REMOVE_ALL_AUDIO_ITEM");
+        await context.actions.REMOVE_ALL_AUDIO_ITEM();
 
-        const audioItem: AudioItem = await context.dispatch(
-          "GENERATE_AUDIO_ITEM",
+        const audioItem: AudioItem = await context.actions.GENERATE_AUDIO_ITEM(
           {},
         );
-        await context.dispatch("REGISTER_AUDIO_ITEM", {
+        await context.actions.REGISTER_AUDIO_ITEM({
           audioItem,
         });
 
         // ソングプロジェクトの初期化
-        await context.dispatch("SET_TPQN", { tpqn: DEFAULT_TPQN });
-        await context.dispatch("SET_TEMPOS", {
+        await context.actions.SET_TPQN({ tpqn: DEFAULT_TPQN });
+        await context.actions.SET_TEMPOS({
           tempos: [createDefaultTempo(0)],
         });
-        await context.dispatch("SET_TIME_SIGNATURES", {
+        await context.actions.SET_TIME_SIGNATURES({
           timeSignatures: [createDefaultTimeSignature(1)],
         });
-        await context.dispatch("SET_NOTES", { notes: [] });
-        await context.dispatch("SET_SINGER", { withRelated: true });
-        await context.dispatch("CLEAR_PITCH_EDIT_DATA");
+        const trackId = TrackId(crypto.randomUUID());
+        await context.actions.SET_TRACKS({
+          tracks: new Map([[trackId, createDefaultTrack()]]),
+        });
+        await context.actions.SET_NOTES({ notes: [], trackId });
+        await context.actions.SET_SINGER({ withRelated: true, trackId });
+        await context.actions.CLEAR_PITCH_EDIT_DATA({ trackId });
 
-        context.commit("SET_PROJECT_FILEPATH", { filePath: undefined });
-        context.commit("SET_SAVED_LAST_COMMAND_UNIX_MILLISEC", null);
-        context.commit("CLEAR_COMMANDS");
+        context.mutations.SET_PROJECT_FILEPATH({ filePath: undefined });
+        void context.actions.CLEAR_UNDO_HISTORY();
       },
     ),
+  },
+
+  PARSE_PROJECT_FILE: {
+    async action({ actions, getters }, { projectJson }) {
+      const projectData: unknown = JSON.parse(projectJson);
+
+      const characterInfos = getters.USER_ORDERED_CHARACTER_INFOS("talk");
+      if (characterInfos == undefined)
+        throw new Error("characterInfos == undefined");
+
+      const parsedProjectData = await migrateProjectFileObject(projectData, {
+        fetchMoraData: (payload) => actions.FETCH_MORA_DATA(payload),
+        voices: characterInfos.flatMap((characterInfo) =>
+          characterInfo.metas.styles.map((style) => ({
+            engineId: style.engineId,
+            speakerId: characterInfo.metas.speakerUuid,
+            styleId: style.styleId,
+          })),
+        ),
+      });
+
+      return parsedProjectData;
+    },
   },
 
   LOAD_PROJECT_FILE: {
@@ -137,7 +168,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
      */
     action: createUILockAction(
       async (
-        context,
+        { actions, mutations, state, getters },
         { filePath, confirm }: { filePath?: string; confirm?: boolean },
       ) => {
         if (!filePath) {
@@ -157,58 +188,44 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             .readFile({ filePath })
             .then(getValueOrThrow);
 
-          await context.dispatch("APPEND_RECENTLY_USED_PROJECT", {
+          await actions.APPEND_RECENTLY_USED_PROJECT({
             filePath,
           });
 
           const text = new TextDecoder("utf-8").decode(buf).trim();
-          const projectData = JSON.parse(text);
+          const parsedProjectData = await actions.PARSE_PROJECT_FILE({
+            projectJson: text,
+          });
 
-          const characterInfos =
-            context.getters.USER_ORDERED_CHARACTER_INFOS("talk");
-          if (characterInfos == undefined)
-            throw new Error("characterInfos == undefined");
+          if (
+            !state.experimentalSetting.enableMultiTrack &&
+            parsedProjectData.song.trackOrder.length > 1
+          ) {
+            await window.backend.showMessageDialog({
+              type: "error",
+              title: "エラー",
+              message:
+                "このプロジェクトはマルチトラック機能を使用して作成されていますが、現在の設定ではマルチトラック機能を使用できません。\n" +
+                "設定の「ソング：マルチトラック機能」を有効にしてからプロジェクトを読み込んでください。",
+            });
+            return false;
+          }
 
-          const parsedProjectData = await migrateProjectFileObject(
-            projectData,
-            {
-              fetchMoraData: (payload) =>
-                context.dispatch("FETCH_MORA_DATA", payload),
-              voices: characterInfos.flatMap((characterInfo) =>
-                characterInfo.metas.styles.map((style) => ({
-                  engineId: style.engineId,
-                  speakerId: characterInfo.metas.speakerUuid,
-                  styleId: style.styleId,
-                })),
-              ),
-            },
-          );
-
-          if (confirm !== false && context.getters.IS_EDITED) {
-            const result = await context.dispatch(
-              "SAVE_OR_DISCARD_PROJECT_FILE",
-              {
-                additionalMessage:
-                  "プロジェクトをロードすると現在のプロジェクトは破棄されます。",
-              },
-            );
+          if (confirm !== false && getters.IS_EDITED) {
+            const result = await actions.SAVE_OR_DISCARD_PROJECT_FILE({
+              additionalMessage:
+                "プロジェクトをロードすると現在のプロジェクトは破棄されます。",
+            });
             if (result == "canceled") {
               return false;
             }
           }
 
-          await applyTalkProjectToStore(
-            context.dispatch,
-            parsedProjectData.talk,
-          );
-          await applySongProjectToStore(
-            context.dispatch,
-            parsedProjectData.song,
-          );
+          await applyTalkProjectToStore(actions, parsedProjectData.talk);
+          await applySongProjectToStore(actions, parsedProjectData.song);
 
-          context.commit("SET_PROJECT_FILEPATH", { filePath });
-          context.commit("SET_SAVED_LAST_COMMAND_UNIX_MILLISEC", null);
-          context.commit("CLEAR_COMMANDS");
+          mutations.SET_PROJECT_FILEPATH({ filePath });
+          void actions.CLEAR_UNDO_HISTORY();
           return true;
         } catch (err) {
           window.backend.logError(err);
@@ -273,7 +290,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             });
           }
 
-          await context.dispatch("APPEND_RECENTLY_USED_PROJECT", {
+          await context.actions.APPEND_RECENTLY_USED_PROJECT({
             filePath,
           });
           const appInfos = await window.backend.getAppInfos();
@@ -284,6 +301,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             tempos,
             timeSignatures,
             tracks,
+            trackOrder,
           } = context.state;
           const projectData: LatestProjectType = {
             appVersion: appInfos.version,
@@ -295,7 +313,8 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
               tpqn,
               tempos,
               timeSignatures,
-              tracks,
+              tracks: Object.fromEntries(tracks),
+              trackOrder,
             },
           };
 
@@ -308,10 +327,9 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
               buffer: buf,
             })
             .then(getValueOrThrow);
-          context.commit("SET_PROJECT_FILEPATH", { filePath });
-          context.commit(
-            "SET_SAVED_LAST_COMMAND_UNIX_MILLISEC",
-            context.getters.LAST_COMMAND_UNIX_MILLISEC,
+          context.mutations.SET_PROJECT_FILEPATH({ filePath });
+          context.mutations.SET_SAVED_LAST_COMMAND_IDS(
+            context.getters.LAST_COMMAND_IDS,
           );
           return true;
         } catch (err) {
@@ -338,7 +356,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
    * 保存に失敗した場合はキャンセル扱いになる。
    */
   SAVE_OR_DISCARD_PROJECT_FILE: {
-    action: createUILockAction(async ({ dispatch }, { additionalMessage }) => {
+    action: createUILockAction(async ({ actions }, { additionalMessage }) => {
       let message = "プロジェクトの変更が保存されていません。";
       if (additionalMessage) {
         message += "\n" + additionalMessage;
@@ -354,7 +372,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
         defaultId: 2,
       });
       if (result == 0) {
-        const saved = await dispatch("SAVE_PROJECT_FILE", {
+        const saved = await actions.SAVE_PROJECT_FILE({
           overwrite: true,
         });
         return saved ? "saved" : "canceled";
@@ -368,16 +386,36 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
 
   IS_EDITED: {
     getter(state, getters) {
-      return (
-        getters.LAST_COMMAND_UNIX_MILLISEC !==
-        state.savedLastCommandUnixMillisec
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _: IsEqual<
+        typeof state.savedLastCommandIds,
+        typeof getters.LAST_COMMAND_IDS
+      > = true;
+      return Object.keys(state.savedLastCommandIds).some((_editor) => {
+        const editor = _editor as EditorType;
+        return (
+          state.savedLastCommandIds[editor] !== getters.LAST_COMMAND_IDS[editor]
+        );
+      });
     },
   },
 
-  SET_SAVED_LAST_COMMAND_UNIX_MILLISEC: {
-    mutation(state, unixMillisec) {
-      state.savedLastCommandUnixMillisec = unixMillisec;
+  SET_SAVED_LAST_COMMAND_IDS: {
+    mutation(state, commandIds) {
+      state.savedLastCommandIds = commandIds;
+    },
+  },
+
+  RESET_SAVED_LAST_COMMAND_IDS: {
+    mutation(state) {
+      state.savedLastCommandIds = { talk: null, song: null };
+    },
+  },
+
+  CLEAR_UNDO_HISTORY: {
+    action({ commit }) {
+      commit("RESET_SAVED_LAST_COMMAND_IDS");
+      commit("CLEAR_COMMANDS");
     },
   },
 });

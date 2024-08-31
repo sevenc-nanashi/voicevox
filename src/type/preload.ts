@@ -7,25 +7,28 @@ export const isProduction = import.meta.env.MODE === "production";
 export const isElectron = import.meta.env.VITE_TARGET === "electron";
 export const isBrowser = import.meta.env.VITE_TARGET === "browser";
 
-// electronのメイン・レンダラープロセス内、ブラウザ内どこでも使用可能なmacOS判定
-function checkIsMac(): boolean {
-  let isMac: boolean | undefined = undefined;
+// electronのメイン・レンダラープロセス内、ブラウザ内どこでも使用可能なOS判定
+function checkOs(os: "windows" | "mac"): boolean {
+  let isSpecifiedOs: boolean | undefined = undefined;
   if (process?.platform) {
     // electronのメインプロセス用
-    isMac = process.platform === "darwin";
+    isSpecifiedOs =
+      process.platform === (os === "windows" ? "win32" : "darwin");
   } else if (navigator?.userAgentData) {
     // electronのレンダラープロセス用、Chrome系統が実装する実験的機能
-    isMac = navigator.userAgentData.platform.toLowerCase().includes("mac");
+    isSpecifiedOs = navigator.userAgentData.platform.toLowerCase().includes(os);
   } else if (navigator?.platform) {
     // ブラウザ用、非推奨機能
-    isMac = navigator.platform.toLowerCase().includes("mac");
+    isSpecifiedOs = navigator.platform.toLowerCase().includes(os);
   } else {
     // ブラウザ用、不正確
-    isMac = navigator.userAgent.toLowerCase().includes("mac");
+    isSpecifiedOs = navigator.userAgent.toLowerCase().includes(os);
   }
-  return isMac;
+  return isSpecifiedOs;
 }
-export const isMac = checkIsMac();
+
+export const isMac = checkOs("mac");
+export const isWindows = checkOs("windows");
 
 const urlStringSchema = z.string().url().brand("URL");
 export type UrlString = z.infer<typeof urlStringSchema>;
@@ -65,6 +68,14 @@ export const VoiceId = (voice: Voice): VoiceId =>
 export const noteIdSchema = z.string().brand<"NoteId">();
 export type NoteId = z.infer<typeof noteIdSchema>;
 export const NoteId = (id: string): NoteId => noteIdSchema.parse(id);
+
+export const commandIdSchema = z.string().brand<"CommandId">();
+export type CommandId = z.infer<typeof commandIdSchema>;
+export const CommandId = (id: string): CommandId => commandIdSchema.parse(id);
+
+export const trackIdSchema = z.string().brand<"TrackId">();
+export type TrackId = z.infer<typeof trackIdSchema>;
+export const TrackId = (id: string): TrackId => trackIdSchema.parse(id);
 
 // 共通のアクション名
 export const actionPostfixSelectNthCharacter = "番目のキャラクターを選択";
@@ -184,7 +195,7 @@ export const defaultHotkeySettings: HotkeySettingType[] = [
     return {
       action:
         `${index + 1}${actionPostfixSelectNthCharacter}` as HotkeyActionNameType,
-      combination: HotkeyCombination((!isMac ? "Ctrl " : "Meta ") + roleKey),
+      combination: HotkeyCombination(`${!isMac ? "Ctrl" : "Meta"} ${roleKey}`),
     };
   }),
 ];
@@ -253,10 +264,12 @@ export interface Sandbox {
   readFile(obj: { filePath: string }): Promise<Result<ArrayBuffer>>;
   isAvailableGPUMode(): Promise<boolean>;
   isMaximizedWindow(): Promise<boolean>;
-  onReceivedIPCMsg<T extends keyof IpcSOData>(
-    channel: T,
-    listener: (event: unknown, ...args: IpcSOData[T]["args"]) => void,
-  ): void;
+  onReceivedIPCMsg(listeners: {
+    [K in keyof IpcSOData]: (
+      event: unknown,
+      ...args: IpcSOData[K]["args"]
+    ) => Promise<IpcSOData[K]["return"]> | IpcSOData[K]["return"];
+  }): void;
   closeWindow(): void;
   minimizeWindow(): void;
   maximizeWindow(): void;
@@ -406,10 +419,10 @@ export type EngineInfo = {
   executionFilePath: string;
   executionArgs: string[];
   // エンジンの種類。
-  // default: デフォルトエンジン
   // vvpp: vvppファイルから読み込んだエンジン
   // path: パスを指定して追加したエンジン
-  type: "default" | "vvpp" | "path";
+  type: "vvpp" | "path";
+  isDefault: boolean; // デフォルトエンジンかどうか
 };
 
 export type Preset = {
@@ -435,15 +448,16 @@ export type PresetConfig = {
   keys: string[];
 };
 
-export type MorphableTargetInfoTable = {
-  [baseStyleId: StyleId]:
-    | undefined
-    | {
-        [targetStyleId: StyleId]: {
-          isMorphable: boolean;
-        };
-      };
-};
+export type MorphableTargetInfoTable = Record<
+  StyleId,
+  | undefined
+  | Record<
+      StyleId,
+      {
+        isMorphable: boolean;
+      }
+    >
+>;
 
 export const hotkeyActionNameSchema = z.enum([
   "音声書き出し",
@@ -561,7 +575,7 @@ export const experimentalSettingSchema = z.object({
   enableMorphing: z.boolean().default(false),
   enableMultiSelect: z.boolean().default(false),
   shouldKeepTuningOnTextChange: z.boolean().default(false),
-  enablePitchEditInSongEditor: z.boolean().default(false),
+  enableMultiTrack: z.boolean().default(false),
 });
 
 export type ExperimentalSettingType = z.infer<typeof experimentalSettingSchema>;
@@ -592,6 +606,13 @@ export const rootMiscSettingSchema = z.object({
   enableMemoNotation: z.boolean().default(false), // メモ記法を有効にするか
   enableRubyNotation: z.boolean().default(false), // ルビ記法を有効にするか
   skipUpdateVersion: z.string().optional(), // アップデートをスキップしたバージョン
+  undoableTrackOperations: z // ソングエディタでどのトラック操作をUndo可能にするか
+    .object({
+      soloAndMute: z.boolean().default(true),
+      panAndGain: z.boolean().default(true),
+    })
+    .default({}),
+  showSinger: z.boolean().default(true),
 });
 export type RootMiscSettingType = z.infer<typeof rootMiscSettingSchema>;
 
@@ -722,6 +743,6 @@ export interface MessageBoxReturnValue {
   checkboxChecked: boolean;
 }
 
-export const SandboxKey = "backend" as const;
+export const SandboxKey = "backend";
 
 export type EditorType = "talk" | "song";

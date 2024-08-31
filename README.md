@@ -15,7 +15,13 @@
 
 こちらは開発用のページになります。利用方法に関しては[VOICEVOX 公式サイト](https://voicevox.hiroshiba.jp/) をご覧ください。
 
-## 貢献者の方へ
+## プロジェクトに貢献したいと考えている方へ
+
+VOICEVOXプロジェクトは興味ある方の参画を歓迎しています。
+[貢献手順について説明したガイド](./CONTRIBUTING.md)をご用意しております。
+
+貢献というとプログラム作成と思われがちですが、ドキュメント執筆、テスト生成、改善提案への議論参加など様々な参加方法があります。
+初心者歓迎タスクもありますので、皆様のご参加をお待ちしております。
 
 VOICEVOX のエディタは Electron・TypeScript・Vue・Vuex などが活用されており、全体構成がわかりにくくなっています。  
 [コードの歩き方](./docs/コードの歩き方.md)で構成を紹介しているので、開発の一助になれば幸いです。
@@ -43,27 +49,44 @@ npm ci
 
 ## 実行
 
-`.env.production`をコピーして`.env`を作成し、`VITE_DEFAULT_ENGINE_INFOS`内の`executionFilePath`に`voicevox_engine`のパスを指定します。
+### エンジンの準備
 
-[製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) のディレクトリのパスを指定すれば動きます。
+`.env.production`をコピーして`.env`を作成し、`VITE_DEFAULT_ENGINE_INFOS`内の`executionFilePath`に
+[製品版 VOICEVOX](https://voicevox.hiroshiba.jp/) 内の`vv-engine/run.exe`を指定すれば動きます。
 
-Windows の場合でもパスの区切り文字は`\`ではなく`/`なのでご注意ください。
+Windows でインストール先を変更していない場合は`C:/Users/(ユーザー名)/AppData/Local/Programs/VOICEVOX/vv-engine/run.exe`を指定してください。  
+パスの区切り文字は`\`ではなく`/`なのでご注意ください。
 
-また、macOS 向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Contents/MacOS/run`を指定してください。
+macOS 向けの`VOICEVOX.app`を利用している場合は`/path/to/VOICEVOX.app/Resources/MacOS/vv-engine/run`を指定してください。
 
-Linux の場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できる tar.gz 版に含まれる`run`コマンドを指定してください。
+Linux の場合は、[Releases](https://github.com/VOICEVOX/voicevox/releases/)から入手できる tar.gz 版に含まれる`vv-engine/run`コマンドを指定してください。
 AppImage 版の場合は`$ /path/to/VOICEVOX.AppImage --appimage-mount`でファイルシステムをマウントできます。
 
-VOICEVOX エディタの実行とは別にエンジン API のサーバを立てている場合は`executionFilePath`を指定する必要はありません。
+VOICEVOX エディタの実行とは別にエンジン API のサーバを立てている場合は`executionFilePath`を指定する必要はありませんが、
+代わりに`executionEnabled`を`false`にしてください。
 これは製品版 VOICEVOX を起動している場合もあてはまります。
 
-また、エンジン API の宛先エンドポイントを変更する場合は`VITE_DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
+エンジン API の宛先エンドポイントを変更する場合は`VITE_DEFAULT_ENGINE_INFOS`内の`host`を変更してください。
+
+### Electron の実行
 
 ```bash
+# 開発しやすい環境で実行
 npm run electron:serve
+
+# ビルド時に近い環境で実行
+npm run electron:serve -- --mode production
 ```
 
 音声合成エンジンのリポジトリはこちらです <https://github.com/VOICEVOX/voicevox_engine>
+
+### Storybook の実行
+
+Storybook を使ってコンポーネントを開発することができます。
+
+```bash
+npm run storybook
+```
 
 ### ブラウザ版の実行（開発中）
 
@@ -95,6 +118,16 @@ fork したリポジトリで Actions を ON にし、workflow_dispatch で`buil
 npm run test:unit
 npm run test-watch:unit # 監視モード
 npm run test:unit -- --update # スナップショットの更新
+```
+
+### コンポーネントのテスト
+
+Storybook を使ってコンポーネントのテストを行います。
+
+```bash
+npm run storybook # 先に Storybook を起動
+npm run test:storybook
+npm run test-watch:storybook # 監視モード
 ```
 
 ### ブラウザ End to End テスト
@@ -165,20 +198,20 @@ npm run license:generate -- -o voicevox_licenses.json
 npm run license:merge -- -o public/licenses.json -i engine_licenses.json -i voicevox_licenses.json
 ```
 
-## リント（静的解析）
-
-コードの静的解析を行い、バグを未然に防ぎます。プルリクエストを送る前に実行してください。
-
-```bash
-npm run lint
-```
-
 ## コードフォーマット
 
 コードのフォーマットを整えます。プルリクエストを送る前に実行してください。
 
 ```bash
 npm run fmt
+```
+
+## リント（静的解析）
+
+コードの静的解析を行い、バグを未然に防ぎます。プルリクエストを送る前に実行してください。
+
+```bash
+npm run lint
 ```
 
 ## タイポチェック

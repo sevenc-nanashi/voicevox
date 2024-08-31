@@ -39,6 +39,7 @@ import {
   SpeakerId,
   StyleId,
   Voice,
+  isProduction,
 } from "@/type/preload";
 
 export const storeKey: InjectionKey<
@@ -324,7 +325,7 @@ export const indexStore = createPartialStore<IndexStoreTypes>({
       promises.push(dispatch("HYDRATE_SETTING_STORE"));
 
       await Promise.all(promises).then(() => {
-        dispatch("ON_VUEX_READY");
+        void dispatch("ON_VUEX_READY");
       });
     },
   },
@@ -408,7 +409,7 @@ export const store = createStore<State, AllGetters, AllActions, AllMutations>({
     ...singingStore.actions,
     ...singingCommandStore.actions,
   },
-  strict: process.env.NODE_ENV !== "production",
+  strict: !isProduction,
 });
 
 export const useStore = (): Store<

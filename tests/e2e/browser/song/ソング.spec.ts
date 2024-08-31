@@ -6,7 +6,7 @@ test.beforeEach(gotoHome);
 
 async function navigateToSong(page: Page) {
   await navigateToMain(page);
-  expect(page.getByText("ソング")).toBeVisible();
+  await expect(page.getByText("ソング")).toBeVisible();
   await page.getByText("ソング").click();
 }
 
@@ -79,7 +79,7 @@ test("ダブルクリックで歌詞を編集できる", async ({ page }) => {
 
   await sequencer.click({ position: { x: 107, y: 171 }, clickCount: 2 }); // ダブルクリック
 
-  await note.getByRole("textbox").fill("あ");
+  await sequencer.locator(".lyric-input").fill("あ");
   await page.keyboard.press("Enter");
   const afterLyric = await getCurrentNoteLyric(note);
   expect(afterLyric).not.toEqual(beforeLyric);

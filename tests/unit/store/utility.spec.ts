@@ -22,6 +22,7 @@ import {
   isOnCommandOrCtrlKeyDown,
   filterCharacterInfosByStyleType,
 } from "@/store/utility";
+import { uuid4 } from "@/helpers/random";
 
 function createDummyMora(text: string): Mora {
   return {
@@ -251,17 +252,18 @@ describe("isAccentPhrasesTextDifferent", () => {
 
 test("buildAudioFileNameFromRawData", () => {
   const fileNamePattern =
-    "index=$連番$ characterName=$キャラ$ text=$テキスト$ styleName=$スタイル$ date=$日付$";
+    "index=$連番$ characterName=$キャラ$ text=$テキスト$ styleName=$スタイル$ date=$日付$ projectName=$プロジェクト名$";
   const vars = {
     index: 10,
     characterName: "キャラ１",
     text: "テストテキスト",
     styleName: "スタイル１",
     date: "20210801",
+    projectName: "サンプルプロジェクト",
   };
   const result = buildAudioFileNameFromRawData(fileNamePattern, vars);
   expect(result).toBe(
-    "index=011 characterName=キャラ１ text=テストテキスト styleName=スタイル１ date=20210801",
+    "index=011 characterName=キャラ１ text=テストテキスト styleName=スタイル１ date=20210801 projectName=サンプルプロジェクト",
   );
 });
 
@@ -304,13 +306,13 @@ describe("filterCharacterInfosByStyleType", () => {
   const createCharacterInfo = (
     styleTypes: (undefined | "talk" | "frame_decode" | "sing")[],
   ): CharacterInfo => {
-    const engineId = EngineId(crypto.randomUUID());
+    const engineId = EngineId(uuid4());
     return {
       portraitPath: "path/to/portrait",
       metas: {
         policy: "policy",
         speakerName: "speakerName",
-        speakerUuid: SpeakerId(crypto.randomUUID()),
+        speakerUuid: SpeakerId(uuid4()),
         styles: styleTypes.map((styleType) => ({
           styleType,
           styleName: "styleName",

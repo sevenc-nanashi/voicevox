@@ -35,20 +35,16 @@ export class Store<
 > extends BaseStore<S> {
   constructor(options: StoreOptions<S, G, A, M>) {
     super(options as OriginalStoreOptions<S>);
-    // @ts-expect-error Storeの型を書き換えている影響で未初期化として判定される
     this.actions = dotNotationDispatchProxy(this.dispatch.bind(this));
-    this.mutations = dotNotationCommitProxy(
-      // @ts-expect-error Storeの型を書き換えている影響で未初期化として判定される
-      this.commit.bind(this) as Commit<M>,
-    );
+    this.mutations = dotNotationCommitProxy(this.commit.bind(this));
   }
 
-  readonly getters!: G;
+  declare readonly getters: G;
 
   // @ts-expect-error Storeの型を非互換な型で書き換えているためエラー
-  dispatch: Dispatch<A>;
+  declare dispatch: Dispatch<A>;
   // @ts-expect-error Storeの型を非互換な型で書き換えているためエラー
-  commit: Commit<M>;
+  declare commit: Commit<M>;
   /**
    * ドット記法用のActionを直接呼べる。エラーになる場合はdispatchを使う。
    * 詳細 https://github.com/VOICEVOX/voicevox/issues/2088
@@ -141,7 +137,9 @@ const dotNotationCommitProxy = <M extends MutationsBase>(
     { commit },
     {
       get(target, tag: string) {
-        return (...payloads: [M[string]]) => target.commit(tag, ...payloads);
+        return (...payloads: [M[string]]) => {
+          target.commit(tag, ...payloads);
+        };
       },
     },
   ) as DotNotationCommit<M>;
@@ -316,6 +314,7 @@ const unwrapDotNotationAction = <
       actions: dotNotationDispatchProxy(injectee.dispatch),
       mutations: dotNotationCommitProxy(injectee.commit),
     };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return wrappedHandler.call(this, dotNotationInjectee, payload);
   };
 
@@ -379,13 +378,14 @@ export type CustomMutationTree<S, M extends MutationsBase> = {
   [K in keyof M]: Mutation<S, M, K>;
 };
 
-type StoreTypesBase = {
-  [key: string]: {
+type StoreTypesBase = Record<
+  string,
+  {
     getter?: GettersBase[number];
     mutation?: MutationsBase[number];
     action?: ActionsBase[number];
-  };
-};
+  }
+>;
 
 type PartialStoreOptions<
   S,
@@ -447,6 +447,7 @@ export const createPartialStore = <
     (acc, cur) => {
       const option = options[cur];
 
+      /* eslint-disable @typescript-eslint/no-unsafe-member-access */
       if (option.getter) {
         acc.getters[cur] = option.getter;
       }
@@ -456,14 +457,18 @@ export const createPartialStore = <
       if (option.action) {
         acc.actions[cur] = option.action;
       }
+      /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
       return acc;
     },
+
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
     {
       getters: Object.create(null),
       mutations: Object.create(null),
       actions: Object.create(null),
     },
+    /*  eslint-enable @typescript-eslint/no-unsafe-assignment */
   );
 
   return obj;
@@ -482,20 +487,26 @@ export const createDotNotationPartialStore = <
       const option = options[cur];
 
       if (option.getter) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         acc.getters[cur] = option.getter;
       }
       if (option.mutation) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         acc.mutations[cur] = option.mutation;
       }
       if (option.action) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         acc.actions[cur] = unwrapDotNotationAction(option.action);
       }
 
       return acc;
     },
     {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       getters: Object.create(null),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       mutations: Object.create(null),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       actions: Object.create(null),
     },
   );
