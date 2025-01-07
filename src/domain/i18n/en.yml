@@ -9,9 +9,7 @@
 音声を繋げて書き出し: Export Voice Concatenated
 テキストを繋げて書き出し: Export Text Concatenated
 テキスト読み込み: Import Text
-'{portFrom}番ポートが使用中であるため {engineName} は、{portTo}番ポートで起動しました': >-
-  {engineName} started on port {portTo} because port {portFrom} is already in
-  use
+'{defaultPort}番ポートが使用中であるため {engineName} は、{altPort}番ポートで起動しました': '{engineName} is running on port {altPort} because port {defaultPort} is in use'
 話速: Speed
 音高: Pitch
 抑揚: Intonation
@@ -21,14 +19,10 @@
 ｱｸｾﾝﾄ: Accent
 ｲﾝﾄﾈｰｼｮﾝ: Intonation
 長さ: Length
-音域調整の説明: |
-  Key Adjustment: Description here
-音域調整: Key Adj.
-声量調整の説明: |
-  Power Adjustment: Description here
-声量調整: Pow. Adj.
+音域: Key Adj.
+声量: Vol. Adj.
 テンポ: Tempo
-拍子: Time Signature
+拍子: Time Sig.
 スナップ: Snap
 トーク: Talk
 ソング: Song
@@ -48,6 +42,11 @@
 元に戻す: Undo
 やり直す: Redo
 すべて選択: すべて選択
+表示: View
+全画面表示を切り替え: Toggle Full Screen
+拡大: Zoom In
+縮小: Zoom Out
+拡大率のリセット: Reset Zoom
 エンジン: Engine
 設定: Settings
 キー割り当て: Key Bindings

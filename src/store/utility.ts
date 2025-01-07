@@ -19,7 +19,7 @@ export const DEFAULT_PROJECT_NAME = "Untitled";
 export const formatCharacterStyleName = (
   characterName: string,
   styleName = DEFAULT_STYLE_NAME,
-) => t`${characterName}（${styleName}）`;
+) => t`${{ characterName }}（${{ styleName }}）`;
 
 export function sanitizeFileName(fileName: string): string {
   // \x00 - \x1f: ASCII 制御文字

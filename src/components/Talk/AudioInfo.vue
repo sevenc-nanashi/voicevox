@@ -320,6 +320,7 @@ import { EngineManifest } from "@/openapi";
 import { useDefaultPreset } from "@/composables/useDefaultPreset";
 import { SLIDER_PARAMETERS } from "@/store/utility";
 import { createLogger } from "@/domain/frontend/log";
+import { t } from "@/domain/i18n/t";
 
 const props = defineProps<{
   activeAudioKey: AudioKey;

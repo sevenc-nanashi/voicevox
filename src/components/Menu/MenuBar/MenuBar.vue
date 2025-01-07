@@ -408,7 +408,7 @@ const menudata = computed<MenuItemData[]>(() => [
   },
   {
     type: "root",
-    label: "表示",
+    label: t`表示`,
     onClick: () => {
       closeAllDialog();
     },
@@ -418,13 +418,13 @@ const menudata = computed<MenuItemData[]>(() => [
       { type: "separator" },
       {
         type: "button",
-        label: "全画面表示を切り替え",
+        label: t`全画面表示を切り替え`,
         onClick: toggleFullScreen,
         disableWhenUiLocked: false,
       },
       {
         type: "button",
-        label: "拡大",
+        label: t`拡大`,
         onClick: () => {
           void zoomIn();
         },
@@ -432,7 +432,7 @@ const menudata = computed<MenuItemData[]>(() => [
       },
       {
         type: "button",
-        label: "縮小",
+        label: t`縮小`,
         onClick: () => {
           void zoomOut();
         },
@@ -440,7 +440,7 @@ const menudata = computed<MenuItemData[]>(() => [
       },
       {
         type: "button",
-        label: "拡大率のリセット",
+        label: t`拡大率のリセット`,
         onClick: () => {
           void zoomReset();
         },

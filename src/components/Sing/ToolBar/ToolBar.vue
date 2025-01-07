@@ -51,7 +51,7 @@
         hideBottomSpace
         dense
         class="sing-time-signature-field"
-        label="拍子"
+        :label="t`拍子`"
         stackLabel
         outlined
       >

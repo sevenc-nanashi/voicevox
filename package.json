@@ -39,7 +39,7 @@
     "postuninstall": "electron-builder install-app-deps",
     "license:generate": "tsx tools/generateLicenses.mts",
     "license:merge": "tsx tools/mergeLicenses.mts",
-    "generate-i18n": "tsx build/generateI18n.ts",
+    "generate-i18n": "tsx tools/generateI18n.mts",
     "storybook": "storybook dev --port 6006",
     "storybook:build": "storybook build"
   },
