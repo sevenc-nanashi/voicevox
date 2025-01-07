@@ -1,7 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
-
-import { IpcRendererInvoke } from "./ipc";
-import { Sandbox, ConfigType, EngineId, SandboxKey } from "@/type/preload";
+import type { IpcRendererInvoke } from "./ipc";
+import {
+  ConfigType,
+  EngineId,
+  Sandbox,
+  SandboxKey,
+  TextAsset,
+} from "@/type/preload";
 
 const ipcRendererInvokeProxy = new Proxy(
   {},
@@ -18,51 +23,14 @@ const api: Sandbox = {
     return await ipcRendererInvokeProxy.GET_APP_INFOS();
   },
 
-  getHowToUseText: async () => {
-    return await ipcRendererInvokeProxy.GET_HOW_TO_USE_TEXT();
-  },
-
-  getPolicyText: async () => {
-    return await ipcRendererInvokeProxy.GET_POLICY_TEXT();
-  },
-
-  getOssLicenses: async () => {
-    return await ipcRendererInvokeProxy.GET_OSS_LICENSES();
-  },
-
-  getUpdateInfos: async () => {
-    return await ipcRendererInvokeProxy.GET_UPDATE_INFOS();
-  },
-
-  getContactText: async () => {
-    return await ipcRendererInvokeProxy.GET_CONTACT_TEXT();
-  },
-
-  getQAndAText: async () => {
-    return await ipcRendererInvokeProxy.GET_Q_AND_A_TEXT();
-  },
-
-  getOssCommunityInfos: async () => {
-    return await ipcRendererInvokeProxy.GET_OSS_COMMUNITY_INFOS();
-  },
-
-  getPrivacyPolicyText: async () => {
-    return await ipcRendererInvokeProxy.GET_PRIVACY_POLICY_TEXT();
+  getTextAsset: (textType) => {
+    return ipcRendererInvokeProxy.GET_TEXT_ASSET(textType) as Promise<
+      TextAsset[typeof textType]
+    >;
   },
 
   getAltPortInfos: async () => {
     return await ipcRendererInvokeProxy.GET_ALT_PORT_INFOS();
-  },
-
-  showAudioSaveDialog: ({ title, defaultPath }) => {
-    return ipcRendererInvokeProxy.SHOW_AUDIO_SAVE_DIALOG({
-      title,
-      defaultPath,
-    });
-  },
-
-  showTextSaveDialog: ({ title, defaultPath }) => {
-    return ipcRendererInvokeProxy.SHOW_TEXT_SAVE_DIALOG({ title, defaultPath });
   },
 
   showSaveDirectoryDialog: ({ title }) => {
@@ -88,32 +56,19 @@ const api: Sandbox = {
     return ipcRendererInvokeProxy.SHOW_PROJECT_LOAD_DIALOG({ title });
   },
 
-  showMessageDialog: ({ type, title, message }) => {
-    return ipcRendererInvokeProxy.SHOW_MESSAGE_DIALOG({ type, title, message });
-  },
-
-  showQuestionDialog: ({
-    type,
-    title,
-    message,
-    buttons,
-    cancelId,
-    defaultId,
-  }) => {
-    return ipcRendererInvokeProxy.SHOW_QUESTION_DIALOG({
-      type,
-      title,
-      message,
-      buttons,
-      cancelId,
-      defaultId,
-    });
-  },
-
   showImportFileDialog: ({ title, name, extensions }) => {
     return ipcRendererInvokeProxy.SHOW_IMPORT_FILE_DIALOG({
       title,
       name,
+      extensions,
+    });
+  },
+
+  showExportFileDialog: ({ title, defaultPath, extensionName, extensions }) => {
+    return ipcRendererInvokeProxy.SHOW_EXPORT_FILE_DIALOG({
+      title,
+      defaultPath,
+      extensionName,
       extensions,
     });
   },
@@ -148,8 +103,22 @@ const api: Sandbox = {
     void ipcRendererInvokeProxy.MINIMIZE_WINDOW();
   },
 
-  maximizeWindow: () => {
-    void ipcRendererInvokeProxy.MAXIMIZE_WINDOW();
+  toggleMaximizeWindow: () => {
+    void ipcRendererInvokeProxy.TOGGLE_MAXIMIZE_WINDOW();
+  },
+
+  toggleFullScreen: () => {
+    void ipcRendererInvokeProxy.TOGGLE_FULLSCREEN();
+  },
+
+  zoomIn: () => {
+    void ipcRendererInvokeProxy.ZOOM_IN();
+  },
+  zoomOut: () => {
+    void ipcRendererInvokeProxy.ZOOM_OUT();
+  },
+  zoomReset: () => {
+    void ipcRendererInvokeProxy.ZOOM_RESET();
   },
 
   logError: (...params) => {
@@ -205,20 +174,12 @@ const api: Sandbox = {
     return ipcRendererInvokeProxy.HOTKEY_SETTINGS({ newData });
   },
 
-  getDefaultHotkeySettings: async () => {
-    return await ipcRendererInvokeProxy.GET_DEFAULT_HOTKEY_SETTINGS();
-  },
-
   getDefaultToolbarSetting: async () => {
     return await ipcRendererInvokeProxy.GET_DEFAULT_TOOLBAR_SETTING();
   },
 
   setNativeTheme: (source) => {
     void ipcRendererInvokeProxy.SET_NATIVE_THEME(source);
-  },
-
-  theme: (newData) => {
-    return ipcRendererInvokeProxy.THEME({ newData });
   },
 
   vuexReady: () => {

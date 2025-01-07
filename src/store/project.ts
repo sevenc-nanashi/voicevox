@@ -1,9 +1,5 @@
-import { getBaseName } from "./utility";
-import {
-  createDotNotationPartialStore as createPartialStore,
-  DotNotationDispatch,
-} from "./vuex";
-import { createDotNotationUILockAction as createUILockAction } from "@/store/ui";
+import { createPartialStore, DotNotationDispatch } from "./vuex";
+import { createUILockAction } from "@/store/ui";
 import {
   AllActions,
   AudioItem,
@@ -11,7 +7,7 @@ import {
   ProjectStoreTypes,
 } from "@/store/type";
 import { TrackId } from "@/type/preload";
-
+import path from "@/helpers/path";
 import { getValueOrThrow, ResultError } from "@/type/result";
 import { LatestProjectType } from "@/domain/project/schema";
 import {
@@ -26,6 +22,12 @@ import {
 } from "@/sing/domain";
 import { EditorType } from "@/type/preload";
 import { IsEqual } from "@/type/utility";
+import {
+  showAlertDialog,
+  showMessageDialog,
+  showQuestionDialog,
+} from "@/components/Dialog/Dialog";
+import { uuid4 } from "@/helpers/random";
 
 export const projectStoreState: ProjectStoreState = {
   savedLastCommandIds: { talk: null, song: null },
@@ -77,7 +79,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
   PROJECT_NAME_WITH_EXT: {
     getter(state) {
       return state.projectFilePath
-        ? getBaseName(state.projectFilePath)
+        ? path.basename(state.projectFilePath)
         : undefined;
     },
   },
@@ -85,7 +87,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
   PROJECT_NAME: {
     getter(state) {
       return state.projectFilePath
-        ? getBaseName(state.projectFilePath).replace(".vvproj", "")
+        ? path.basename(state.projectFilePath, ".vvproj")
         : undefined;
     },
   },
@@ -124,7 +126,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
         await context.actions.SET_TIME_SIGNATURES({
           timeSignatures: [createDefaultTimeSignature(1)],
         });
-        const trackId = TrackId(crypto.randomUUID());
+        const trackId = TrackId(uuid4());
         await context.actions.SET_TRACKS({
           tracks: new Map([[trackId, createDefaultTrack()]]),
         });
@@ -168,8 +170,8 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
      */
     action: createUILockAction(
       async (
-        { actions, mutations, state, getters },
-        { filePath, confirm }: { filePath?: string; confirm?: boolean },
+        { actions, mutations, getters },
+        { filePath }: { filePath?: string },
       ) => {
         if (!filePath) {
           // Select and load a project File.
@@ -197,21 +199,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             projectJson: text,
           });
 
-          if (
-            !state.experimentalSetting.enableMultiTrack &&
-            parsedProjectData.song.trackOrder.length > 1
-          ) {
-            await window.backend.showMessageDialog({
-              type: "error",
-              title: "エラー",
-              message:
-                "このプロジェクトはマルチトラック機能を使用して作成されていますが、現在の設定ではマルチトラック機能を使用できません。\n" +
-                "設定の「ソング：マルチトラック機能」を有効にしてからプロジェクトを読み込んでください。",
-            });
-            return false;
-          }
-
-          if (confirm !== false && getters.IS_EDITED) {
+          if (getters.IS_EDITED) {
             const result = await actions.SAVE_OR_DISCARD_PROJECT_FILE({
               additionalMessage:
                 "プロジェクトをロードすると現在のプロジェクトは破棄されます。",
@@ -238,8 +226,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
               return "ファイルフォーマットが正しくありません。";
             return err.message;
           })();
-          await window.backend.showMessageDialog({
-            type: "error",
+          await showAlertDialog({
             title: "エラー",
             message: `プロジェクトファイルの読み込みに失敗しました。\n${message}`,
           });
@@ -283,7 +270,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             context.state.projectFilePath &&
             context.state.projectFilePath != filePath
           ) {
-            await window.backend.showMessageDialog({
+            await showMessageDialog({
               type: "info",
               title: "保存",
               message: `編集中のプロジェクトが ${filePath} に切り替わりました。`,
@@ -339,8 +326,7 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
             if (!(err instanceof Error)) return "エラーが発生しました。";
             return err.message;
           })();
-          await window.backend.showMessageDialog({
-            type: "error",
+          await showAlertDialog({
             title: "エラー",
             message: `プロジェクトファイルの保存に失敗しました。\n${message}`,
           });
@@ -361,17 +347,19 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
       if (additionalMessage) {
         message += "\n" + additionalMessage;
       }
-      message += "\n変更を保存しますか？";
 
-      const result: number = await window.backend.showQuestionDialog({
-        type: "info",
-        title: "警告",
+      const result: number = await showQuestionDialog({
+        type: "warning",
+        title: "プロジェクトを保存しますか？",
         message,
-        buttons: ["保存", "破棄", "キャンセル"],
-        cancelId: 2,
-        defaultId: 2,
+        buttons: [
+          "キャンセル",
+          { text: "破棄する", color: "warning" },
+          { text: "保存する", color: "primary" },
+        ],
+        cancel: 0,
       });
-      if (result == 0) {
+      if (result == 2) {
         const saved = await actions.SAVE_PROJECT_FILE({
           overwrite: true,
         });
@@ -413,9 +401,9 @@ export const projectStore = createPartialStore<ProjectStoreTypes>({
   },
 
   CLEAR_UNDO_HISTORY: {
-    action({ commit }) {
-      commit("RESET_SAVED_LAST_COMMAND_IDS");
-      commit("CLEAR_COMMANDS");
+    action({ mutations }) {
+      mutations.RESET_SAVED_LAST_COMMAND_IDS();
+      mutations.CLEAR_COMMANDS();
     },
   },
 });
