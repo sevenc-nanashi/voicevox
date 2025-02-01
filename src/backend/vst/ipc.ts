@@ -218,6 +218,17 @@ const ipcRtcIce =
     "rtcIce",
   );
 
+const ipcLogInfo = createMessageFunction<(message: string) => void>("logInfo", {
+  silent: true,
+});
+const ipcLogWarn = createMessageFunction<(message: string) => void>("logWarn", {
+  silent: true,
+});
+const ipcLogError = createMessageFunction<(message: string) => void>(
+  "logError",
+  { silent: true },
+);
+
 type Config = Record<string, unknown> & Metadata;
 const log = createLogger("vst/ipc");
 
@@ -372,4 +383,16 @@ export async function rtcSdp(sdp: RTCSessionDescriptionInit) {
 
 export async function rtcIce(nonce: string, ice: RTCIceCandidateInit) {
   await ipcRtcIce({ nonce, ice });
+}
+
+export function logInfo(message: string) {
+  void ipcLogInfo(message);
+}
+
+export function logWarn(message: string) {
+  void ipcLogWarn(message);
+}
+
+export function logError(message: string) {
+  void ipcLogError(message);
 }
