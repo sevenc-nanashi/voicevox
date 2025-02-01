@@ -14,6 +14,8 @@ import {
   exportProject,
   startEngine,
   VstPhrase,
+  rtcIce,
+  rtcSdp,
 } from "./ipc";
 import { projectFilePath } from "./sandbox";
 import { Store } from "@/store/vuex";
@@ -27,7 +29,11 @@ import {
   State,
 } from "@/store/type";
 import { secondToTick, tickToSecond } from "@/sing/domain";
-import { phraseSingingVoices, singingVoiceCache } from "@/store/singing";
+import {
+  mediaStreamDestination,
+  phraseSingingVoices,
+  singingVoiceCache,
+} from "@/store/singing";
 import onetimeWatch from "@/helpers/onetimeWatch";
 import { createLogger } from "@/helpers/log";
 import { getOrThrow } from "@/helpers/mapHelper";
@@ -149,6 +155,17 @@ export const vstPlugin: Plugin = {
             value: "song",
           });
         }
+      },
+    );
+
+    onetimeWatch(
+      () => store.state.isEditorReady,
+      async (isEditorReady) => {
+        if (!isEditorReady) {
+          return "continue";
+        }
+        void startWebrtc();
+        return "unwatch";
       },
     );
 
@@ -290,5 +307,40 @@ export const vstPlugin: Plugin = {
       },
       { deep: true },
     );
+
+    async function startWebrtc() {
+      if (!mediaStreamDestination)
+        throw new UnreachableError("mediaStreamDestination is not initialized");
+
+      const rtcPeerConnection = new RTCPeerConnection();
+      const tracks = mediaStreamDestination.stream.getAudioTracks();
+      console.log(tracks);
+      rtcPeerConnection.addTrack(tracks[0]);
+
+      const { promise: noncePromise, resolve: resolveNonce } =
+        Promise.withResolvers<string>();
+
+      rtcPeerConnection.onicecandidate = (event) => {
+        const candidate = event.candidate;
+        if (candidate) {
+          void noncePromise.then((nonce) => rtcIce(nonce, candidate));
+        }
+      };
+      rtcPeerConnection.onconnectionstatechange = () => {
+        log.info(`connection state: ${rtcPeerConnection.connectionState}`);
+      };
+      const offer = await rtcPeerConnection.createOffer();
+      await rtcPeerConnection.setLocalDescription(offer);
+      log.info("Local description set");
+
+      onReceivedIPCMessage("rtcIce", async (candidate) => {
+        await rtcPeerConnection.addIceCandidate(candidate);
+      });
+
+      const { nonce, answer } = await rtcSdp(offer);
+      resolveNonce(nonce);
+      await rtcPeerConnection.setRemoteDescription(answer);
+      log.info("Remote description set");
+    }
   },
 };

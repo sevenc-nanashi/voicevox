@@ -45,6 +45,7 @@ class RustError extends Error {
 type Notifications = {
   updatePlayingState: boolean;
   engineReady: { port: number };
+  rtcIce: RTCIceCandidateInit | undefined;
 };
 
 let nonce = 0;
@@ -211,6 +212,12 @@ const ipcChangeEnginePath =
 
 const ipcZoom = createMessageFunction<(factor: number) => void>("zoom");
 
+const ipcRtcSdp = createMessageFunction<(sdp: unknown) => unknown>("rtcSdp");
+const ipcRtcIce =
+  createMessageFunction<(obj: { nonce: string; ice: unknown }) => void>(
+    "rtcIce",
+  );
+
 type Config = Record<string, unknown> & Metadata;
 const log = createLogger("vst/ipc");
 
@@ -354,4 +361,15 @@ export async function showSaveDirectoryDialog(obj: {
   return await ipcShowSaveDirectoryDialog(obj).then(
     (result) => result || undefined,
   );
+}
+
+export async function rtcSdp(sdp: RTCSessionDescriptionInit) {
+  return (await ipcRtcSdp(sdp)) as {
+    nonce: string;
+    answer: RTCSessionDescription;
+  };
+}
+
+export async function rtcIce(nonce: string, ice: RTCIceCandidateInit) {
+  await ipcRtcIce({ nonce, ice });
 }

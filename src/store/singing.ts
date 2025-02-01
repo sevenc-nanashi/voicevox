@@ -123,6 +123,7 @@ import {
   ufProjectToMultiFile,
   ufProjectToSingleFile,
 } from "@/sing/utaformatixProject/utils";
+import { isVst } from "@/helpers/platform";
 
 const logger = createLogger("store/singing");
 
@@ -518,6 +519,7 @@ let mainChannelStrip: ChannelStrip | undefined;
 const trackChannelStrips = new Map<TrackId, ChannelStrip>();
 let limiter: Limiter | undefined;
 let clipper: Clipper | undefined;
+export let mediaStreamDestination: MediaStreamAudioDestinationNode | undefined;
 
 // NOTE: テスト時はAudioContextが存在しない
 if (window.AudioContext) {
@@ -531,6 +533,14 @@ if (window.AudioContext) {
   previewSynth.output.connect(mainChannelStrip.input);
   mainChannelStrip.output.connect(limiter.input);
   limiter.output.connect(clipper.input);
+
+  if (isVst) {
+    mediaStreamDestination = audioContext.createMediaStreamDestination();
+    if (!mediaStreamDestination)
+      throw new Error("Failed to create MediaStreamAudioDestinationNode");
+
+    clipper.output.connect(mediaStreamDestination);
+  }
   clipper.output.connect(audioContext.destination);
 }
 
