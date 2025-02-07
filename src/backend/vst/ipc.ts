@@ -361,7 +361,7 @@ export async function rtcSdp(sdp: RTCSessionDescriptionInit) {
   };
 }
 
-export async function rtcIce(nonce: string, ice: RTCIceCandidateInit) {
+export async function rtcIce(nonce: string, ice: RTCIceCandidateInit | null) {
   await ipcRtcIce({ nonce, ice });
 }
 

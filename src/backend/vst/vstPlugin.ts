@@ -315,15 +315,13 @@ export const vstPlugin: Plugin = {
       const { promise: noncePromise, resolve: resolveNonce } =
         Promise.withResolvers<string>();
 
-      rtcPeerConnection.onicecandidate = (event) => {
+      rtcPeerConnection.addEventListener("icecandidate", async (event) => {
         const candidate = event.candidate;
-        if (candidate) {
-          void noncePromise.then((nonce) => rtcIce(nonce, candidate));
-        }
-      };
-      rtcPeerConnection.onconnectionstatechange = () => {
+        void noncePromise.then((nonce) => rtcIce(nonce, candidate));
+      });
+      rtcPeerConnection.addEventListener("connectionstatechange", () => {
         log.info(`connection state: ${rtcPeerConnection.connectionState}`);
-      };
+      });
       const offer = await rtcPeerConnection.createOffer();
       await rtcPeerConnection.setLocalDescription(offer);
       log.info("Local description set");
