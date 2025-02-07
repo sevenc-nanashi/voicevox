@@ -540,8 +540,9 @@ if (window.AudioContext) {
       throw new Error("Failed to create MediaStreamAudioDestinationNode");
 
     clipper.output.connect(mediaStreamDestination);
+  } else {
+    clipper.output.connect(audioContext.destination);
   }
-  clipper.output.connect(audioContext.destination);
 }
 
 const playheadPosition = ref(0); // 単位はtick
