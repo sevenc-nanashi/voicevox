@@ -1,6 +1,10 @@
 managePackageManagerVersions: true
 
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - "@vizejs/*"
+  - "@typescript/*"
+  - vize
 
 onlyBuiltDependencies:
   - '@nestjs/core'
