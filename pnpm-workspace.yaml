@@ -5,6 +5,7 @@ minimumReleaseAgeExclude:
   - "@vizejs/*"
   - "@typescript/*"
   - vize
+  - vue
 
 onlyBuiltDependencies:
   - '@nestjs/core'
