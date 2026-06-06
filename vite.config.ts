@@ -119,7 +119,9 @@ export default defineConfig((options) => {
     },
     plugins: [
       // vue(),
-      vize(),
+      vize({
+        vueParserQuirks: true,
+      }),
       quasar({ autoImportComponentCase: "pascal" }),
       isElectron && [
         cleanDistPlugin(),
