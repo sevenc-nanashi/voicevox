@@ -121,7 +121,6 @@ export default defineConfig((options) => {
       // vue(),
       vize({
         templateSyntax: "quirks",
-        vapor: true,
       }),
       quasar({ autoImportComponentCase: "pascal" }),
       isElectron && [
