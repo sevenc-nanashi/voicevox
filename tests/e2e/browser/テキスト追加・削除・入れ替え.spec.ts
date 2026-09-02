@@ -42,10 +42,10 @@ test("テキストの追加・入れ替え・削除", async ({ page }) => {
     const cells = page.locator(".audio-cell");
 
     const fromHandle = cells
-      .nth(1)
+      .first()
       .getByRole("button", { name: /^キャラクターとスタイルを変更、/ });
     const toHandle = cells
-      .nth(2)
+      .nth(1)
       .getByRole("button", { name: /^キャラクターとスタイルを変更、/ });
 
     const fromBox = ensureNotNullish(await fromHandle.boundingBox());
