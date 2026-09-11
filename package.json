@@ -14,7 +14,7 @@
   "packageManager": "pnpm@10.28.2",
   "scripts": {
     "// --- lint ---": "",
-    "lint": "cross-env ESLINT_FILE_PROGRESS=1 eslint --cache",
+    "lint": "cross-env ESLINT_FILE_PROGRESS=1 eslint --cache && vize lint",
     "lint:inspector": "eslint --inspect-config",
     "fmt": "cross-env ESLINT_FILE_PROGRESS=1 eslint --fix --cache",
     "markdownlint": "markdownlint --ignore node_modules/ --ignore dist/ --ignore dist_electron/ --ignore dist_preview/ ./",
