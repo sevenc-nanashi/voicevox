@@ -7,9 +7,9 @@ import type {
   VolumeEditorPreviewMode,
   VolumeEditorInput,
   VolumeEditorComputedRefs,
+  VolumeEditorTooltipData,
 } from "@/sing/volumeEditorStateMachine/common";
 import type { TrackId } from "@/type/preload";
-import type { Tempo } from "@/domain/project/type";
 import { createVolumeEditorStateMachine } from "@/sing/volumeEditorStateMachine";
 import type { VolumeEditableFrameRange } from "@/sing/volumeEditRanges";
 
@@ -25,16 +25,12 @@ export const useVolumeEditorStateMachine = (
     previewVolumeEdit: shallowRef<VolumePreviewEdit | undefined>(undefined),
     previewMode: ref<VolumeEditorPreviewMode>("IDLE"),
     cursorState: ref<CursorState>("UNSET"),
+    tooltipData: ref<VolumeEditorTooltipData>(),
+    highlightedFrame: ref<number>(),
   };
 
   const computedRefs: VolumeEditorComputedRefs = {
     selectedTrackId: computed<TrackId>(() => store.getters.SELECTED_TRACK_ID),
-    playheadTicks: computed<number>(() => store.getters.PLAYHEAD_POSITION),
-    tempos: computed<Tempo[]>(() => store.state.tempos),
-    tpqn: computed<number>(() => store.state.tpqn),
-    zoomX: computed<number>(() => store.state.sequencerZoomX),
-    zoomY: computed<number>(() => store.state.sequencerZoomY),
-    nowPlaying: computed<boolean>(() => store.state.nowPlaying),
   };
 
   const idleStateId = computed<VolumeEditorIdleStateId>(() =>
@@ -66,5 +62,7 @@ export const useVolumeEditorStateMachine = (
     volumePreviewEdit: computed(() => refs.previewVolumeEdit.value),
     previewMode: computed(() => refs.previewMode.value),
     cursorState: computed(() => refs.cursorState.value),
+    tooltipData: computed(() => refs.tooltipData.value),
+    highlightedFrame: computed(() => refs.highlightedFrame.value),
   };
 };

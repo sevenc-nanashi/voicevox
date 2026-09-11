@@ -18,6 +18,7 @@
           beforeClass="overflow-hidden"
           :disable="!shouldShowPanes"
           :modelValue="audioDetailPaneHeight"
+          data-testid="audio-detail-pane-splitter"
           @update:modelValue="updateAudioDetailPane"
         >
           <template #before>
@@ -62,6 +63,7 @@
                         class="audio-cells"
                         :modelValue="audioKeys"
                         :itemKey
+                        :disabled="uiLocked"
                         ghostClass="ghost"
                         filter="input"
                         :preventOnFilter="false"

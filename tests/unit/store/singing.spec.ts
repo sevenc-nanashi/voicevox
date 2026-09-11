@@ -1,16 +1,113 @@
+import { nextTick } from "vue";
 import { beforeEach, describe, expect, test } from "vitest";
 import { store } from "@/store";
-import { NoteId, TrackId } from "@/type/preload";
+import {
+  type CharacterInfo,
+  EngineId,
+  NoteId,
+  SpeakerId,
+  StyleId,
+  TrackId,
+} from "@/type/preload";
 import { resetMockMode, uuid4 } from "@/helpers/random";
 import { cloneWithUnwrapProxy } from "@/helpers/cloneWithUnwrapProxy";
-import { createDefaultTrack, VALUE_INDICATING_NO_DATA } from "@/sing/domain";
+import { createDefaultTrack } from "@/sing/domain";
 import { getOrThrow } from "@/helpers/mapHelper";
+import { getEngineManifestMock } from "@/mock/engineMock/manifestMock";
 
 const initialState = cloneWithUnwrapProxy(store.state);
 beforeEach(() => {
   store.replaceState(cloneWithUnwrapProxy(initialState));
 
   resetMockMode();
+});
+
+test("SET_SINGERで未設定の歌い方を同じキャラクターから補完する", async () => {
+  const trackId = store.state.trackOrder[0];
+  const engineId = EngineId(uuid4());
+  const singer = { engineId, styleId: StyleId(1) };
+  const characterInfo: CharacterInfo = {
+    portraitPath: "path/to/portrait",
+    metas: {
+      policy: "policy",
+      speakerName: "speakerName",
+      speakerUuid: SpeakerId(uuid4()),
+      styles: [
+        {
+          styleType: "frame_decode",
+          styleName: "singer",
+          engineId,
+          styleId: singer.styleId,
+          iconPath: "path/to/icon",
+          portraitPath: "path/to/portrait",
+          voiceSamplePaths: [],
+        },
+        {
+          styleType: "singing_teacher",
+          styleName: "teacher",
+          engineId,
+          styleId: StyleId(6000),
+          iconPath: "path/to/icon",
+          portraitPath: "path/to/portrait",
+          voiceSamplePaths: [],
+        },
+      ],
+    },
+  };
+  store.mutations.SET_CHARACTER_INFOS({
+    engineId,
+    characterInfos: [characterInfo],
+  });
+  store.mutations.SET_ENGINE_MANIFESTS({
+    engineManifests: { [engineId]: getEngineManifestMock() },
+  });
+
+  store.mutations.SET_SINGER({ trackId, singer });
+
+  expect(getOrThrow(store.state.tracks, trackId).singingTeacher).toEqual({
+    styleId: StyleId(6000),
+  });
+
+  await nextTick();
+});
+
+test("SET_SINGERで設定済みの歌い方を上書きしない", async () => {
+  const trackId = store.state.trackOrder[0];
+  const engineId = EngineId(uuid4());
+  const singingTeacher = {
+    styleId: StyleId(2),
+  };
+  store.mutations.SET_ENGINE_MANIFESTS({
+    engineManifests: { [engineId]: getEngineManifestMock() },
+  });
+  store.mutations.SET_SINGING_TEACHER({ trackId, singingTeacher });
+
+  store.mutations.SET_SINGER({
+    trackId,
+    singer: { engineId, styleId: StyleId(1) },
+  });
+
+  expect(getOrThrow(store.state.tracks, trackId).singingTeacher).toEqual(
+    singingTeacher,
+  );
+
+  await nextTick();
+});
+
+test("COMMAND_SET_SINGING_TEACHER", async () => {
+  const trackId = store.state.trackOrder[0];
+  const singingTeacher = {
+    styleId: StyleId(1),
+  };
+
+  await store.actions.COMMAND_SET_SINGING_TEACHER({
+    trackId,
+    singingTeacher,
+  });
+
+  expect(getOrThrow(store.state.tracks, trackId).singingTeacher).toEqual(
+    singingTeacher,
+  );
 });
 
 describe("COMMAND_UPSERT_PHONEME_TIMING_EDIT", () => {
@@ -280,7 +377,7 @@ describe("COMMAND_ERASE_PHONEME_TIMING_EDITS", () => {
 describe("COMMAND_ERASE_VOLUME_EDIT_DATA", () => {
   test("複数範囲を1コマンドで削除し範囲外のデータを保持する", async () => {
     const trackId = store.state.trackOrder[0];
-    const volumeEditData = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7];
+    const volumeEditData = [-6, -3, 0, 3, 6, 9, 12];
     store.mutations.SET_VOLUME_EDIT_DATA({
       volumeArray: volumeEditData,
       startFrame: 0,
@@ -295,15 +392,7 @@ describe("COMMAND_ERASE_VOLUME_EDIT_DATA", () => {
     });
 
     const track = getOrThrow(store.state.tracks, trackId);
-    expect(track.volumeEditData).toEqual([
-      0.1,
-      VALUE_INDICATING_NO_DATA,
-      VALUE_INDICATING_NO_DATA,
-      0.4,
-      0.5,
-      VALUE_INDICATING_NO_DATA,
-      0.7,
-    ]);
+    expect(track.volumeEditData).toEqual([-6, null, null, 3, 6, null, 12]);
   });
 });
 
@@ -364,7 +453,7 @@ test("COMMAND_DUPLICATE_TRACK", async () => {
   // ピッチ・音量編集データ
   const sourceTrackClone = cloneWithUnwrapProxy(sourceTrack);
   sourceTrackClone.pitchEditData = [440, 442, 440];
-  sourceTrackClone.volumeEditData = [1.0, 1.2, 1.0];
+  sourceTrackClone.volumeEditData = [0, 1.2, 0];
   // 音素タイミング編集データ
   const noteId = notes[0].id;
   sourceTrackClone.phonemeTimingEditData.set(noteId, [
@@ -393,7 +482,7 @@ test("COMMAND_DUPLICATE_TRACK", async () => {
   expect(newTrack.notes[0].id).not.toBe(noteId);
   expect(newTrack.notes[0].lyric).toBe("test");
   expect(newTrack.pitchEditData).toEqual([440, 442, 440]);
-  expect(newTrack.volumeEditData).toEqual([1.0, 1.2, 1.0]);
+  expect(newTrack.volumeEditData).toEqual([0, 1.2, 0]);
 
   // 音素タイミング編集データが新しいノートIDで引き継がれているか
   const newNoteId = newTrack.notes[0].id;

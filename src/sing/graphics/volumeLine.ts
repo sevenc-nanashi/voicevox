@@ -16,49 +16,103 @@ export type VolumeViewInfo = {
   readonly leftPadding: number;
 };
 
-type VolumeLineOptions = {
-  color: Color;
-  width: number;
-  dashed?: boolean;
-  // TODO: 見た目調整のための暫定オプション。
-  // TODO: 調整完了後に isVisible / areaAlpha は削除し、必要最小限に整理する。
-  showArea?: boolean;
-  areaAlpha?: number;
-  isVisible?: boolean;
-};
+/** normalizedY(下端0・上端1)を、上端を0とする画面Y座標へ変換する。 */
+export const volumeNormalizedYToScreenY = (
+  normalizedY: number,
+  viewportHeight: number,
+) => (1 - normalizedY) * viewportHeight;
 
-const colorToHex = (color: Color) => {
-  return (color.r << 16) + (color.g << 8) + color.b;
+/**
+ * baseXの昇順に並んだsegmentから、baseXがtargetBaseX以上となる
+ * 最初の点のインデックスを返す。該当する点がなければsegment.lengthを返す。
+ */
+export const findFirstVolumePointAtOrAfter = (
+  segment: VolumeSegment,
+  targetBaseX: number,
+) => {
+  let low = 0;
+  let high = segment.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (segment[middle].baseX < targetBaseX) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
 };
 
 /**
- * ボリュームライン（折れ線と塗りつぶし）を描画するクラス。
+ * baseXの昇順に並んだsegmentから、baseXがtargetBaseXより大きくなる
+ * 最初の点のインデックスを返す。該当する点がなければsegment.lengthを返す。
+ */
+export const findFirstVolumePointAfter = (
+  segment: VolumeSegment,
+  targetBaseX: number,
+) => {
+  let low = 0;
+  let high = segment.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (segment[middle].baseX <= targetBaseX) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+  return low;
+};
+
+/**
+ * ビューポートに映る点のインデックス範囲を返す。
+ * 画面端をまたぐ線分が途切れないように、範囲の前後1点を含める。
+ */
+export const computeVisibleVolumePointRange = (
+  segment: VolumeSegment,
+  viewInfo: VolumeViewInfo,
+) => {
+  const viewportStartBaseX =
+    (viewInfo.offsetX - viewInfo.leftPadding) / viewInfo.zoomX;
+  const viewportEndBaseX =
+    (viewInfo.offsetX + viewInfo.viewportWidth - viewInfo.leftPadding) /
+    viewInfo.zoomX;
+  const startIndex = Math.max(
+    0,
+    findFirstVolumePointAtOrAfter(segment, viewportStartBaseX) - 1,
+  );
+  const endIndex = Math.min(
+    segment.length,
+    findFirstVolumePointAtOrAfter(segment, viewportEndBaseX) + 1,
+  );
+  return { startIndex, endIndex };
+};
+
+type VolumeLineOptions = {
+  color: Color;
+  width: number;
+  isVisible?: boolean;
+};
+
+/**
+ * ボリュームラインを描画するクラス。
  */
 export class VolumeLine {
   color: Color;
   width: number;
-  dashed: boolean;
-  showArea: boolean;
-  areaAlpha: number;
   isVisible: boolean;
 
   readonly container: PIXI.Container;
-  private readonly area: PIXI.Graphics;
   private readonly line: PIXI.Graphics;
 
   constructor(options: VolumeLineOptions) {
     this.color = options.color;
     this.width = options.width;
-    this.dashed = options.dashed ?? false;
-    this.showArea = options.showArea ?? false;
-    this.areaAlpha = options.areaAlpha ?? 0.15;
     this.isVisible = options.isVisible ?? true;
 
     this.container = new PIXI.Container();
-    this.area = new PIXI.Graphics();
     this.line = new PIXI.Graphics();
 
-    this.container.addChild(this.area);
     this.container.addChild(this.line);
   }
 
@@ -69,12 +123,11 @@ export class VolumeLine {
     }
     const alpha = this.color.a / 255;
 
-    this.area.clear();
     this.line.clear();
 
     const strokeStyle = {
       width: this.width,
-      color: colorToHex(this.color),
+      color: this.color.toRgbNumber(),
       alpha,
       alignment: 0.5,
     };
@@ -96,72 +149,26 @@ export class VolumeLine {
         continue;
       }
 
+      const { startIndex, endIndex } = computeVisibleVolumePointRange(
+        segment,
+        viewInfo,
+      );
+
       // 画面座標に変換
-      const screenPoints = segment.map((point) => ({
+      const screenPoints = segment.slice(startIndex, endIndex).map((point) => ({
         x:
           point.baseX * viewInfo.zoomX -
           viewInfo.offsetX +
           viewInfo.leftPadding,
-        y: (1 - point.normalizedY) * viewInfo.viewportHeight,
+        y: volumeNormalizedYToScreenY(
+          point.normalizedY,
+          viewInfo.viewportHeight,
+        ),
       }));
 
-      if (this.showArea) {
-        this.area
-          .poly([
-            { x: screenPoints[0].x, y: viewInfo.viewportHeight },
-            ...screenPoints,
-            {
-              x: screenPoints[screenPoints.length - 1].x,
-              y: viewInfo.viewportHeight,
-            },
-          ])
-          .fill({ color: colorToHex(this.color), alpha: this.areaAlpha });
-      }
-
-      if (this.dashed) {
-        const dashLength = 6;
-        const gapLength = 4;
-        let drawing = true;
-        let remaining = dashLength;
-
-        this.line.moveTo(screenPoints[0].x, screenPoints[0].y);
-        for (let i = 1; i < screenPoints.length; i++) {
-          let x0 = screenPoints[i - 1].x;
-          let y0 = screenPoints[i - 1].y;
-          const x1 = screenPoints[i].x;
-          const y1 = screenPoints[i].y;
-          let segLen = Math.hypot(x1 - x0, y1 - y0);
-          while (segLen > 0.0001) {
-            const step = Math.min(segLen, remaining);
-            const t = step / segLen;
-            const nx = x0 + (x1 - x0) * t;
-            const ny = y0 + (y1 - y0) * t;
-
-            if (drawing) {
-              this.line.lineTo(nx, ny);
-            } else {
-              this.line.moveTo(nx, ny);
-            }
-
-            segLen -= step;
-            remaining -= step;
-            x0 = nx;
-            y0 = ny;
-
-            if (drawing && remaining <= 0) {
-              drawing = false;
-              remaining = gapLength;
-            } else if (!drawing && remaining <= 0) {
-              drawing = true;
-              remaining = dashLength;
-            }
-          }
-        }
-      } else {
-        this.line.moveTo(screenPoints[0].x, screenPoints[0].y);
-        for (let i = 1; i < screenPoints.length; i++) {
-          this.line.lineTo(screenPoints[i].x, screenPoints[i].y);
-        }
+      this.line.moveTo(screenPoints[0].x, screenPoints[0].y);
+      for (let i = 1; i < screenPoints.length; i++) {
+        this.line.lineTo(screenPoints[i].x, screenPoints[i].y);
       }
     }
 
@@ -169,7 +176,6 @@ export class VolumeLine {
   }
 
   destroy() {
-    this.area.destroy();
     this.line.destroy();
     this.container.destroy();
   }

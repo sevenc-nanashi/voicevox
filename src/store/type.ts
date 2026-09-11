@@ -73,9 +73,11 @@ import type {
   Note,
   PhonemeTimingEdit,
   Singer,
+  SingingTeacher,
   Tempo,
   TimeSignature,
   Track,
+  VolumeEditValue,
 } from "@/domain/project/type";
 import type { LatestProjectType } from "@/infrastructures/projectFile/type";
 import type { WavFormat } from "@/helpers/fileDataGenerator";
@@ -942,6 +944,17 @@ export type SingingStoreTypes = {
     }): void;
   };
 
+  SET_SINGING_TEACHER: {
+    mutation: {
+      singingTeacher?: SingingTeacher;
+      trackId: TrackId;
+    };
+    action(payload: {
+      singingTeacher?: SingingTeacher;
+      trackId: TrackId;
+    }): void;
+  };
+
   SET_KEY_RANGE_ADJUSTMENT: {
     mutation: { keyRangeAdjustment: number; trackId: TrackId };
     action(payload: { keyRangeAdjustment: number; trackId: TrackId }): void;
@@ -1050,9 +1063,13 @@ export type SingingStoreTypes = {
   };
 
   SET_VOLUME_EDIT_DATA: {
-    mutation: { volumeArray: number[]; startFrame: number; trackId: TrackId };
+    mutation: {
+      volumeArray: VolumeEditValue[];
+      startFrame: number;
+      trackId: TrackId;
+    };
     action(payload: {
-      volumeArray: number[];
+      volumeArray: VolumeEditValue[];
       startFrame: number;
       trackId: TrackId;
     }): void;
@@ -1544,6 +1561,11 @@ export type SingingCommandStoreTypes = {
     }): void;
   };
 
+  COMMAND_SET_SINGING_TEACHER: {
+    mutation: { singingTeacher: SingingTeacher; trackId: TrackId };
+    action(payload: { singingTeacher: SingingTeacher; trackId: TrackId }): void;
+  };
+
   COMMAND_SET_KEY_RANGE_ADJUSTMENT: {
     mutation: { keyRangeAdjustment: number; trackId: TrackId };
     action(payload: { keyRangeAdjustment: number; trackId: TrackId }): void;
@@ -1627,9 +1649,13 @@ export type SingingCommandStoreTypes = {
   };
 
   COMMAND_SET_VOLUME_EDIT_DATA: {
-    mutation: { volumeArray: number[]; startFrame: number; trackId: TrackId };
+    mutation: {
+      volumeArray: VolumeEditValue[];
+      startFrame: number;
+      trackId: TrackId;
+    };
     action(payload: {
-      volumeArray: number[];
+      volumeArray: VolumeEditValue[];
       startFrame: number;
       trackId: TrackId;
     }): void;

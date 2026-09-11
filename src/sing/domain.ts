@@ -18,12 +18,19 @@ import type {
   Tempo,
   TimeSignature,
   Track,
+  VolumeEditValue,
 } from "@/domain/project/type";
 import { getDoremiFromNoteNumber } from "@/sing/viewHelper";
 import { ExhaustiveError } from "@/type/utility";
 import { getRepresentableNoteTypes, isValidNotes } from "@/sing/music";
+import { decibelToLinear } from "@/sing/audio";
 
 const MAX_SNAP_TYPE = 32;
+
+export const MIN_KEY_RANGE_ADJUSTMENT = -28;
+export const MAX_KEY_RANGE_ADJUSTMENT = 28;
+export const MIN_VOLUME_RANGE_ADJUSTMENT = -20;
+export const MAX_VOLUME_RANGE_ADJUSTMENT = 20;
 
 export const isTracksEmpty = (tracks: Track[]) =>
   tracks.length === 0 || (tracks.length === 1 && tracks[0].notes.length === 0);
@@ -32,7 +39,9 @@ export const isValidTrack = (track: Track) => {
   return (
     isValidKeyRangeAdjustment(track.keyRangeAdjustment) &&
     isValidVolumeRangeAdjustment(track.volumeRangeAdjustment) &&
-    isValidNotes(track.notes)
+    isValidNotes(track.notes) &&
+    isValidPitchEditData(track.pitchEditData) &&
+    isValidVolumeEditData(track.volumeEditData)
   );
 };
 
@@ -86,6 +95,7 @@ export function createDefaultTrack(): Track {
   return {
     name: DEFAULT_TRACK_NAME,
     singer: undefined,
+    singingTeacher: undefined,
     keyRangeAdjustment: 0,
     volumeRangeAdjustment: 0,
     notes: [],
@@ -113,16 +123,16 @@ export function isValidSnapType(snapType: number, tpqn: number) {
 export function isValidKeyRangeAdjustment(keyRangeAdjustment: number) {
   return (
     Number.isInteger(keyRangeAdjustment) &&
-    keyRangeAdjustment <= 28 &&
-    keyRangeAdjustment >= -28
+    keyRangeAdjustment <= MAX_KEY_RANGE_ADJUSTMENT &&
+    keyRangeAdjustment >= MIN_KEY_RANGE_ADJUSTMENT
   );
 }
 
 export function isValidVolumeRangeAdjustment(volumeRangeAdjustment: number) {
   return (
     Number.isInteger(volumeRangeAdjustment) &&
-    volumeRangeAdjustment <= 20 &&
-    volumeRangeAdjustment >= -20
+    volumeRangeAdjustment <= MAX_VOLUME_RANGE_ADJUSTMENT &&
+    volumeRangeAdjustment >= MIN_VOLUME_RANGE_ADJUSTMENT
   );
 }
 
@@ -134,12 +144,12 @@ export function isValidPitchEditData(pitchEditData: number[]) {
   );
 }
 
-export function isValidVolumeEditData(volumeEditData: number[]) {
-  // NOTE: APIの返却が0未満になる場合があるため、0以上かどうかのみ検証する
+export function isValidVolumeEditData(volumeEditData: VolumeEditValue[]) {
+  // UIの表示範囲とは分け、音声へ有限な倍率として適用できる値を受け入れる。
   return volumeEditData.every(
     (value) =>
-      Number.isFinite(value) &&
-      (value >= 0 || value === VALUE_INDICATING_NO_DATA),
+      value == null ||
+      (Number.isFinite(value) && Number.isFinite(decibelToLinear(value))),
   );
 }
 
@@ -626,10 +636,22 @@ export function applyPitchEdit(
   }
 }
 
+/**
+ * ユーザーによるボリューム変更量を、クエリのvolumeに適用する。
+ * 変更量が保存されているフレームのみ、元のボリュームへdB変化量を適用する。
+ * 音声が不自然になるのを防ぐため、隣接フレーズ境界のpau区間には適用しない。
+ *
+ * @param phraseQuery - 適用対象のクエリ
+ * @param phraseStartTime - フレーズの開始時刻（秒）
+ * @param volumeEditData - ユーザーが編集したボリューム変更量（dB）の配列
+ * @param editorFrameRate - エディターのフレームレート
+ * @param minNonPauseStartFrame - 適用してよい非pau区間の開始フレーム（フレーズ先頭からのフレーム数）。undefinedなら制限しない
+ * @param maxNonPauseEndFrame - 適用してよい非pau区間の終了フレーム（フレーズ先頭からのフレーム数）。undefinedなら制限しない
+ */
 export function applyVolumeEdit(
   phraseQuery: EditorFrameAudioQuery,
   phraseStartTime: number,
-  volumeEditData: number[],
+  volumeEditData: VolumeEditValue[],
   editorFrameRate: number,
   minNonPauseStartFrame: number | undefined,
   maxNonPauseEndFrame: number | undefined,
@@ -659,12 +681,11 @@ export function applyVolumeEdit(
     phraseQueryEndFrame,
   );
   for (let i = startFrame; i < endFrame; i++) {
-    const editedVolume = volumeEditData[i];
-    if (editedVolume === VALUE_INDICATING_NO_DATA) {
+    const volumeAdjustmentDb = volumeEditData[i];
+    if (volumeAdjustmentDb == null) {
       continue;
     }
-    // NOTE: ボリューム編集結果が負値になるケースに備えて0以上にクランプする
-    volume[i - phraseQueryStartFrame] = Math.max(editedVolume, 0);
+    volume[i - phraseQueryStartFrame] *= decibelToLinear(volumeAdjustmentDb);
   }
 }
 
