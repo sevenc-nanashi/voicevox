@@ -41,7 +41,7 @@ export class WavStream {
     while (true) {
       const { id, size } = await this.readChunkHeader();
       if (id === "fmt ") {
-        const fmtChunk = await this.readBytes(size);
+        const fmtChunk = await this.readBytes(size + (size % 2));
         const view = new DataView(
           fmtChunk.buffer,
           fmtChunk.byteOffset,
