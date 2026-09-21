@@ -56,8 +56,8 @@ export async function playAudioStreams(
   let lastBufferEndTime = audioContext.currentTime;
   let lastDelayNotifier: ReturnType<typeof setTimeout> | null = null;
   const chunkStartNotifiers: ReturnType<typeof setTimeout>[] = [];
-  for (const [index, audioStream] of audioStreams.entries()) {
-    try {
+  try {
+    for (const [index, audioStream] of audioStreams.entries()) {
       const header = await Promise.race([
         cancelledPromise,
         audioStream.readHeader(),
@@ -127,25 +127,25 @@ export async function playAudioStreams(
       }
 
       if (!cancel.aborted) await callbacks.onFetchEnd?.(index);
-    } finally {
-      if (lastDelayNotifier != null) clearTimeout(lastDelayNotifier);
-      await Promise.race([
-        new Promise<void>((resolve) => {
-          setTimeout(
-            resolve,
-            (lastBufferEndTime - audioContext.currentTime) * 1000,
-          );
-        }),
-        cancelledPromise,
-      ]);
+    }
+  } finally {
+    if (lastDelayNotifier != null) clearTimeout(lastDelayNotifier);
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        setTimeout(
+          resolve,
+          (lastBufferEndTime - audioContext.currentTime) * 1000,
+        );
+      }),
+      cancelledPromise,
+    ]);
 
-      for (const notifier of chunkStartNotifiers) {
-        clearTimeout(notifier);
-      }
+    for (const notifier of chunkStartNotifiers) {
+      clearTimeout(notifier);
+    }
 
-      for (const source of bufferSources) {
-        source.stop();
-      }
+    for (const source of bufferSources) {
+      source.stop();
     }
   }
 }
