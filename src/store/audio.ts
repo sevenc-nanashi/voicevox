@@ -62,7 +62,7 @@ import { getValueOrThrow, ResultError } from "@/type/result";
 import { generateWriteErrorMessage } from "@/helpers/fileHelper";
 import { uuid4 } from "@/helpers/random";
 import { cloneWithUnwrapProxy } from "@/helpers/cloneWithUnwrapProxy";
-import { UnreachableError } from "@/type/utility";
+import { ensureNotNullish, UnreachableError } from "@/type/utility";
 import { errorToMessage } from "@/helpers/errorHelper";
 import path from "@/helpers/path";
 import { generateTextFileData } from "@/helpers/fileDataGenerator";
@@ -1736,12 +1736,25 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
       ) => {
         await actions.STOP_AUDIO();
 
-        // TODO: そのうち移動する
         const engineId = state.audioItems[audioKey].voice.engineId;
         const engineManifest = state.engineManifests[engineId];
+        const characterInfo = ensureNotNullish(
+          state.characterInfos[engineId].find(
+            (character) =>
+              character.metas.speakerUuid ===
+              state.audioItems[audioKey].voice.speakerId,
+          ),
+        );
+        const styleInfo = ensureNotNullish(
+          characterInfo.metas.styles.find(
+            (style) =>
+              style.styleId === state.audioItems[audioKey].voice.styleId,
+          ),
+        );
         if (
           engineManifest.supportedFeatures?.streamingSynthesis &&
-          !state.audioItems[audioKey].morphingInfo
+          !state.audioItems[audioKey].morphingInfo &&
+          styleInfo.styleType === "streaming_talk"
         ) {
           return actions.PLAY_AUDIO_STREAMING({ audioKey });
         }
