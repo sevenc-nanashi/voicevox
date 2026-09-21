@@ -9,6 +9,7 @@ import type {
 } from "./type";
 import type { AudioKey } from "@/type/preload";
 import { showAlertDialog } from "@/components/Dialog/Dialog";
+import { Mutex } from "@/helpers/mutex";
 
 // ユニットテストが落ちるのを回避するための遅延読み込み
 const getAudioElement = (() => {
@@ -21,17 +22,22 @@ const getAudioElement = (() => {
   };
 })();
 
-let lastPlayController: AbortController | undefined = undefined;
-export function playAudioWithAbort<T>(
-  callback: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
-  if (lastPlayController) {
-    lastPlayController.abort();
-  }
-  const controller = new AbortController();
-  lastPlayController = controller;
-  return callback(controller.signal);
+function createPlayAudioWithAbort() {
+  let lastPlayController: AbortController | undefined = undefined;
+  const mutex = new Mutex();
+  return async <T>(
+    callback: (signal: AbortSignal) => Promise<T>,
+  ): Promise<T> => {
+    if (lastPlayController) {
+      lastPlayController.abort();
+    }
+    const controller = new AbortController();
+    lastPlayController = controller;
+    await using _lock = await mutex.acquire();
+    return await callback(controller.signal);
+  };
 }
+export const playAudioWithAbort = createPlayAudioWithAbort();
 
 export const audioPlayerStoreState: AudioPlayerStoreState = {
   currentPlayState: { type: "stopped" },
