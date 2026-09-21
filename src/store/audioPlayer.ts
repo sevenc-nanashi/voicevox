@@ -33,10 +33,17 @@ function createPlayAudioWithAbort() {
     }
     const controller = new AbortController();
     lastPlayController = controller;
+    getAudioElement().pause();
     await using _lock = await mutex.acquire();
     return await callback(controller.signal);
   };
 }
+
+/**
+ * 現在再生されている音声を停止した後、callbackを実行する。
+ *
+ * callbackはAbortSignalに従って音声再生を中止すること。
+ */
 export const playAudioWithAbort = createPlayAudioWithAbort();
 
 export const audioPlayerStoreState: AudioPlayerStoreState = {
@@ -149,9 +156,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   STOP_AUDIO: {
     // 停止中でも呼び出して問題ない
     action() {
-      void playAudioWithAbort(async () => {});
-      // PLAY_ でonpause時の処理が設定されているため、pauseするだけで良い
-      getAudioElement().pause();
+      return playAudioWithAbort(async () => {});
     },
   },
 });

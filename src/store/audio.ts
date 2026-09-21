@@ -1734,8 +1734,6 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         { state, mutations, actions },
         { audioKey }: { audioKey: AudioKey },
       ) => {
-        await actions.STOP_AUDIO();
-
         const engineId = state.audioItems[audioKey].voice.engineId;
         const engineManifest = state.engineManifests[engineId];
         const characterInfo = ensureNotNullish(
@@ -1758,6 +1756,8 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         ) {
           return actions.PLAY_AUDIO_STREAMING({ audioKey });
         }
+
+        await actions.STOP_AUDIO();
 
         // 音声用意
         let fetchAudioResult: FetchAudioResult;

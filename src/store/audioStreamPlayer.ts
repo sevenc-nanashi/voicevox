@@ -158,40 +158,40 @@ export const audioStreamPlayerStore =
           { state, mutations, getters, actions },
           { audioKey }: { audioKey: AudioKey },
         ) => {
-          await actions.STOP_AUDIO();
-
-          const engineId = state.audioItems[audioKey].voice.engineId;
-          const engineManifest = state.engineManifests[engineId];
-          if (!engineManifest.supportedFeatures?.streamingSynthesis) {
-            throw new Error("Streaming synthesis is not supported.");
-          }
-          const audioItem = state.audioItems[audioKey];
-          const [id, editorAudioQuery] = await generateUniqueIdAndQuery(
-            state,
-            audioItem,
-          );
-          assertNonNullable(editorAudioQuery);
-          const segmentLength = {
-            LOW_LATENCY: 0.3,
-            BALANCED: 1.0,
-            STABLE: 9999,
-          }[state.streamingMode];
-          const cacheKey = `${id}:${segmentLength}`;
-          const audioQuery = convertAudioQueryFromEditorToEngine(
-            editorAudioQuery,
-            engineManifest.defaultSamplingRate,
-          );
-          const accentPhraseOffsets = await actions.GET_AUDIO_PLAY_OFFSETS({
-            audioKey,
-          });
-          if (accentPhraseOffsets.length === 0)
-            throw new Error("accentPhraseOffsets.length === 0");
-          const startTime =
-            accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
-
           return await playAudioWithAbort(async (abortSignal) => {
+            if (abortSignal.aborted) return false;
+
             try {
+              const engineId = state.audioItems[audioKey].voice.engineId;
+              const engineManifest = state.engineManifests[engineId];
+              if (!engineManifest.supportedFeatures?.streamingSynthesis) {
+                throw new Error("Streaming synthesis is not supported.");
+              }
+              const audioItem = state.audioItems[audioKey];
+              const [id, editorAudioQuery] = await generateUniqueIdAndQuery(
+                state,
+                audioItem,
+              );
+              if (abortSignal.aborted) return false;
+              assertNonNullable(editorAudioQuery);
+              const segmentLength = {
+                LOW_LATENCY: 0.3,
+                BALANCED: 1.0,
+                STABLE: 9999,
+              }[state.streamingMode];
+              const audioQuery = convertAudioQueryFromEditorToEngine(
+                editorAudioQuery,
+                engineManifest.defaultSamplingRate,
+              );
+              const accentPhraseOffsets = await actions.GET_AUDIO_PLAY_OFFSETS({
+                audioKey,
+              });
+              if (abortSignal.aborted) return false;
+              const startTime =
+                accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
+
               if (audioContext?.setSinkId) {
+                // TODO: 設計として、setSinkIdはここではなくplayAudioWithAbortの近くでやるべき
                 const device = state.savingSetting.audioOutputDevice;
                 await audioContext
                   .setSinkId(device === "default" ? "" : device)
@@ -203,7 +203,8 @@ export const audioStreamPlayerStore =
                     throw err;
                   });
               }
-              const existingCache = audioCache.get(cacheKey);
+              if (abortSignal.aborted) return false;
+              const existingCache = audioCache.get(id);
               if (existingCache && existingCache.startsAt <= startTime) {
                 log.info(
                   `Using cached audio for ${audioKey} starting at ${existingCache.startsAt} with offset ${startTime - existingCache.startsAt}`,
@@ -297,7 +298,7 @@ export const audioStreamPlayerStore =
                     );
                     const wavBlob = await new Response(wavBodyForSave).blob();
                     if (abortSignal.aborted) return;
-                    audioCache.set(cacheKey, {
+                    audioCache.set(id, {
                       wav: wavBlob,
                       startsAt: startTime,
                     });
@@ -305,6 +306,14 @@ export const audioStreamPlayerStore =
                 });
                 return !abortSignal.aborted;
               }
+            } catch (error) {
+              if (
+                abortSignal.aborted &&
+                error instanceof Error &&
+                error.name === "AbortError"
+              )
+                return false;
+              throw error;
             } finally {
               mutations.SET_AUDIO_NOW_GENERATING({
                 audioKey,
