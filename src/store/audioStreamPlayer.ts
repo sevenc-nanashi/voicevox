@@ -236,6 +236,7 @@ export const audioStreamPlayerStore =
                   audioKey,
                   nowGenerating: true,
                 });
+                void actions.START_PROGRESS();
                 const response = await actions
                   .INSTANTIATE_ENGINE_CONNECTOR({
                     engineId,
@@ -263,6 +264,7 @@ export const audioStreamPlayerStore =
                 let delayNotified = false;
                 await playAudioStreams([wavStream], abortSignal, {
                   onStart() {
+                    void actions.RESET_PROGRESS();
                     mutations.SET_AUDIO_NOW_GENERATING({
                       audioKey,
                       nowGenerating: false,
@@ -315,6 +317,7 @@ export const audioStreamPlayerStore =
                 return false;
               throw error;
             } finally {
+              void actions.RESET_PROGRESS();
               mutations.SET_AUDIO_NOW_GENERATING({
                 audioKey,
                 nowGenerating: false,
