@@ -17,7 +17,7 @@ if (window.AudioContext) {
   audioContext = new AudioContext();
 }
 
-const samplesPerChunk = 4096;
+const samplesPerChunk = 256;
 
 const cancelled = Symbol("cancelled");
 
