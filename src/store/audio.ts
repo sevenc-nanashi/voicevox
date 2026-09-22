@@ -62,7 +62,11 @@ import { getValueOrThrow, ResultError } from "@/type/result";
 import { generateWriteErrorMessage } from "@/helpers/fileHelper";
 import { uuid4 } from "@/helpers/random";
 import { cloneWithUnwrapProxy } from "@/helpers/cloneWithUnwrapProxy";
-import { ensureNotNullish, UnreachableError } from "@/type/utility";
+import {
+  assertNonNullable,
+  ensureNotNullish,
+  UnreachableError,
+} from "@/type/utility";
 import { errorToMessage } from "@/helpers/errorHelper";
 import path from "@/helpers/path";
 import { generateTextFileData } from "@/helpers/fileDataGenerator";
@@ -1731,18 +1735,16 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
   PLAY_AUDIO: {
     action: createUILockAction(
       async (
-        { state, mutations, actions },
+        { state, mutations, actions, getters },
         { audioKey }: { audioKey: AudioKey },
       ) => {
-        const engineId = state.audioItems[audioKey].voice.engineId;
-        const engineManifest = state.engineManifests[engineId];
-        const characterInfo = ensureNotNullish(
-          state.characterInfos[engineId].find(
-            (character) =>
-              character.metas.speakerUuid ===
-              state.audioItems[audioKey].voice.speakerId,
-          ),
+        const voice = state.audioItems[audioKey].voice;
+        const engineManifest = state.engineManifests[voice.engineId];
+        const characterInfo = getters.CHARACTER_INFO(
+          voice.engineId,
+          voice.styleId,
         );
+        assertNonNullable(characterInfo);
         const styleInfo = ensureNotNullish(
           characterInfo.metas.styles.find(
             (style) =>
