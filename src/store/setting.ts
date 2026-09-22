@@ -78,7 +78,7 @@ export const settingStoreState: SettingStoreState = {
   playheadPositionDisplayFormat: "MINUTES_SECONDS",
   enableKatakanaEnglish: true,
   showAudioLength: false,
-  streamingMode: "BALANCED",
+  streamingMode: "STABLE",
 };
 
 export const settingStore = createPartialStore<SettingStoreTypes>({

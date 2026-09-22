@@ -421,7 +421,7 @@ export const rootMiscSettingSchema = z.object({
   showAudioLength: z.boolean().default(false), // 音声の長さを表示するかどうか
   streamingMode: z
     .enum(["LOW_LATENCY", "BALANCED", "STABLE"])
-    .default("BALANCED"),
+    .default("STABLE"),
 });
 export type RootMiscSettingType = z.infer<typeof rootMiscSettingSchema>;
 
