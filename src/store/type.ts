@@ -771,6 +771,25 @@ export type AudioPlayerStoreTypes = {
   PLAY_AUDIO_STREAMING: {
     action(payload: { audioKey: AudioKey }): Promise<boolean>;
   };
+
+  PLAY_AUDIO_STREAMING_FROM_CACHE: {
+    action(payload: {
+      audioKey: AudioKey;
+      cache: { wav: Blob; startsAt: number };
+      startTime: number;
+    }): Promise<boolean>;
+  };
+
+  GENERATE_AND_PLAY_AUDIO_STREAMING: {
+    action(payload: {
+      audioKey: AudioKey;
+      audioItem: AudioItem;
+      audioQuery: AudioQuery;
+      cacheKey: string;
+      startTime: number;
+      segmentLength: number;
+    }): Promise<boolean>;
+  };
 };
 
 /*

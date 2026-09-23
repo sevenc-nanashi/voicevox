@@ -24,6 +24,19 @@ if (window.AudioContext) {
   audioContext = new AudioContext();
 }
 
+async function setAudioContextSinkId(device: string) {
+  if (!audioContext?.setSinkId) return;
+  await audioContext
+    .setSinkId(device === "default" ? "" : device)
+    .catch((err: unknown) => {
+      void showAlertDialog({
+        title: "エラー",
+        message: "再生デバイスが見つかりません",
+      });
+      throw err;
+    });
+}
+
 const samplesPerChunk = 256;
 
 const cancelled = Symbol("cancelled");
@@ -357,189 +370,220 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   PLAY_AUDIO_STREAMING: {
     action: createUILockAction(
       async (
-        { state, mutations, getters, actions },
+        { state, getters, actions },
         { audioKey }: { audioKey: AudioKey },
       ) => {
-        return await playAudioWithAbort(async (abortSignal) => {
-          if (abortSignal.aborted) return false;
+        const engineId = state.audioItems[audioKey].voice.engineId;
+        const engineManifest = state.engineManifests[engineId];
+        if (!engineManifest.supportedFeatures?.streamingSynthesis) {
+          throw new Error("Streaming synthesis is not supported.");
+        }
+        const audioItem = state.audioItems[audioKey];
+        const [id, editorAudioQuery] = await generateUniqueIdAndQuery(
+          state,
+          audioItem,
+        );
+        assertNonNullable(editorAudioQuery);
+        const segmentLength = {
+          LOW_LATENCY: 0.3,
+          BALANCED: 1.0,
+          STABLE: 9999,
+        }[state.streamingMode];
+        const audioQuery = convertAudioQueryFromEditorToEngine(
+          editorAudioQuery,
+          engineManifest.defaultSamplingRate,
+        );
+        const accentPhraseOffsets = await actions.GET_AUDIO_PLAY_OFFSETS({
+          audioKey,
+        });
+        const startTime =
+          accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
 
-          try {
-            const engineId = state.audioItems[audioKey].voice.engineId;
-            const engineManifest = state.engineManifests[engineId];
-            if (!engineManifest.supportedFeatures?.streamingSynthesis) {
-              throw new Error("Streaming synthesis is not supported.");
-            }
-            const audioItem = state.audioItems[audioKey];
-            const [id, editorAudioQuery] = await generateUniqueIdAndQuery(
-              state,
-              audioItem,
-            );
-            if (abortSignal.aborted) return false;
-            assertNonNullable(editorAudioQuery);
-            const segmentLength = {
-              LOW_LATENCY: 0.3,
-              BALANCED: 1.0,
-              STABLE: 9999,
-            }[state.streamingMode];
-            const audioQuery = convertAudioQueryFromEditorToEngine(
-              editorAudioQuery,
-              engineManifest.defaultSamplingRate,
-            );
-            const accentPhraseOffsets = await actions.GET_AUDIO_PLAY_OFFSETS({
-              audioKey,
-            });
-            if (abortSignal.aborted) return false;
-            const startTime =
-              accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
+        const existingCache = audioCache.get(id);
+        if (existingCache && existingCache.startsAt <= startTime) {
+          log.info(
+            `Using cached audio for ${audioKey} starting at ${existingCache.startsAt} with offset ${startTime - existingCache.startsAt}`,
+          );
+          return await actions.PLAY_AUDIO_STREAMING_FROM_CACHE({
+            audioKey,
+            cache: existingCache,
+            startTime,
+          });
+        }
 
-            if (audioContext?.setSinkId) {
-              // TODO: 設計として、setSinkIdはここではなくplayAudioWithAbortの近くでやるべき
-              const device = state.savingSetting.audioOutputDevice;
-              await audioContext
-                .setSinkId(device === "default" ? "" : device)
-                .catch((err: unknown) => {
-                  void showAlertDialog({
-                    title: "エラー",
-                    message: "再生デバイスが見つかりません",
-                  });
-                  throw err;
-                });
-            }
-            if (abortSignal.aborted) return false;
-            const existingCache = audioCache.get(id);
-            if (existingCache && existingCache.startsAt <= startTime) {
-              log.info(
-                `Using cached audio for ${audioKey} starting at ${existingCache.startsAt} with offset ${startTime - existingCache.startsAt}`,
-              );
-              const wavBlob = existingCache.wav;
-              const wavStreamForPlay = new WavStream(wavBlob.stream());
+        log.info(`Generating audio for ${audioKey} starting at ${startTime}`);
 
-              await playAudioStreams(
-                [
-                  {
-                    offset: startTime - existingCache.startsAt,
-                    stream: wavStreamForPlay,
-                  },
-                ],
-                abortSignal,
-                {
-                  onChunkStart(_index, time) {
-                    mutations.SET_CURRENT_PLAY_STATE({
-                      currentPlayState: {
-                        type: "streaming",
-                        audioKey,
-                        currentTime: time + startTime,
-                      },
-                    });
-                  },
-                },
-              );
-              return !abortSignal.aborted;
-            } else {
-              log.info(
-                `Generating audio for ${audioKey} starting at ${startTime}`,
-              );
-
-              mutations.SET_AUDIO_NOW_GENERATING({
-                audioKey,
-                nowGenerating: true,
-              });
-              void actions.START_PROGRESS();
-              const response = await actions
-                .INSTANTIATE_ENGINE_CONNECTOR({
-                  engineId,
-                })
-                .then((instance) =>
-                  instance.invoke("streamingSynthesisRaw")(
-                    {
-                      audioQuery,
-                      speaker: audioItem.voice.styleId,
-                      enableInterrogativeUpspeak:
-                        state.experimentalSetting.enableInterrogativeUpspeak,
-                      startOffset: startTime,
-                      segmentLength,
-                    },
-                    {
-                      signal: abortSignal,
-                    },
-                  ),
-                );
-
-              const wavBody = ensureNotNullish(response.raw.body);
-              const [wavBodyForPlay, wavBodyForSave] = wavBody.tee();
-
-              const wavStream = new WavStream(wavBodyForPlay);
-              let delayNotified = false;
-              await playAudioStreams(
-                [{ offset: 0, stream: wavStream }],
-                abortSignal,
-                {
-                  onStart() {
-                    void actions.RESET_PROGRESS();
-                    mutations.SET_AUDIO_NOW_GENERATING({
-                      audioKey,
-                      nowGenerating: false,
-                    });
-                  },
-                  onChunkStart(_index, time) {
-                    mutations.SET_CURRENT_PLAY_STATE({
-                      currentPlayState: {
-                        type: "streaming",
-                        audioKey,
-                        currentTime: time + startTime,
-                      },
-                    });
-                  },
-                  onDelay() {
-                    if (
-                      !delayNotified &&
-                      !state.confirmedTips.streamingUnrecommended
-                    ) {
-                      delayNotified = true;
-
-                      void actions.SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON({
-                        message: "このPCではストリーミング再生が推奨されません",
-                        icon: "warning",
-                        tipName: "streamingUnrecommended",
-                      });
-                    }
-                  },
-                  async onFetchEnd() {
-                    if (abortSignal.aborted) return;
-                    log.info(
-                      `Caching audio for ${audioKey} starting at ${startTime}`,
-                    );
-                    const wavBlob = await new Response(wavBodyForSave).blob();
-                    if (abortSignal.aborted) return;
-                    audioCache.set(id, {
-                      wav: wavBlob,
-                      startsAt: startTime,
-                    });
-                  },
-                },
-              );
-              return !abortSignal.aborted;
-            }
-          } catch (error) {
-            if (
-              abortSignal.aborted &&
-              error instanceof Error &&
-              error.name === "AbortError"
-            )
-              return false;
-            throw error;
-          } finally {
-            void actions.RESET_PROGRESS();
-            mutations.SET_AUDIO_NOW_GENERATING({
-              audioKey,
-              nowGenerating: false,
-            });
-            mutations.SET_CURRENT_PLAY_STATE({
-              currentPlayState: { type: "stopped" },
-            });
-          }
+        return await actions.GENERATE_AND_PLAY_AUDIO_STREAMING({
+          audioKey,
+          audioItem,
+          audioQuery,
+          cacheKey: id,
+          startTime,
+          segmentLength,
         });
       },
     ),
+  },
+
+  PLAY_AUDIO_STREAMING_FROM_CACHE: {
+    async action(
+      { state, mutations, actions },
+      { audioKey, cache, startTime },
+    ) {
+      return await playAudioWithAbort(async (abortSignal) => {
+        if (abortSignal.aborted) return false;
+        try {
+          await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
+          if (abortSignal.aborted) return false;
+          const wavBlob = cache.wav;
+          const wavStreamForPlay = new WavStream(wavBlob.stream());
+
+          await playAudioStreams(
+            [
+              {
+                offset: startTime - cache.startsAt,
+                stream: wavStreamForPlay,
+              },
+            ],
+            abortSignal,
+            {
+              onChunkStart(_index, time) {
+                mutations.SET_CURRENT_PLAY_STATE({
+                  currentPlayState: {
+                    type: "streaming",
+                    audioKey,
+                    currentTime: time + startTime,
+                  },
+                });
+              },
+            },
+          );
+          return !abortSignal.aborted;
+        } catch (error) {
+          if (
+            abortSignal.aborted &&
+            error instanceof Error &&
+            error.name === "AbortError"
+          )
+            return false;
+          throw error;
+        } finally {
+          void actions.RESET_PROGRESS();
+          mutations.SET_AUDIO_NOW_GENERATING({
+            audioKey,
+            nowGenerating: false,
+          });
+          mutations.SET_CURRENT_PLAY_STATE({
+            currentPlayState: { type: "stopped" },
+          });
+        }
+      });
+    },
+  },
+
+  GENERATE_AND_PLAY_AUDIO_STREAMING: {
+    async action(
+      { state, mutations, actions },
+      { audioKey, audioItem, audioQuery, cacheKey, startTime, segmentLength },
+    ) {
+      return await playAudioWithAbort(async (abortSignal) => {
+        if (abortSignal.aborted) return false;
+        try {
+          await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
+          if (abortSignal.aborted) return false;
+          mutations.SET_AUDIO_NOW_GENERATING({
+            audioKey,
+            nowGenerating: true,
+          });
+          void actions.START_PROGRESS();
+          const instance = await actions.INSTANTIATE_ENGINE_CONNECTOR({
+            engineId: audioItem.voice.engineId,
+          });
+          const response = await instance.invoke("streamingSynthesisRaw")(
+            {
+              audioQuery,
+              speaker: audioItem.voice.styleId,
+              enableInterrogativeUpspeak:
+                state.experimentalSetting.enableInterrogativeUpspeak,
+              startOffset: startTime,
+              segmentLength,
+            },
+            { signal: abortSignal },
+          );
+
+          const wavBody = ensureNotNullish(response.raw.body);
+          const [wavBodyForPlay, wavBodyForSave] = wavBody.tee();
+
+          const wavStream = new WavStream(wavBodyForPlay);
+          let delayNotified = false;
+          await playAudioStreams(
+            [{ offset: 0, stream: wavStream }],
+            abortSignal,
+            {
+              onStart() {
+                void actions.RESET_PROGRESS();
+                mutations.SET_AUDIO_NOW_GENERATING({
+                  audioKey,
+                  nowGenerating: false,
+                });
+              },
+              onChunkStart(_index, time) {
+                mutations.SET_CURRENT_PLAY_STATE({
+                  currentPlayState: {
+                    type: "streaming",
+                    audioKey,
+                    currentTime: time + startTime,
+                  },
+                });
+              },
+              onDelay() {
+                if (
+                  !delayNotified &&
+                  !state.confirmedTips.streamingUnrecommended
+                ) {
+                  delayNotified = true;
+
+                  void actions.SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON({
+                    message: "このPCではストリーミング再生が推奨されません",
+                    icon: "warning",
+                    tipName: "streamingUnrecommended",
+                  });
+                }
+              },
+              async onFetchEnd() {
+                if (abortSignal.aborted) return;
+                log.info(
+                  `Caching audio for ${audioKey} starting at ${startTime}`,
+                );
+                const wavBlob = await new Response(wavBodyForSave).blob();
+                if (abortSignal.aborted) return;
+                audioCache.set(cacheKey, {
+                  wav: wavBlob,
+                  startsAt: startTime,
+                });
+              },
+            },
+          );
+          return !abortSignal.aborted;
+        } catch (error) {
+          if (
+            abortSignal.aborted &&
+            error instanceof Error &&
+            error.name === "AbortError"
+          )
+            return false;
+          throw error;
+        } finally {
+          void actions.RESET_PROGRESS();
+          mutations.SET_AUDIO_NOW_GENERATING({
+            audioKey,
+            nowGenerating: false,
+          });
+          mutations.SET_CURRENT_PLAY_STATE({
+            currentPlayState: { type: "stopped" },
+          });
+        }
+      });
+    },
   },
 });
