@@ -426,10 +426,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   },
 
   PLAY_AUDIO_STREAMING_FROM_CACHE: {
-    async action(
-      { state, mutations, actions },
-      { audioKey, cache, startTime },
-    ) {
+    async action({ state, mutations }, { audioKey, cache, startTime }) {
       return await playAudioWithAbort(async (abortSignal) => {
         if (abortSignal.aborted) return false;
         try {
@@ -468,11 +465,6 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
             return false;
           throw error;
         } finally {
-          void actions.RESET_PROGRESS();
-          mutations.SET_AUDIO_NOW_GENERATING({
-            audioKey,
-            nowGenerating: false,
-          });
           mutations.SET_CURRENT_PLAY_STATE({
             currentPlayState: { type: "stopped" },
           });
