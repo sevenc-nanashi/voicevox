@@ -61,7 +61,7 @@ const audioCache = new LruCache<
  *   - `index`: 再生中のWavStreamのインデックス。
  *   - `time`: 再生中のWavStreamの再生時間（秒）。
  * - `onDelay()`: バッファが枯渇して再生が遅延したときに呼ばれる。
- * - `onFetchEnd(index: number)`: WavStreamの全てのチャンクが再生されたときに呼ばれる。
+ * - `onFetchEnd(index: number)`: WavStreamの全てのチャンクが読み込まれたときに呼ばれる。
  *   - `index`: 再生中のWavStreamのインデックス。
  */
 export async function playAudioStreams(
