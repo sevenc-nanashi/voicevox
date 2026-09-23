@@ -8,7 +8,7 @@ const expectedSamples = Float32Array.from(
   (_, index) => wav.readInt16LE(44 + index * 2) / 32768,
 );
 
-function createParser(bytes: Uint8Array, chunkSize: number, startOffset = 0) {
+function createParser(bytes: Uint8Array, chunkSize: number) {
   let offset = 0;
   return new WavStream(
     new ReadableStream<Uint8Array>({
@@ -21,7 +21,6 @@ function createParser(bytes: Uint8Array, chunkSize: number, startOffset = 0) {
         offset += chunkSize;
       },
     }),
-    startOffset,
   );
 }
 
@@ -80,26 +79,3 @@ test("ヘッダーの途中でストリームが終了するとエラーにな�
     "Stream ended before reading enough bytes",
   );
 });
-
-test.each([0, 0.12345, 5, 6])(
-  "開始位置 %f 秒より前のサンプルを読み飛ばす",
-  async (startOffset) => {
-    const stream = createParser(wav, 4093, startOffset);
-    await stream.readHeader();
-    const chunks: [number, number][][] = [];
-    for await (const chunk of stream.readSamples(1024)) {
-      chunks.push(chunk);
-    }
-    expect(stream.startOffset).toBe(startOffset);
-    expect(Float32Array.from(chunks.flat(2))).toEqual(
-      expectedSamples.slice(Math.floor(startOffset * 44100) * 2),
-    );
-  },
-);
-
-test.each([-1, NaN, Infinity])(
-  "不正な開始位置 %f を拒否する",
-  (startOffset) => {
-    expect(() => createParser(wav, 4093, startOffset)).toThrow();
-  },
-);

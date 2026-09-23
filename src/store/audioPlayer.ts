@@ -52,7 +52,11 @@ const audioCache = new LruCache<
  *   - `index`: 再生中のWavStreamのインデックス。
  */
 export async function playAudioStreams(
-  audioStreams: WavStream[],
+  audioStreams: {
+    /** WAVの先頭からの再生開始位置（秒）。 */
+    offset: number;
+    stream: WavStream;
+  }[],
   cancel: AbortSignal,
   callbacks: {
     onStart?: (index: number) => void;
@@ -80,15 +84,16 @@ export async function playAudioStreams(
   const chunkStartNotifiers: ReturnType<typeof setTimeout>[] = [];
 
   try {
-    for (const [index, audioStream] of audioStreams.entries()) {
+    for (const [index, { offset, stream }] of audioStreams.entries()) {
       const header = await Promise.race([
         cancelledPromise,
-        audioStream.readHeader(),
+        stream.readHeader(),
       ]);
       if (header === cancelled) return;
       const sampleRate = header.sampleRate;
 
-      const samplesIterator = audioStream.readSamples(samplesPerChunk);
+      const samplesIterator = stream.readSamples(samplesPerChunk);
+      let samplesToSkip = Math.floor(offset * sampleRate);
       let numTotalSamples = 0;
       while (true) {
         // 最初のチャンクは遅延通知をしない
@@ -121,6 +126,15 @@ export async function playAudioStreams(
           break;
         }
 
+        // offsetに達するまでのサンプルをスキップする
+        const skippedSamples = Math.min(
+          samplesToSkip,
+          chunkOrDone.value.length,
+        );
+        samplesToSkip -= skippedSamples;
+        const samples = chunkOrDone.value.slice(skippedSamples);
+        if (samples.length === 0) continue;
+
         // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
         if (numTotalSamples === 0) {
           callbacks.onStart?.(index);
@@ -129,13 +143,13 @@ export async function playAudioStreams(
         // AudioBufferを作ってチャンクのサンプルをコピーする
         const audioBuffer = audioContext.createBuffer(
           2,
-          chunkOrDone.value.length,
+          samples.length,
           sampleRate,
         );
         const leftChannel = audioBuffer.getChannelData(0);
         const rightChannel = audioBuffer.getChannelData(1);
         let offset = 0;
-        for (const [left, right] of chunkOrDone.value) {
+        for (const [left, right] of samples) {
           leftChannel[offset] = left;
           rightChannel[offset] = right;
           offset++;
@@ -398,22 +412,28 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
                 `Using cached audio for ${audioKey} starting at ${existingCache.startsAt} with offset ${startTime - existingCache.startsAt}`,
               );
               const wavBlob = existingCache.wav;
-              const wavStreamForPlay = new WavStream(
-                wavBlob.stream(),
-                startTime - existingCache.startsAt,
-              );
+              const wavStreamForPlay = new WavStream(wavBlob.stream());
 
-              await playAudioStreams([wavStreamForPlay], abortSignal, {
-                onChunkStart(_index, time) {
-                  mutations.SET_CURRENT_PLAY_STATE({
-                    currentPlayState: {
-                      type: "streaming",
-                      audioKey,
-                      currentTime: time + startTime,
-                    },
-                  });
+              await playAudioStreams(
+                [
+                  {
+                    offset: startTime - existingCache.startsAt,
+                    stream: wavStreamForPlay,
+                  },
+                ],
+                abortSignal,
+                {
+                  onChunkStart(_index, time) {
+                    mutations.SET_CURRENT_PLAY_STATE({
+                      currentPlayState: {
+                        type: "streaming",
+                        audioKey,
+                        currentTime: time + startTime,
+                      },
+                    });
+                  },
                 },
-              });
+              );
               return !abortSignal.aborted;
             } else {
               log.info(
@@ -450,50 +470,54 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
 
               const wavStream = new WavStream(wavBodyForPlay);
               let delayNotified = false;
-              await playAudioStreams([wavStream], abortSignal, {
-                onStart() {
-                  void actions.RESET_PROGRESS();
-                  mutations.SET_AUDIO_NOW_GENERATING({
-                    audioKey,
-                    nowGenerating: false,
-                  });
-                },
-                onChunkStart(_index, time) {
-                  mutations.SET_CURRENT_PLAY_STATE({
-                    currentPlayState: {
-                      type: "streaming",
+              await playAudioStreams(
+                [{ offset: 0, stream: wavStream }],
+                abortSignal,
+                {
+                  onStart() {
+                    void actions.RESET_PROGRESS();
+                    mutations.SET_AUDIO_NOW_GENERATING({
                       audioKey,
-                      currentTime: time + startTime,
-                    },
-                  });
-                },
-                onDelay() {
-                  if (
-                    !delayNotified &&
-                    !state.confirmedTips.streamingUnrecommended
-                  ) {
-                    delayNotified = true;
-
-                    void actions.SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON({
-                      message: "このPCではストリーミング再生が推奨されません",
-                      icon: "warning",
-                      tipName: "streamingUnrecommended",
+                      nowGenerating: false,
                     });
-                  }
+                  },
+                  onChunkStart(_index, time) {
+                    mutations.SET_CURRENT_PLAY_STATE({
+                      currentPlayState: {
+                        type: "streaming",
+                        audioKey,
+                        currentTime: time + startTime,
+                      },
+                    });
+                  },
+                  onDelay() {
+                    if (
+                      !delayNotified &&
+                      !state.confirmedTips.streamingUnrecommended
+                    ) {
+                      delayNotified = true;
+
+                      void actions.SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON({
+                        message: "このPCではストリーミング再生が推奨されません",
+                        icon: "warning",
+                        tipName: "streamingUnrecommended",
+                      });
+                    }
+                  },
+                  async onFetchEnd() {
+                    if (abortSignal.aborted) return;
+                    log.info(
+                      `Caching audio for ${audioKey} starting at ${startTime}`,
+                    );
+                    const wavBlob = await new Response(wavBodyForSave).blob();
+                    if (abortSignal.aborted) return;
+                    audioCache.set(id, {
+                      wav: wavBlob,
+                      startsAt: startTime,
+                    });
+                  },
                 },
-                async onFetchEnd() {
-                  if (abortSignal.aborted) return;
-                  log.info(
-                    `Caching audio for ${audioKey} starting at ${startTime}`,
-                  );
-                  const wavBlob = await new Response(wavBodyForSave).blob();
-                  if (abortSignal.aborted) return;
-                  audioCache.set(id, {
-                    wav: wavBlob,
-                    startsAt: startTime,
-                  });
-                },
-              });
+              );
               return !abortSignal.aborted;
             }
           } catch (error) {
