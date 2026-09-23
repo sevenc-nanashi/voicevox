@@ -767,13 +767,7 @@ export type AudioPlayerStoreTypes = {
   STOP_AUDIO: {
     action(): void;
   };
-};
 
-/*
- * Audio Stream Player Store Types
- */
-
-export type AudioStreamPlayerStoreTypes = {
   PLAY_AUDIO_STREAMING: {
     action(payload: { audioKey: AudioKey }): Promise<boolean>;
   };
@@ -2619,7 +2613,6 @@ export type State = AudioStoreState &
 
 type AllStoreTypes = AudioStoreTypes &
   AudioPlayerStoreTypes &
-  AudioStreamPlayerStoreTypes &
   AudioCommandStoreTypes &
   CommandStoreTypes &
   EngineStoreTypes &
