@@ -11,14 +11,12 @@ export class WavStream {
   private reader: ReadableStreamDefaultReader<Uint8Array>;
   private buffer: Uint8Array;
   private bufferOffset: number;
-  private bufferLength: number;
   private header?: WavHeader;
 
   constructor(stream: ReadableStream<Uint8Array>) {
     this.reader = stream.getReader();
     this.buffer = new Uint8Array(0);
     this.bufferOffset = 0;
-    this.bufferLength = 0;
   }
 
   /**
@@ -136,31 +134,38 @@ export class WavStream {
   }
 
   private async readBytes(size: number): Promise<Uint8Array> {
-    while (this.bufferLength < size) {
-      const { value, done } = await this.reader.read();
-      if (done) {
-        throw new Error("Stream ended before reading enough bytes");
-      }
-      const newBuffer = new Uint8Array(this.bufferLength + value.length);
-      newBuffer.set(
-        this.buffer.subarray(
-          this.bufferOffset,
-          this.bufferOffset + this.bufferLength,
-        ),
-        0,
+    if (this.buffer.length - this.bufferOffset >= size) {
+      const result = this.buffer.subarray(
+        this.bufferOffset,
+        this.bufferOffset + size,
       );
-      newBuffer.set(value, this.bufferLength);
-      this.buffer = newBuffer;
-      this.bufferOffset = 0;
-      this.bufferLength += value.length;
+      this.bufferOffset += size;
+      return result;
     }
 
-    const result = this.buffer.subarray(
-      this.bufferOffset,
-      this.bufferOffset + size,
-    );
-    this.bufferOffset += size;
-    this.bufferLength -= size;
+    // 必要なサイズを一度だけ確保し、受信ごとの蓄積データの再コピーを避ける。
+    const result = new Uint8Array(size);
+    let offset = 0;
+    while (offset < size) {
+      if (this.bufferOffset === this.buffer.length) {
+        const { value, done } = await this.reader.read();
+        if (done) {
+          throw new Error("Stream ended before reading enough bytes");
+        }
+        this.buffer = value;
+        this.bufferOffset = 0;
+      }
+      const length = Math.min(
+        size - offset,
+        this.buffer.length - this.bufferOffset,
+      );
+      result.set(
+        this.buffer.subarray(this.bufferOffset, this.bufferOffset + length),
+        offset,
+      );
+      this.bufferOffset += length;
+      offset += length;
+    }
 
     return result;
   }
