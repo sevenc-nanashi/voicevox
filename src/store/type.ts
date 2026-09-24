@@ -730,13 +730,14 @@ export type CurrentPlayState =
       type: "stopped";
     }
   | {
-      type: "playing";
-      audioKey: AudioKey;
-    }
-  | {
       type: "streaming";
       audioKey: AudioKey;
       currentTime: number;
+    }
+  // NOTE: 単体再生のルートを置き換えるときに消えるはず
+  | {
+      type: "playing";
+      audioKey: AudioKey;
     };
 
 export type AudioPlayerStoreState = {

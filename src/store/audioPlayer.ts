@@ -37,11 +37,12 @@ async function setAudioContextSinkId(device: string) {
     });
 }
 
-const samplesPerChunk = 256;
-
 const cancelled = Symbol("cancelled");
 
-const audioCache = new LruCache<
+/**
+ * ストリーミング再生用のキャッシュ。
+ */
+const audioCacheForStreaming = new LruCache<
   string,
   {
     wav: Blob;
@@ -78,6 +79,8 @@ export async function playAudioStreams(
     onFetchEnd?: (index: number) => void | Promise<void>;
   } = {},
 ) {
+  const samplesPerChunk = 256;
+
   if (!audioContext) {
     throw new Error("AudioContext is not supported in this browser.");
   }
@@ -259,13 +262,14 @@ export const audioPlayerStoreState: AudioPlayerStoreState = {
 
 export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   ACTIVE_AUDIO_ELEM_CURRENT_TIME_GETTER: {
-    getter: (state) => {
-      return () =>
-        state.currentPlayState.type === "playing"
-          ? getAudioElement().currentTime
-          : state.currentPlayState.type === "streaming"
-            ? state.currentPlayState.currentTime
-            : undefined;
+    getter: (state) => () => {
+      if (state.currentPlayState.type === "playing") {
+        return getAudioElement().currentTime;
+      } else if (state.currentPlayState.type === "streaming") {
+        return state.currentPlayState.currentTime;
+      } else {
+        return undefined;
+      }
     },
   },
 
@@ -399,7 +403,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
         const startTime =
           accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
 
-        const existingCache = audioCache.get(id);
+        const existingCache = audioCacheForStreaming.get(id);
         if (existingCache && existingCache.startsAt <= startTime) {
           log.info(
             `Using cached audio for ${audioKey} starting at ${existingCache.startsAt} with offset ${startTime - existingCache.startsAt}`,
@@ -549,7 +553,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
                 );
                 const wavBlob = await new Response(wavBodyForSave).blob();
                 if (abortSignal.aborted) return;
-                audioCache.set(cacheKey, {
+                audioCacheForStreaming.set(cacheKey, {
                   wav: wavBlob,
                   startsAt: startTime,
                 });

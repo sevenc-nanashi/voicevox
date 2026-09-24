@@ -7,6 +7,9 @@ export type WavHeader = {
   bitsPerSample: number;
 };
 
+/**
+ * WAVファイルのReadableStreamを受け取り、WAVヘッダーと波形データを読み取る。
+ */
 export class WavStream {
   private reader: ReadableStreamDefaultReader<Uint8Array>;
   private buffer: Uint8Array;

@@ -1,5 +1,8 @@
 import { ensureNotNullish } from "@/type/utility";
 
+/**
+ * LRUキャッシュ。
+ */
 export class LruCache<K, V> {
   private maxSize: number;
   private cache: Map<K, V>;

@@ -387,7 +387,7 @@ export type ConfirmedTips = {
   tweakableSliderByScroll: boolean;
   engineStartedOnAltPort: boolean; // エンジンのポート変更の通知
   notifyOnGenerate: boolean; // 音声書き出し時の通知
-  streamingUnrecommended: boolean; // ストリーミング再生のRTFが1.0未満のPCを検出したときの通知
+  streamingUnrecommended: boolean; // ストリーミング再生で音声が枯渇したときの通知
 };
 
 // ルート直下にある雑多な設定値
