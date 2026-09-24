@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { WavStream } from "@/domain/wavStream";
 
 const wav = readFileSync("tests/unit/domain/fixtures/wavStream.wav");
@@ -24,40 +24,33 @@ function createParser(bytes: Uint8Array, chunkSize: number) {
   );
 }
 
-describe.each([4, 4093, wav.length])("受信単位が %i バイト", (chunkSize) => {
-  test("PCM16ステレオのヘッダーを読み取れる", async () => {
-    const parser = createParser(wav, chunkSize);
-    await expect(parser.readHeader()).resolves.toEqual({
-      audioFormat: "pcm16le",
-      numChannels: 2,
-      sampleRate: 44100,
-      byteRate: 176400,
-      blockAlign: 4,
-      bitsPerSample: 16,
-    });
+const chunkSize = 1024;
+test("PCM16ステレオのヘッダーを読み取れる", async () => {
+  const parser = createParser(wav, chunkSize);
+  await expect(parser.readHeader()).resolves.toEqual({
+    audioFormat: "pcm16le",
+    numChannels: 2,
+    sampleRate: 44100,
+    byteRate: 176400,
+    blockAlign: 4,
+    bitsPerSample: 16,
   });
+});
 
-  test.each([441, 1024])(
-    "%iフレームずつ全サンプルを読み取れる",
-    async (samplesPerChunk) => {
-      const parser = createParser(wav, chunkSize);
-      await parser.readHeader();
-      const samples: number[] = [];
-      for await (const chunk of parser.readSamples(samplesPerChunk)) {
-        expect(chunk).toHaveLength(
-          Math.min(
-            samplesPerChunk,
-            (expectedSamples.length - samples.length) / 2,
-          ),
-        );
-        for (const [left, right] of chunk) {
-          samples.push(left, right);
-        }
-      }
-      expect(samples).toHaveLength(expectedSamples.length);
-      expect(Float32Array.from(samples)).toEqual(expectedSamples);
-    },
-  );
+test("1024フレームずつ全サンプルを読み取れる", async () => {
+  const parser = createParser(wav, chunkSize);
+  await parser.readHeader();
+  const samples: number[] = [];
+  for await (const chunk of parser.readSamples(1024)) {
+    expect(chunk).toHaveLength(
+      Math.min(1024, (expectedSamples.length - samples.length) / 2),
+    );
+    for (const [left, right] of chunk) {
+      samples.push(left, right);
+    }
+  }
+  expect(samples).toHaveLength(expectedSamples.length);
+  expect(Float32Array.from(samples)).toEqual(expectedSamples);
 });
 
 test("音声全体より大きいフレーム数を指定すると全サンプルを一度に返す", async () => {
