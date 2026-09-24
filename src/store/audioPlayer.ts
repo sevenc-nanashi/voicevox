@@ -7,7 +7,7 @@ import type {
   AudioPlayerStoreTypes,
   CurrentPlayState,
 } from "./type";
-import { AudioUniqueId, generateUniqueIdAndQuery } from "./audioGenerate";
+import { type AudioUniqueId, generateUniqueIdAndQuery } from "./audioGenerate";
 import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { createUILockAction } from "./ui";
 import type { AudioKey } from "@/type/preload";
