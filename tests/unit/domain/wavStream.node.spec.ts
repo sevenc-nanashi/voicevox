@@ -37,13 +37,13 @@ test("PCM16ステレオのヘッダーを読み取れる", async () => {
   });
 });
 
-test("1024フレームずつ全サンプルを読み取れる", async () => {
+test("全サンプルを読み取れる", async () => {
   const parser = createParser(wav, chunkSize);
   await parser.readHeader();
   const samples: number[] = [];
   for await (const chunk of parser.readSamples(1024)) {
     expect(chunk).toHaveLength(
-      Math.min(1024, (expectedSamples.length - samples.length) / 2),
+      Math.min(chunkSize, (expectedSamples.length - samples.length) / 2),
     );
     for (const [left, right] of chunk) {
       samples.push(left, right);

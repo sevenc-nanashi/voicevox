@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { playAudioWithAbort } from "@/store/audioPlayer";
 
-async function nextTick() {
+async function flushPromises() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
@@ -31,7 +31,7 @@ describe(
 
       // この時点ではfirstが後処理で待機中で、
       // secondとthirdがfirstの後処理が終わるのを待機中
-      await nextTick();
+      await flushPromises();
       expect(events).toEqual(["first"]);
       cleanup.resolve();
       await Promise.allSettled([first, second, third]);
