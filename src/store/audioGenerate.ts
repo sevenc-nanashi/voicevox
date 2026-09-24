@@ -8,6 +8,7 @@ import type {
 } from "./type";
 import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { generateTempUniqueId } from "./utility";
+import type { Brand } from "@/type/utility";
 
 const audioBlobCache: Record<string, Blob> = {};
 
@@ -118,10 +119,12 @@ export async function generateLabFromAudioQuery(
   return labString;
 }
 
+export type AudioUniqueId = Brand<string, "AudioUniqueId">;
+
 export async function generateUniqueIdAndQuery(
   state: SettingStoreState,
   audioItem: AudioItem,
-): Promise<[string, EditorAudioQuery | undefined]> {
+): Promise<[AudioUniqueId, EditorAudioQuery | undefined]> {
   audioItem = JSON.parse(JSON.stringify(audioItem)) as AudioItem;
   const audioQuery = audioItem.query;
   if (audioQuery != undefined) {
@@ -137,7 +140,7 @@ export async function generateUniqueIdAndQuery(
     audioItem.morphingInfo,
     state.experimentalSetting.enableInterrogativeUpspeak, // このフラグが違うと、同じAudioQueryで違う音声が生成されるので追加
   ]);
-  return [id, audioQuery];
+  return [id as AudioUniqueId, audioQuery];
 }
 
 export function isMorphable(

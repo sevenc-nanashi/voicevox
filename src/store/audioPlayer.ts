@@ -7,7 +7,7 @@ import type {
   AudioPlayerStoreTypes,
   CurrentPlayState,
 } from "./type";
-import { generateUniqueIdAndQuery } from "./audioGenerate";
+import { AudioUniqueId, generateUniqueIdAndQuery } from "./audioGenerate";
 import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { createUILockAction } from "./ui";
 import type { AudioKey } from "@/type/preload";
@@ -43,7 +43,7 @@ const cancelled = Symbol("cancelled");
  * ストリーミング再生用のキャッシュ。
  */
 const audioCacheForStreaming = new LruCache<
-  string,
+  AudioUniqueId,
   {
     wav: Blob;
     startsAt: number;
