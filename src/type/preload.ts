@@ -387,7 +387,7 @@ export type ConfirmedTips = {
   tweakableSliderByScroll: boolean;
   engineStartedOnAltPort: boolean; // エンジンのポート変更の通知
   notifyOnGenerate: boolean; // 音声書き出し時の通知
-  streamingUnrecommended: boolean; // ストリーミング再生で音声が枯渇したときの通知
+  streamingUnrecommended: boolean; // ストリーミング再生で生成が再生に追いつかない場合の通知
 };
 
 // ルート直下にある雑多な設定値
@@ -421,7 +421,7 @@ export const rootMiscSettingSchema = z.object({
   showAudioLength: z.boolean().default(false), // 音声の長さを表示するかどうか
   streamingMode: z
     .enum(["LOW_LATENCY", "BALANCED", "STABLE"])
-    .default("STABLE"),
+    .default("STABLE"), // ストリーミング再生のモード
 });
 export type RootMiscSettingType = z.infer<typeof rootMiscSettingSchema>;
 
