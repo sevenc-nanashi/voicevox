@@ -76,7 +76,7 @@ export class WavStream {
    */
   async *readSamples(
     samplesPerChunk: number,
-  ): AsyncGenerator<[number, number][], undefined> {
+  ): AsyncGenerator<[Float32Array, Float32Array], undefined> {
     if (!this.header) {
       throw new Error("WAV header not read yet");
     }
@@ -105,7 +105,12 @@ export class WavStream {
         chunk.byteLength,
       );
 
-      const samples: [number, number][] = [];
+      const nextChunkSize = Math.min(
+        samplesPerChunk,
+        (dataChunkSize - bytesRead) / bytesPerSample,
+      );
+      const leftSamples = new Float32Array(nextChunkSize);
+      const rightSamples = new Float32Array(nextChunkSize);
       for (let i = 0; i < chunk.length; i += bytesPerSample) {
         let left: number, right: number;
         if (this.header.audioFormat === "pcm16le") {
@@ -119,9 +124,10 @@ export class WavStream {
           right =
             this.header.numChannels === 2 ? view.getFloat32(i + 4, true) : left;
         }
-        samples.push([left, right]);
+        leftSamples[i / bytesPerSample] = left;
+        rightSamples[i / bytesPerSample] = right;
       }
-      yield samples;
+      yield [leftSamples, rightSamples];
     }
   }
 

@@ -148,8 +148,8 @@ export async function playAudioStreams(
           chunkOrDone.value.length,
         );
         samplesToSkip -= skippedSamples;
-        const samples = chunkOrDone.value.slice(skippedSamples);
-        if (samples.length === 0) continue;
+        const [leftSamples, rightSamples] =
+          chunkOrDone.value.slice(skippedSamples);
 
         // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
         if (numTotalSamples === 0) {
@@ -159,17 +159,13 @@ export async function playAudioStreams(
         // AudioBufferを作ってチャンクのサンプルをコピーする
         const audioBuffer = audioContext.createBuffer(
           2,
-          samples.length,
+          leftSamples.length,
           sampleRate,
         );
         const leftChannel = audioBuffer.getChannelData(0);
         const rightChannel = audioBuffer.getChannelData(1);
-        let offset = 0;
-        for (const [left, right] of samples) {
-          leftChannel[offset] = left;
-          rightChannel[offset] = right;
-          offset++;
-        }
+        leftChannel.set(leftSamples);
+        rightChannel.set(rightSamples);
 
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
@@ -188,7 +184,7 @@ export async function playAudioStreams(
             (baseTime - audioContext.currentTime) * 1000,
           ),
         );
-        numTotalSamples += offset;
+        numTotalSamples += leftSamples.length;
         lastBufferEndTime = baseTime + audioBuffer.duration;
         bufferSources.push(source);
       }
