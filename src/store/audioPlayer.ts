@@ -17,6 +17,7 @@ import { createLogger } from "@/helpers/log";
 import { WavStream } from "@/domain/wavStream";
 import { assertNonNullable, ensureNotNullish } from "@/type/utility";
 import { LruCache } from "@/helpers/lruCache";
+import { ErmTimeout } from "@/helpers/ermTimeout";
 
 const log = createLogger("store/audioPlayer");
 let audioContext: AudioContext | null = null;
@@ -96,123 +97,101 @@ export async function playAudioStreams(
     resolveCancel(cancelled);
   });
   let lastBufferEndTime = audioContext.currentTime;
-  let lastDelayNotifier: ReturnType<typeof setTimeout> | null = null;
-  const chunkStartNotifiers: ReturnType<typeof setTimeout>[] = [];
 
-  try {
-    for (const [index, { offset, stream }] of audioStreams.entries()) {
-      const header = await Promise.race([
+  using cancelables = new DisposableStack();
+  for (const [index, { offset, stream }] of audioStreams.entries()) {
+    const header = await Promise.race([cancelledPromise, stream.readHeader()]);
+    if (header === cancelled) return;
+    const sampleRate = header.sampleRate;
+
+    const samplesIterator = stream.readSamples(samplesPerChunk);
+    let samplesToSkip = Math.floor(offset * sampleRate);
+    let numTotalSamples = 0;
+    while (true) {
+      // 現在のバッファの終了時刻に向けて遅延通知をセットする
+      // ただし、初回のチャンクは再生開始前なので遅延通知をセットしない
+      using delayNotifier =
+        numTotalSamples > 0
+          ? new ErmTimeout(
+              Math.max(0, lastBufferEndTime - audioContext.currentTime) * 1000,
+              () => callbacks.onDelay?.(),
+            )
+          : undefined;
+
+      // 中断されるか、次のチャンクが読み込まれるまで待つ
+      const chunkOrDone = await Promise.race([
         cancelledPromise,
-        stream.readHeader(),
+        samplesIterator.next(),
       ]);
-      if (header === cancelled) return;
-      const sampleRate = header.sampleRate;
+      delayNotifier?.clear();
 
-      const samplesIterator = stream.readSamples(samplesPerChunk);
-      let samplesToSkip = Math.floor(offset * sampleRate);
-      let numTotalSamples = 0;
-      while (true) {
-        // 最初のチャンクは遅延通知をしない
-        if (numTotalSamples > 0) {
-          // 現在のバッファの終了時刻に向けて遅延通知をセットする
-          lastDelayNotifier = setTimeout(
-            () => {
-              callbacks.onDelay?.();
-            },
-            Math.max(0, lastBufferEndTime - audioContext.currentTime) * 1000,
-          );
-        }
-
-        //  中断されるか、次のチャンクが読み込まれるまで待つ
-        const chunkOrDone = await Promise.race([
-          cancelledPromise,
-          samplesIterator.next(),
-        ]);
-
-        // 遅延通知をクリアする
-        if (lastDelayNotifier != null) {
-          clearTimeout(lastDelayNotifier);
-          lastDelayNotifier = null;
-        }
-
-        if (chunkOrDone === cancelled) {
-          return;
-        }
-        if (chunkOrDone.done) {
-          break;
-        }
-
-        // offsetに達するまでのサンプルをスキップする
-        const skippedSamples = Math.min(
-          samplesToSkip,
-          chunkOrDone.value.length,
-        );
-        samplesToSkip -= skippedSamples;
-        const [leftSamples, rightSamples] =
-          chunkOrDone.value.slice(skippedSamples);
-
-        // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
-        if (numTotalSamples === 0) {
-          callbacks.onStart?.(index);
-        }
-
-        // AudioBufferを作ってチャンクのサンプルをコピーする
-        const audioBuffer = audioContext.createBuffer(
-          2,
-          leftSamples.length,
-          sampleRate,
-        );
-        const leftChannel = audioBuffer.getChannelData(0);
-        const rightChannel = audioBuffer.getChannelData(1);
-        leftChannel.set(leftSamples);
-        rightChannel.set(rightSamples);
-
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-
-        // 現在のバッファの終了時刻に合わせて再生を予約する
-        // ただし現在のバッファがすでに終了している場合は現在時刻で再生を予約する（=今すぐ再生する）
-        const baseTime = Math.max(lastBufferEndTime, audioContext.currentTime);
-        source.start(baseTime);
-
-        // 予約した再生時刻に合わせてonChunkStartを呼ぶ
-        const currentSampleTime = numTotalSamples / sampleRate;
-        chunkStartNotifiers.push(
-          setTimeout(
-            () => callbacks.onChunkStart?.(index, currentSampleTime),
-            (baseTime - audioContext.currentTime) * 1000,
-          ),
-        );
-        numTotalSamples += leftSamples.length;
-        lastBufferEndTime = baseTime + audioBuffer.duration;
-        bufferSources.push(source);
+      if (chunkOrDone === cancelled) {
+        return;
+      }
+      if (chunkOrDone.done) {
+        break;
       }
 
-      if (!cancel.aborted) await callbacks.onStreamEnd?.(index);
-    }
-  } finally {
-    // 後始末
-    // まずディレイを通知するタイマーをクリアする
-    if (lastDelayNotifier != null) clearTimeout(lastDelayNotifier);
+      // offsetに達するまでのサンプルをスキップする
+      const skippedSamples = Math.min(samplesToSkip, chunkOrDone.value.length);
+      samplesToSkip -= skippedSamples;
+      const [leftSamples, rightSamples] =
+        chunkOrDone.value.slice(skippedSamples);
 
-    // キャンセルされるか、最後のバッファの再生が終了するまで待つ
-    await Promise.race([
-      new Promise<void>((resolve) => {
-        setTimeout(
-          resolve,
-          (lastBufferEndTime - audioContext.currentTime) * 1000,
-        );
-      }),
-      cancelledPromise,
-    ]);
+      // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
+      if (numTotalSamples === 0) {
+        callbacks.onStart?.(index);
+      }
 
-    // タイマーとかAudioBufferSourceNodeをクリアする
-    for (const notifier of chunkStartNotifiers) {
-      clearTimeout(notifier);
+      // AudioBufferを作ってチャンクのサンプルをコピーする
+      const audioBuffer = audioContext.createBuffer(
+        2,
+        leftSamples.length,
+        sampleRate,
+      );
+      const leftChannel = audioBuffer.getChannelData(0);
+      const rightChannel = audioBuffer.getChannelData(1);
+      leftChannel.set(leftSamples);
+      rightChannel.set(rightSamples);
+
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      cancelables.use({
+        [Symbol.dispose]() {
+          source.disconnect();
+          source.stop();
+        },
+      });
+
+      // 現在のバッファの終了時刻に合わせて再生を予約する
+      // ただし現在のバッファがすでに終了している場合は現在時刻で再生を予約する（=今すぐ再生する）
+      const baseTime = Math.max(lastBufferEndTime, audioContext.currentTime);
+      source.start(baseTime);
+
+      // 予約した再生時刻に合わせてonChunkStartを呼ぶ
+      const currentSampleTime = numTotalSamples / sampleRate;
+      cancelables.use(
+        new ErmTimeout((baseTime - audioContext.currentTime) * 1000, () =>
+          callbacks.onChunkStart?.(index, currentSampleTime),
+        ),
+      );
+      numTotalSamples += leftSamples.length;
+      lastBufferEndTime = baseTime + audioBuffer.duration;
+      bufferSources.push(source);
     }
-    for (const source of bufferSources) {
-      source.stop();
+
+    if (!cancel.aborted) {
+      await callbacks.onStreamEnd?.(index);
+
+      // 最後のチャンクの再生が終了するか、中断されるまで待つ
+      const { promise: playbackEnded, resolve: resolvePlaybackEnd } =
+        Promise.withResolvers<void>();
+      using _playbackEndNotifier = new ErmTimeout(
+        (lastBufferEndTime - audioContext.currentTime) * 1000,
+        resolvePlaybackEnd,
+      );
+      await Promise.race([playbackEnded, cancelledPromise]);
     }
   }
 }
