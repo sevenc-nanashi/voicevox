@@ -12,7 +12,7 @@ import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { createUILockAction } from "./ui";
 import type { AudioKey } from "@/type/preload";
 import { showAlertDialog } from "@/components/Dialog/Dialog";
-import { Mutex } from "@/helpers/mutex";
+import { AbortableMutex } from "@/helpers/abortableMutex";
 import { createLogger } from "@/helpers/log";
 import { WavStream } from "@/domain/wavStream";
 import { assertNonNullable, ensureNotNullish } from "@/type/utility";
@@ -228,29 +228,7 @@ const getAudioElement = (() => {
   };
 })();
 
-function createPlayAudioWithAbort() {
-  let lastPlayController: AbortController | undefined = undefined;
-  const mutex = new Mutex();
-  return async <T>(
-    callback: (signal: AbortSignal) => Promise<T>,
-  ): Promise<T> => {
-    if (lastPlayController) {
-      lastPlayController.abort();
-    }
-    const controller = new AbortController();
-    lastPlayController = controller;
-    getAudioElement().pause();
-    await using _lock = await mutex.acquire();
-    return await callback(controller.signal);
-  };
-}
-
-/**
- * 現在再生されている音声を停止した後、callbackを実行する。
- *
- * callbackはAbortSignalに従って音声再生を中止すること。
- */
-export const playAudioWithAbort = createPlayAudioWithAbort();
+const audioPlayMutex = new AbortableMutex();
 
 export const audioPlayerStoreState: AudioPlayerStoreState = {
   currentPlayState: { type: "stopped" },
@@ -363,7 +341,8 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   STOP_AUDIO: {
     // 停止中でも呼び出して問題ない
     action() {
-      return playAudioWithAbort(async () => {});
+      getAudioElement().pause();
+      return audioPlayMutex.abort();
     },
   },
 
@@ -427,7 +406,8 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
 
   PLAY_AUDIO_STREAMING_FROM_CACHE: {
     async action({ state, mutations }, { audioKey, cache, startTime }) {
-      return await playAudioWithAbort(async (abortSignal) => {
+      getAudioElement().pause();
+      return await audioPlayMutex.lock(async (abortSignal) => {
         if (abortSignal.aborted) return false;
         try {
           await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
@@ -478,7 +458,8 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
       { state, mutations, actions },
       { audioKey, audioItem, audioQuery, cacheKey, startTime, segmentLength },
     ) {
-      return await playAudioWithAbort(async (abortSignal) => {
+      getAudioElement().pause();
+      return await audioPlayMutex.lock(async (abortSignal) => {
         if (abortSignal.aborted) return false;
         try {
           await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
