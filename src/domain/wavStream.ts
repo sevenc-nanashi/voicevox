@@ -105,10 +105,7 @@ export class WavStream {
         chunk.byteLength,
       );
 
-      const nextChunkSize = Math.min(
-        samplesPerChunk,
-        (dataChunkSize - bytesRead) / bytesPerSample,
-      );
+      const nextChunkSize = chunk.length / bytesPerSample;
       const leftSamples = new Float32Array(nextChunkSize);
       const rightSamples = new Float32Array(nextChunkSize);
       for (let i = 0; i < chunk.length; i += bytesPerSample) {

@@ -7,6 +7,12 @@ const expectedSamples = Float32Array.from(
   { length: 44100 * 5 * 2 },
   (_, index) => wav.readInt16LE(44 + index * 2) / 32768,
 );
+const expectedLeftSamples = expectedSamples.filter(
+  (_, index) => index % 2 === 0,
+);
+const expectedRightSamples = expectedSamples.filter(
+  (_, index) => index % 2 === 1,
+);
 
 function createParser(bytes: Uint8Array, chunkSize: number) {
   let offset = 0;
@@ -40,30 +46,36 @@ test("PCM16ステレオのヘッダーを読み取れる", async () => {
 test("全サンプルを読み取れる", async () => {
   const parser = createParser(wav, chunkSize);
   await parser.readHeader();
-  const samples: number[] = [];
-  for await (const chunk of parser.readSamples(1024)) {
-    expect(chunk).toHaveLength(
-      Math.min(chunkSize, (expectedSamples.length - samples.length) / 2),
+  let numSamples = 0;
+  for await (const [leftChunk, rightChunk] of parser.readSamples(1024)) {
+    const expectedChunkSize = Math.min(
+      chunkSize,
+      expectedSamples.length / 2 - numSamples,
     );
-    for (const [left, right] of chunk) {
-      samples.push(left, right);
-    }
+    expect(leftChunk).toHaveLength(expectedChunkSize);
+    expect(rightChunk).toHaveLength(expectedChunkSize);
+    expect(leftChunk).toEqual(
+      expectedLeftSamples.subarray(numSamples, numSamples + expectedChunkSize),
+    );
+    expect(rightChunk).toEqual(
+      expectedRightSamples.subarray(numSamples, numSamples + expectedChunkSize),
+    );
+    numSamples += leftChunk.length;
   }
-  expect(samples).toHaveLength(expectedSamples.length);
-  expect(Float32Array.from(samples)).toEqual(expectedSamples);
+  expect(numSamples).toBe(expectedSamples.length / 2);
 });
 
 test("音声全体より大きいフレーム数を指定すると全サンプルを一度に返す", async () => {
   const parser = createParser(wav, wav.length);
   await parser.readHeader();
-  const chunks: [number, number][][] = [];
+  const chunks: [Float32Array, Float32Array][] = [];
   for await (const chunk of parser.readSamples(
     expectedSamples.length / 2 + 1,
   )) {
     chunks.push(chunk);
   }
   expect(chunks).toHaveLength(1);
-  expect(Float32Array.from(chunks.flat(2))).toEqual(expectedSamples);
+  expect(chunks[0]).toEqual([expectedLeftSamples, expectedRightSamples]);
 });
 
 test("ヘッダーの途中でストリームが終了するとエラーになる", async () => {
