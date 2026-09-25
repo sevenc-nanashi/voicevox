@@ -4,14 +4,12 @@
  */
 export class ErmTimeout {
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private cleared = false;
 
   constructor(ms: number, callback: () => void) {
     this.timer = setTimeout(callback, ms);
   }
 
   clear() {
-    this.cleared = true;
     if (this.timer != null) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -19,7 +17,7 @@ export class ErmTimeout {
   }
 
   [Symbol.dispose]() {
-    if (!this.cleared && this.timer != null) {
+    if (this.timer != null) {
       clearTimeout(this.timer);
       this.timer = null;
     }
