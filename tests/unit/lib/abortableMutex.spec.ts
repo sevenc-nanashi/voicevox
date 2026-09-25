@@ -70,7 +70,7 @@ describe("AbortableMutex", () => {
     await expect(second).resolves.toBe(true);
   });
 
-  test("abortは実行中と待機中の処理を中断し、後始末の完了を待つ", async () => {
+  test("abortは実行中の処理を中断し、後始末の完了を待つ", async () => {
     const mutex = new AbortableMutex();
     const cleanup = Promise.withResolvers<void>();
     let taskSignal: AbortSignal | undefined;
