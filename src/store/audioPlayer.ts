@@ -8,14 +8,13 @@ import type {
   CurrentPlayState,
 } from "./type";
 import { type AudioUniqueId, generateUniqueIdAndQuery } from "./audioGenerate";
-import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { createUILockAction } from "./ui";
 import type { AudioKey } from "@/type/preload";
 import { showAlertDialog } from "@/components/Dialog/Dialog";
 import { AbortableMutex } from "@/helpers/abortableMutex";
 import { createLogger } from "@/helpers/log";
 import { WavStream } from "@/domain/wavStream";
-import { assertNonNullable, ensureNotNullish } from "@/type/utility";
+import { ensureNotNullish } from "@/type/utility";
 import { LruCache } from "@/helpers/lruCache";
 import { ErmTimeout } from "@/helpers/ermTimeout";
 
@@ -337,15 +336,8 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
           throw new Error("Streaming synthesis is not supported.");
         }
         const audioItem = state.audioItems[audioKey];
-        const [id, editorAudioQuery] = await generateUniqueIdAndQuery(
-          state,
-          audioItem,
-        );
-        assertNonNullable(editorAudioQuery);
-        const audioQuery = convertAudioQueryFromEditorToEngine(
-          editorAudioQuery,
-          engineManifest.defaultSamplingRate,
-        );
+        const { id, engineAudioQuery: audioQuery } =
+          await generateUniqueIdAndQuery(state, audioItem);
         const accentPhraseOffsets = await actions.GET_AUDIO_PLAY_OFFSETS({
           audioKey,
         });

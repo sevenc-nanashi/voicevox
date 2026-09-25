@@ -8,7 +8,7 @@ import type {
 } from "./type";
 import { convertAudioQueryFromEditorToEngine } from "./proxy";
 import { generateTempUniqueId } from "./utility";
-import type { Brand } from "@/type/utility";
+import { ensureNotNullish, type Brand } from "@/type/utility";
 
 const audioBlobCache: Record<string, Blob> = {};
 
@@ -28,11 +28,10 @@ export async function fetchAudioFromAudioItem(
     audioItem: AudioItem;
   },
 ): Promise<FetchAudioResult> {
-  const engineId = audioItem.voice.engineId;
-
-  const [id, audioQuery] = await generateUniqueIdAndQuery(state, audioItem);
-  if (audioQuery == undefined)
-    throw new Error("audioQuery is not defined for audioItem");
+  const { id, audioQuery, engineAudioQuery } = await generateUniqueIdAndQuery(
+    state,
+    audioItem,
+  );
 
   if (Object.prototype.hasOwnProperty.call(audioBlobCache, id)) {
     const blob = audioBlobCache[id];
@@ -40,11 +39,6 @@ export async function fetchAudioFromAudioItem(
   }
 
   const speaker = audioItem.voice.styleId;
-
-  const engineAudioQuery = convertAudioQueryFromEditorToEngine(
-    audioQuery,
-    state.engineManifests[engineId].defaultSamplingRate,
-  );
 
   let blob: Blob;
   // FIXME: モーフィングが設定で無効化されていてもモーフィングが行われるので気づけるUIを作成する
@@ -122,16 +116,15 @@ export async function generateLabFromAudioQuery(
 export type AudioUniqueId = Brand<string, "AudioUniqueId">;
 
 export async function generateUniqueIdAndQuery(
-  state: SettingStoreState,
+  state: AudioStoreState & SettingStoreState,
   audioItem: AudioItem,
-): Promise<[AudioUniqueId, EditorAudioQuery | undefined]> {
+) {
   audioItem = JSON.parse(JSON.stringify(audioItem)) as AudioItem;
-  const audioQuery = audioItem.query;
-  if (audioQuery != undefined) {
-    audioQuery.outputSamplingRate =
-      state.engineSettings[audioItem.voice.engineId].outputSamplingRate;
-    audioQuery.outputStereo = state.savingSetting.outputStereo;
-  }
+  const audioQuery = ensureNotNullish(audioItem.query);
+  const engineId = audioItem.voice.engineId;
+  audioQuery.outputSamplingRate =
+    state.engineSettings[engineId].outputSamplingRate;
+  audioQuery.outputStereo = state.savingSetting.outputStereo;
 
   const id = await generateTempUniqueId([
     audioItem.text,
@@ -140,7 +133,11 @@ export async function generateUniqueIdAndQuery(
     audioItem.morphingInfo,
     state.experimentalSetting.enableInterrogativeUpspeak, // このフラグが違うと、同じAudioQueryで違う音声が生成されるので追加
   ]);
-  return [id as AudioUniqueId, audioQuery];
+  const engineAudioQuery = convertAudioQueryFromEditorToEngine(
+    audioQuery,
+    state.engineManifests[engineId].defaultSamplingRate,
+  );
+  return { id: id as AudioUniqueId, audioQuery, engineAudioQuery };
 }
 
 export function isMorphable(
