@@ -789,7 +789,6 @@ export type AudioPlayerStoreTypes = {
       audioQuery: AudioQuery;
       cacheKey: AudioUniqueId;
       startTime: number;
-      segmentLength: number;
     }): Promise<boolean>;
   };
 };

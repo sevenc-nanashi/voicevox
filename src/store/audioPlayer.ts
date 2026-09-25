@@ -113,7 +113,7 @@ export async function playAudioStreams(
       using delayNotifier =
         numTotalSamples > 0
           ? new ErmTimeout(
-              Math.max(0, lastBufferEndTime - audioContext.currentTime) * 1000,
+              (lastBufferEndTime - audioContext.currentTime) * 1000,
               () => callbacks.onDelay?.(),
             )
           : undefined;
@@ -342,11 +342,6 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
           audioItem,
         );
         assertNonNullable(editorAudioQuery);
-        const segmentLength = {
-          LOW_LATENCY: 0.3,
-          BALANCED: 1.0,
-          STABLE: 9999,
-        }[state.streamingMode];
         const audioQuery = convertAudioQueryFromEditorToEngine(
           editorAudioQuery,
           engineManifest.defaultSamplingRate,
@@ -367,18 +362,17 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
             cache: existingCache,
             startTime,
           });
+        } else {
+          log.info(`Generating audio for ${audioKey} starting at ${startTime}`);
+
+          return await actions.GENERATE_AND_PLAY_AUDIO_STREAMING({
+            audioKey,
+            audioItem,
+            audioQuery,
+            cacheKey: id,
+            startTime,
+          });
         }
-
-        log.info(`Generating audio for ${audioKey} starting at ${startTime}`);
-
-        return await actions.GENERATE_AND_PLAY_AUDIO_STREAMING({
-          audioKey,
-          audioItem,
-          audioQuery,
-          cacheKey: id,
-          startTime,
-          segmentLength,
-        });
       },
     ),
   },
@@ -435,11 +429,16 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
   GENERATE_AND_PLAY_AUDIO_STREAMING: {
     async action(
       { state, mutations, actions },
-      { audioKey, audioItem, audioQuery, cacheKey, startTime, segmentLength },
+      { audioKey, audioItem, audioQuery, cacheKey, startTime },
     ) {
       getAudioElement().pause();
+
+      const segmentLength = {
+        LOW_LATENCY: 0.3,
+        BALANCED: 1.0,
+        STABLE: 9999,
+      }[state.streamingMode];
       return await audioPlayMutex.lock(async (abortSignal) => {
-        if (abortSignal.aborted) return false;
         try {
           await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
           if (abortSignal.aborted) return false;
@@ -503,12 +502,10 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
                 }
               },
               async onStreamEnd() {
-                if (abortSignal.aborted) return;
                 log.info(
                   `Caching audio for ${audioKey} starting at ${startTime}`,
                 );
                 const wavBlob = await new Response(wavBodyForSave).blob();
-                if (abortSignal.aborted) return;
                 audioCacheForStreaming.set(cacheKey, {
                   wav: wavBlob,
                   startsAt: startTime,
@@ -517,14 +514,6 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
             },
           );
           return !abortSignal.aborted;
-        } catch (error) {
-          if (
-            abortSignal.aborted &&
-            error instanceof Error &&
-            error.name === "AbortError"
-          )
-            return false;
-          throw error;
         } finally {
           void actions.RESET_PROGRESS();
           mutations.SET_AUDIO_NOW_GENERATING({
