@@ -85,7 +85,9 @@ export async function playAudioStreams(
   if (!audioContext) {
     throw new Error("AudioContext is not supported in this browser.");
   }
+  // TODO: interruptedも考慮する
   if (audioContext.state === "suspended") {
+    // NOTE: resumeできない場合はエラーが発生する（排他モードで専有中など）
     await audioContext.resume();
   }
   if (cancel.aborted) return;
