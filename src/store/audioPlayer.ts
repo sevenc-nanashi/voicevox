@@ -106,8 +106,10 @@ export async function playAudioStreams(
     if (header === cancelled) return;
     const sampleRate = header.sampleRate;
 
-    const samplesIterator = stream.readSamples(samplesPerChunk);
-    let samplesToSkip = Math.floor(offset * sampleRate);
+    const samplesIterator = stream.readSamples(
+      samplesPerChunk,
+      Math.floor(offset * sampleRate),
+    );
     let numTotalSamples = 0;
     while (true) {
       // 現在のバッファの終了時刻に向けて遅延通知をセットする
@@ -134,19 +136,7 @@ export async function playAudioStreams(
         break;
       }
 
-      // offsetに達するまでのサンプルをスキップする
-      const skippedSamples = Math.min(
-        samplesToSkip,
-        chunkOrDone.value[0].length,
-      );
-      samplesToSkip -= skippedSamples;
-      let [leftSamples, rightSamples] = chunkOrDone.value;
-      if (skippedSamples === leftSamples.length) {
-        continue;
-      } else if (skippedSamples > 0) {
-        leftSamples = leftSamples.subarray(skippedSamples);
-        rightSamples = rightSamples.subarray(skippedSamples);
-      }
+      const [leftSamples, rightSamples] = chunkOrDone.value;
 
       // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
       if (numTotalSamples === 0) {

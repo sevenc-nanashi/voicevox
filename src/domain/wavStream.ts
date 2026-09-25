@@ -73,9 +73,15 @@ export class WavStream {
   /**
    * WAVの波形データを読み取る。
    * 受けとるデータはfloat32のステレオに変換される。
+   *
+   * @param samplesPerChunk 1回のyieldで返すサンプル数
+   * @param startOffset 読み取り開始位置（サンプル単位）
+   *
+   * このメソッドを使用したあとのWavStreamは再利用しないこと。
    */
   async *readSamples(
     samplesPerChunk: number,
+    startOffset: number = 0,
   ): AsyncGenerator<[Float32Array, Float32Array], undefined> {
     if (!this.header) {
       throw new Error("WAV header not read yet");
@@ -94,6 +100,15 @@ export class WavStream {
     let bytesRead = 0;
     const bytesPerSample =
       (this.header.bitsPerSample / 8) * this.header.numChannels;
+    const bytesToSkip = Math.min(startOffset * bytesPerSample, dataChunkSize);
+    while (bytesRead < bytesToSkip) {
+      const size = Math.min(
+        samplesPerChunk * bytesPerSample,
+        bytesToSkip - bytesRead,
+      );
+      await this.readBytes(size);
+      bytesRead += size;
+    }
     while (bytesRead < dataChunkSize) {
       const chunk = await this.readBytes(
         Math.min(samplesPerChunk * bytesPerSample, dataChunkSize - bytesRead),
