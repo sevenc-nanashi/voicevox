@@ -133,10 +133,18 @@ export async function playAudioStreams(
       }
 
       // offsetに達するまでのサンプルをスキップする
-      const skippedSamples = Math.min(samplesToSkip, chunkOrDone.value.length);
+      const skippedSamples = Math.min(
+        samplesToSkip,
+        chunkOrDone.value[0].length,
+      );
       samplesToSkip -= skippedSamples;
-      const [leftSamples, rightSamples] =
-        chunkOrDone.value.slice(skippedSamples);
+      let [leftSamples, rightSamples] = chunkOrDone.value;
+      if (skippedSamples === leftSamples.length) {
+        continue;
+      } else if (skippedSamples > 0) {
+        leftSamples = leftSamples.subarray(skippedSamples);
+        rightSamples = rightSamples.subarray(skippedSamples);
+      }
 
       // 最初のチャンクの再生が開始されるときにonStartを呼ぶ
       if (numTotalSamples === 0) {
