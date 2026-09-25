@@ -503,7 +503,8 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
                   delayNotified = true;
 
                   void actions.SHOW_NOTIFY_AND_NOT_SHOW_AGAIN_BUTTON({
-                    message: "このPCではストリーミング再生が推奨されません",
+                    message:
+                      "音声が途切れる場合は設定の「ストリーミング再生」を「安定」に変更してください",
                     icon: "warning",
                     tipName: "streamingUnrecommended",
                   });
