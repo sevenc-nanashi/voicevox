@@ -360,6 +360,13 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
         const startTime =
           accentPhraseOffsets[getters.AUDIO_PLAY_START_POINT ?? 0];
 
+        // # キャッシュについて
+        //
+        // - AudioQueryやstyleIdなどの音声を生成するためのパラメーターから生成されるIDをキャッシュのキーにする。
+        // - 音声をすべて取得しきったあとにキャッシュにいれる。
+        //   - そのため、キャッシュには`(キャッシュのキー) -> (開始時刻, 開始時刻から終端までの音声)`、しか入らない。
+        // - もしキャッシュが存在していて、再生しようとしている時刻からの音声を含んでいる場合は、キャッシュから再生する。
+        //   - ここで、「再生しようとしている時刻からの音声を含んでいる場合」はキャッシュの開始時刻が再生しようとしている時刻よりも前かどうかで判定する。
         const existingCache = audioCacheForStreaming.get(id);
         if (existingCache && existingCache.startsAt <= startTime) {
           log.info(
