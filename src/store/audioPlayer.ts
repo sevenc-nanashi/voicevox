@@ -62,7 +62,7 @@ const audioCacheForStreaming = new LruCache<
  *   - `index`: 再生中のWavStreamのインデックス。
  *   - `time`: 再生中のWavStreamの再生時間（秒）。
  * - `onDelay()`: バッファが枯渇して再生が遅延したときに呼ばれる。
- * - `onFetchEnd(index: number)`: WavStreamの全てのチャンクが読み込まれたときに呼ばれる。
+ * - `onStreamEnd(index: number)`: WavStreamの全てのチャンクが読み込まれたときに呼ばれる。
  *   - `index`: 再生中のWavStreamのインデックス。
  */
 export async function playAudioStreams(
@@ -76,7 +76,7 @@ export async function playAudioStreams(
     onStart?: (index: number) => void;
     onChunkStart?: (index: number, time: number) => void;
     onDelay?: () => void;
-    onFetchEnd?: (index: number) => void | Promise<void>;
+    onStreamEnd?: (index: number) => void | Promise<void>;
   } = {},
 ) {
   const samplesPerChunk = 256;
@@ -189,7 +189,7 @@ export async function playAudioStreams(
         bufferSources.push(source);
       }
 
-      if (!cancel.aborted) await callbacks.onFetchEnd?.(index);
+      if (!cancel.aborted) await callbacks.onStreamEnd?.(index);
     }
   } finally {
     // 後始末
@@ -542,7 +542,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
                   });
                 }
               },
-              async onFetchEnd() {
+              async onStreamEnd() {
                 if (abortSignal.aborted) return;
                 log.info(
                   `Caching audio for ${audioKey} starting at ${startTime}`,
