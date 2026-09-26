@@ -484,6 +484,7 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
           {
             onStart() {
               void actions.RESET_PROGRESS();
+              // TODO: GENERATING（生成）自体は終わっていないので、generatingという名称を変更する
               mutations.SET_AUDIO_NOW_GENERATING({
                 audioKey,
                 nowGenerating: false,
