@@ -16,7 +16,7 @@ import { createLogger } from "@/helpers/log";
 import { WavStream } from "@/domain/wavStream";
 import { ensureNotNullish } from "@/type/utility";
 import { LruCache } from "@/helpers/lruCache";
-import { ErmTimeout } from "@/helpers/ermTimeout";
+import { DisposableTimeout } from "@/helpers/disposableTimeout";
 
 const log = createLogger("store/audioPlayer");
 let audioContext: AudioContext | null = null;
@@ -115,7 +115,7 @@ export async function playAudioStreams(
       // ただし、初回のチャンクは再生開始前なので遅延通知をセットしない
       using delayNotifier =
         numTotalSamples > 0
-          ? new ErmTimeout(
+          ? new DisposableTimeout(
               (lastBufferEndTime - audioContext.currentTime) * 1000,
               () => callbacks.onDelay?.(),
             )
@@ -171,8 +171,9 @@ export async function playAudioStreams(
       // 予約した再生時刻に合わせてonChunkStartを呼ぶ
       const currentSampleTime = numTotalSamples / sampleRate;
       cancelables.use(
-        new ErmTimeout((baseTime - audioContext.currentTime) * 1000, () =>
-          callbacks.onChunkStart?.(index, currentSampleTime),
+        new DisposableTimeout(
+          (baseTime - audioContext.currentTime) * 1000,
+          () => callbacks.onChunkStart?.(index, currentSampleTime),
         ),
       );
       numTotalSamples += leftSamples.length;
@@ -186,7 +187,7 @@ export async function playAudioStreams(
       // 最後のチャンクの再生が終了するか、中断されるまで待つ
       const { promise: playbackEnded, resolve: resolvePlaybackEnd } =
         Promise.withResolvers<void>();
-      using _playbackEndNotifier = new ErmTimeout(
+      using _playbackEndNotifier = new DisposableTimeout(
         (lastBufferEndTime - audioContext.currentTime) * 1000,
         resolvePlaybackEnd,
       );
