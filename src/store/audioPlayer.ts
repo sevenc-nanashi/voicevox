@@ -387,42 +387,32 @@ export const audioPlayerStore = createPartialStore<AudioPlayerStoreTypes>({
             currentPlayState: { type: "stopped" },
           });
         });
-        try {
-          await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
-          if (abortSignal.aborted) return false;
-          const wavBlob = cache.wav;
-          const wavStreamForPlay = new WavStream(wavBlob.stream());
+        await setAudioContextSinkId(state.savingSetting.audioOutputDevice);
+        if (abortSignal.aborted) return false;
+        const wavBlob = cache.wav;
+        const wavStreamForPlay = new WavStream(wavBlob.stream());
 
-          await playAudioStreams(
-            [
-              {
-                offset: startTime - cache.startsAt,
-                stream: wavStreamForPlay,
-              },
-            ],
-            abortSignal,
+        await playAudioStreams(
+          [
             {
-              onChunkStart(_index, time) {
-                mutations.SET_CURRENT_PLAY_STATE({
-                  currentPlayState: {
-                    type: "streaming",
-                    audioKey,
-                    currentTime: time + startTime,
-                  },
-                });
-              },
+              offset: startTime - cache.startsAt,
+              stream: wavStreamForPlay,
             },
-          );
-          return !abortSignal.aborted;
-        } catch (error) {
-          if (
-            abortSignal.aborted &&
-            error instanceof Error &&
-            error.name === "AbortError"
-          )
-            return false;
-          throw error;
-        }
+          ],
+          abortSignal,
+          {
+            onChunkStart(_index, time) {
+              mutations.SET_CURRENT_PLAY_STATE({
+                currentPlayState: {
+                  type: "streaming",
+                  audioKey,
+                  currentTime: time + startTime,
+                },
+              });
+            },
+          },
+        );
+        return !abortSignal.aborted;
       });
     },
   },
