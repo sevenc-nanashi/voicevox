@@ -16,7 +16,7 @@ describe("AbortableMutex", () => {
 
   test("前の処理の終了前に複数の処理を要求すると、最後の要求以外は中断される", async () => {
     const mutex = new AbortableMutex();
-    const cleanup = Promise.withResolvers<void>();
+    const longTask = Promise.withResolvers<void>();
     const events: string[] = [];
     const signals: AbortSignal[] = [];
 
@@ -25,12 +25,13 @@ describe("AbortableMutex", () => {
       signals.push(signal);
       events.push("first");
 
-      // 時間のかかる後処理
-      await cleanup.promise;
+      // 中断不可の時間のかかる処理
+      await longTask.promise;
       events.push("firstDone");
     });
-
     // この時点では処理1が実行中
+
+    // ここで処理1にAbortSignalが送られるはず
     // 処理2
     void mutex.lock(async (signal) => {
       signals.push(signal);
@@ -42,13 +43,12 @@ describe("AbortableMutex", () => {
       events.push("third");
     });
 
-    // ここで処理1にAbortSignalが送られるはず
     await flushPromises();
     expect(events).toEqual(["first"]);
     expect(signals.map((signal) => signal.aborted)).toEqual([true]);
 
     // 後処理を終了させる、この時点で処理2が実行されて同時に処理2がabortされ、処理3が実行されるはず
-    cleanup.resolve();
+    longTask.resolve();
     await third;
 
     expect(events).toEqual(["first", "firstDone", "second", "third"]);
