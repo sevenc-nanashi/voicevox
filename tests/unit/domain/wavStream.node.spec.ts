@@ -19,12 +19,12 @@ function createParser(bytes: Uint8Array, chunkSize: number) {
   return new WavStream(
     new ReadableStream<Uint8Array>({
       pull(controller) {
+        controller.enqueue(bytes.subarray(offset, offset + chunkSize));
+        offset += chunkSize;
         if (offset >= bytes.length) {
           controller.close();
           return;
         }
-        controller.enqueue(bytes.subarray(offset, offset + chunkSize));
-        offset += chunkSize;
       },
     }),
   );
